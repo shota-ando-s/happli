@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>インボイス登録番号のチェック｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* このページだけの部品: ファイル3つの並び、列の対応付けのまとまり、区分の直し、絞り込み */
+  .iv-files { display: grid; gap: 16px; }
+  .iv-group { display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-low); }
+  .iv-group__title { margin: 0; }
+  .iv-entities { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px 16px; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); }
+  .iv-entity { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; padding: 8px 12px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); }
+  .iv-entity__text { min-width: 0; display: flex; flex-direction: column; }
+  .iv-entity__name { font-weight: 700; overflow-wrap: anywhere; }
+  .iv-entity__src { font-size: 14px; color: var(--md-on-surface-variant); }
+  .iv-entity .md-select { width: 7.5rem; }
+  .iv-filters { display: grid; gap: 12px 16px; grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr)); align-items: end; }
+  .iv-filters .md-field { gap: 4px; min-width: 0; }
+  .iv-filters .md-input, .iv-filters .md-select { width: 100%; }
+  .iv-count { font-size: 14px; color: var(--md-on-surface-variant); margin: 0; }
+  .iv-opts { display: flex; flex-direction: column; gap: 16px; }
+  .iv-opts .md-input[type="date"] { max-width: 14rem; }
+  #result td.is-wrap:last-child, #dlines td.is-wrap:last-child, #partners td.is-wrap:last-child { min-width: 22rem; }
+  #result td:nth-child(2) { min-width: 9rem; }
+  #summary .md-stats, #dsummary .md-stats { grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr)); }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="verified" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">インボイス登録番号のチェック</h1>
+      <p class="md-lead text-secondary">取引先マスタの登録番号（T＋13けた）の書き方・写し間違い・重複を確かめ、整えたマスタを作ります。仕入や経費の明細を読み込むと、登録番号のない相手との取引で、消費税をどれだけ差し引けなくなるか（経過措置）の目安も出します。</p>
+    </div>
+  </div>
+
+  <div class="md-banner alert" data-type="info" role="note" style="margin-bottom:16px">
+    <span class="md-icon md-banner__icon alert-icon" data-icon="info" role="img" aria-label="お知らせ"></span>
+    <div class="md-banner__body">
+      <p class="md-banner__title alert-heading">このページは国税庁のサイトに問い合わせません。番号が本当に登録されているかは、国税庁の公表サイトで調べるか、公表サイトからダウンロードしたデータを手順1で読み込んで確かめてください。金額は目安です。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" data-state="active" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">ファイルを選ぶ</h2>
+          <p class="md-step__desc">取引先マスタだけでも調べられます。ファイルをドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-number"><span class="md-icon" data-icon="help" aria-hidden="true"></span>登録番号とは</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="iv-files">
+          <div class="md-field">
+            <span class="md-field__label form-label" id="file-master-label">取引先マスタのCSV <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="file-master-help" class="md-field__help form-hint">1行に1取引先。取引先名と登録番号の列が必要です。個人・法人の区分や取引先コードの列はあれば使います。仕入請求の照合の仕入先マスタも使えます（登録番号の列を足してください）。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">取引先マスタのCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="file-master" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-master-label" aria-describedby="file-master-help file-master-status">
+            </label>
+            <p id="file-master-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="file-public-label">国税庁の公表データのCSV <span class="md-badge badge" data-kind="optional">任意</span></span>
+            <p id="file-public-help" class="md-field__help form-hint">公表サイトからダウンロードしたCSV（見出しのない形もそのまま読めます）か、登録番号・名称・登録年月日・失効年月日の列がある一覧。選ぶと、番号が登録されているか・失効していないか・名称が合うかも確かめます。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">公表データのCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="file-public" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-public-label" aria-describedby="file-public-help file-public-status">
+            </label>
+            <p id="file-public-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="file-detail-label">仕入・経費の明細のCSV <span class="md-badge badge" data-kind="optional">任意</span></span>
+            <p id="file-detail-help" class="md-field__help form-hint">日付・取引先・金額の列が必要です。仕入請求の照合の請求明細、経費精算の申請一覧、仕訳データ（汎用CSV）もそのまま読めます。選ぶと、経過措置で差し引ける消費税の目安を出します。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">明細のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="file-detail" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-detail-label" aria-describedby="file-detail-help file-detail-status">
+            </label>
+            <p id="file-detail-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">どの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-master-wrap" class="iv-group md-hidden" role="group" aria-labelledby="map-master-title">
+          <h3 id="map-master-title" class="md-subhead iv-group__title">取引先マスタ</h3>
+          <div class="md-grid" data-min="14" id="map-master"></div>
+        </div>
+        <div id="map-public-wrap" class="iv-group md-hidden" role="group" aria-labelledby="map-public-title">
+          <h3 id="map-public-title" class="md-subhead iv-group__title">公表データ</h3>
+          <p id="map-public-note" class="md-body-s" style="margin:0"></p>
+          <div class="md-grid" data-min="14" id="map-public"></div>
+        </div>
+        <div id="map-detail-wrap" class="iv-group md-hidden" role="group" aria-labelledby="map-detail-title">
+          <h3 id="map-detail-title" class="md-subhead iv-group__title">仕入・経費の明細</h3>
+          <div class="md-grid" data-min="14" id="map-detail"></div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="amount-mode">金額の列は</label>
+            <p id="amount-mode-help" class="md-field__help form-hint">経費の申請やカードの明細のように支払った額そのものなら「消費税込み」です。仕入請求の照合の請求明細の「金額」は消費税抜きです。</p>
+            <select id="amount-mode" class="md-select form-select" aria-describedby="amount-mode-help">
+              <option value="gross">消費税込み（支払った額）</option>
+              <option value="net">消費税抜き（消費税は別）</option>
+            </select>
+          </div>
+          <div id="tax-level" class="md-hidden"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-opt" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">確かめ方を選ぶ</h2>
+          <p class="md-step__desc">ふだんはそのままで大丈夫です。選んだ内容はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-transition"><span class="md-icon" data-icon="help" aria-hidden="true"></span>経過措置とは</button></div>
+      </div>
+      <div class="md-step__body iv-opts card-body">
+        <fieldset class="md-fieldset" id="small-wrap">
+          <legend>少額特例（税込み1万円未満の仕入れ）の対象の会社ですか？</legend>
+          <p class="md-field__help form-hint" style="margin:0 0 8px">2年前（基準期間）の課税売上高が1億円以下か、前年の1〜6月（特定期間）の課税売上高が5,000万円以下なら対象です。明細を読み込んだときだけ使います。</p>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="small" value="no" checked>
+              <span class="md-choice__text"><span class="md-choice__label">対象でない・わからない</span><span class="md-choice__desc">1万円未満の仕入れも、登録番号がなければ経過措置の割合で数えます</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="small" value="yes">
+              <span class="md-choice__text"><span class="md-choice__label">対象の会社</span><span class="md-choice__desc">2029年9月までの税込み1万円未満の仕入れは全額差し引けるとして数えます</span></span></label>
+          </div>
+        </fieldset>
+        <details class="md-details card">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（基準日・個人の番号・税率が空の行）</span></summary>
+          <div class="md-details__body iv-opts card-body">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="base-date">確かめる日（基準日）</label>
+              <p id="base-date-help" class="md-field__help form-hint">公表データと照合するとき、この日までに失効・取消になった番号を「直してください」にします。既定は今日です。</p>
+              <input id="base-date" class="md-input form-control" type="date" aria-describedby="base-date-help">
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="ind-check">個人事業者の番号の検査用数字</label>
+              <p id="ind-check-help" class="md-field__help form-hint">個人事業者の番号が法人番号と同じ決まりで作られているとは限らないため、既定では合わなくても「要確認」にとどめます。</p>
+              <select id="ind-check" class="md-select form-select" aria-describedby="ind-check-help">
+                <option value="warn">合わなければ「要確認」にする（おすすめ）</option>
+                <option value="error">合わなければ「直してください」にする</option>
+                <option value="skip">確かめない（形だけ見る）</option>
+              </select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="default-rate">税率の列がない・空の行の税率</label>
+              <select id="default-rate" class="md-select form-select">
+                <option value="10">10%（標準税率）</option>
+                <option value="8">8%（軽減税率）</option>
+              </select>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">調べる</h2>
+          <p class="md-step__desc">元のファイルは変わりません。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-cta">
+          <p class="md-cta__text">登録番号を1件ずつ確かめ、明細があれば差し引ける消費税の目安を出します。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>調べる</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">「直してください」は番号の形か検査用数字が合わない、または失効した番号です。「要確認」は番号がない・重複している・名称が違うなど、人が確かめたほうがよいものです。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <details class="md-details card" id="entity-wrap">
+          <summary><span class="md-icon" data-icon="person" aria-hidden="true"></span>取引先の個人・法人<span class="md-details__hint" id="entity-hint"></span></summary>
+          <div class="md-details__body card-body">
+            <p class="md-body-s" style="margin:0">区分の列が空の取引先は、名前に「株式会社」「(株)」「合同会社」などがあれば法人、なければ個人と推測しています。個人は検査用数字が合わなくても「要確認」にとどめるため、違っているときは選び直してください。選んだ区分はこのパソコンに保存されます。</p>
+            <ul id="entities" class="iv-entities" aria-label="取引先の一覧"></ul>
+          </div>
+        </details>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">取引先ごとの結果</h3>
+          <div class="iv-filters" role="group" aria-label="結果の絞り込み">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-judge">判定</label>
+              <select id="f-judge" class="md-select form-select">
+                <option value="">すべて</option>
+                <option value="ng">問題のあるものだけ</option>
+                <option value="直してください">直してくださいだけ</option>
+                <option value="要確認">要確認だけ</option>
+                <option value="問題なし">問題なしだけ</option>
+              </select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-q">取引先・番号で探す</label>
+              <input id="f-q" class="md-input form-control" type="search" placeholder="例）見本、T1">
+            </div>
+          </div>
+          <p id="f-count" class="iv-count" aria-live="polite"></p>
+          <div id="result"></div>
+        </div>
+        <div id="detail-wrap" class="md-stack md-hidden" data-gap="16">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="receipt" data-size="20" aria-hidden="true"></span>仕入・経費の明細（経過措置の目安）</h3>
+          <div id="dsummary"></div>
+          <div class="md-stack" data-gap="8">
+            <p class="md-body-s" style="margin:0"><strong>区分と税率ごとの集計</strong>　消費税額は、消費税額の列がなければ金額から計算しています（1円未満は切り捨て）。</p>
+            <div id="agg"></div>
+          </div>
+          <div class="md-stack" data-gap="8">
+            <p class="md-body-s" style="margin:0"><strong>登録番号のない取引先</strong>（差し引けない額の多い順）。登録しているか取引先に確かめたり、取引の条件を見直したりするときの参考にしてください。</p>
+            <div id="partners"></div>
+          </div>
+          <div class="md-stack" data-gap="8">
+            <p class="md-body-s" style="margin:0"><strong>明細ごとの判定</strong></p>
+            <div id="dlines"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。絞り込みに関係なく、全部の行を保存します。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-check" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>登録番号チェック結果.csv を保存</button>
+          <button id="save-master" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>整えた取引先マスタ.csv を保存</button>
+          <button id="save-summary" class="md-btn md-hidden btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>経過措置の集計.csv を保存</button>
+          <button id="save-detail" class="md-btn md-hidden btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>経過措置の明細.csv を保存</button>
+        </div>
+        <p class="md-body-s" style="margin:0">「整えた取引先マスタ」は、元のマスタの列の並びのまま、登録番号の列だけを整えた書き方（T＋13けた、半角）にし、最後に「登録番号の確認」の列を足したものです。形を直せなかった番号は元のまま残します。</p>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ol>
+        <li>手順1で <code>samples/invoice/</code> の3つのファイル（取引先マスタ・公表データ_見本・仕入と経費の明細）を選びます。</li>
+        <li>手順4の「調べる」を押します。写し間違い・けたの多い番号・失効した番号・番号のない取引先が見つかります。</li>
+        <li>「公表データ_見本」は架空のデータです。実際に使うときは、国税庁の公表サイトの「公表情報ダウンロード」から取ったCSVを選んでください。</li>
+      </ol>
+    </div>
+  </dialog>
+  <dialog id="dlg-number" class="md-modal" aria-labelledby="dlg-number-title">
+    <div class="md-modal__head"><h2 id="dlg-number-title" class="md-modal__title">登録番号とは</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>インボイス（適格請求書）を出せる事業者に、国税庁が付けた番号です。「T」のあとに数字が13けた続きます。会社（法人）は法人番号と同じ13けたで、最初の1けたは残りの12けたから計算する「検査用数字」です。そのため、1けたの写し間違いはたいてい見つけられます。個人事業者の番号は法人番号とは別に付けられるため、このページでは検査用数字が合わなくても「要確認」にとどめます。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-transition" class="md-modal" aria-labelledby="dlg-transition-title">
+    <div class="md-modal__head"><h2 id="dlg-transition-title" class="md-modal__title">経過措置とは</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>登録番号のない相手（免税事業者など）からの仕入れは、原則として消費税を差し引けません（仕入税額控除）。ただし当面は、次の割合だけ差し引けます。</p>
+      <ul>
+        <li>2023年10月〜2026年9月: 80%</li>
+        <li>2026年10月〜2029年9月: 50%</li>
+        <li>2029年10月から: 差し引けない</li>
+      </ul>
+      <p class="md-body-s">売上が1億円以下などの事業者は、2029年9月までの税込み1万円未満の仕入れなら、インボイスがなくても帳簿の記載だけで差し引けます（少額特例）。会社が当てはまるかは手順3で選びます。</p>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/gensen.js"></script>
+<script src="../assets/js/apps/invoice.js"></script>
+<script src="../assets/js/ui/invoice.js"></script>
+</body>
+</html>

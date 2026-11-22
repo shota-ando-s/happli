@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>期限の管理｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  .kg-base { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .kg-base .md-input { width: auto; min-width: 12rem; }
+  .kg-range .md-choice { padding: 10px 16px; min-width: 6.5rem; }
+  .kg-range .md-choice__label { white-space: nowrap; }
+  .kg-custom { margin-top: 12px; }
+  .kg-ov-table td, .kg-ov-table th { vertical-align: middle; padding: 8px 12px; }
+  .kg-ov-table .md-input { min-width: 9rem; }
+  .kg-ov-table .kg-days { width: 6.5rem; min-width: 0; }
+  /* 区分ごとの件数（押すとその区分で絞り込む） */
+  .kg-stat-btn { font: inherit; text-align: left; cursor: pointer; color: inherit; min-height: 48px; }
+  .kg-stat-btn:hover { box-shadow: var(--md-elev-1); }
+  .kg-stat-btn[aria-pressed="true"] { outline: 3px solid var(--md-primary); outline-offset: 2px; }
+  /* 絞り込み */
+  .kg-filters { display: grid; gap: 12px 16px; grid-template-columns: repeat(auto-fill, minmax(min(13rem, 100%), 1fr)); align-items: end; }
+  .kg-filterbar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+  .kg-count { font-weight: 700; }
+  /* カレンダー */
+  .kg-months { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); }
+  .kg-month { border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); padding: 12px; background: var(--md-surface-container-lowest); min-width: 0; }
+  .kg-month__title { font-size: 17px; font-weight: 700; margin: 0 0 8px 4px; }
+  .kg-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+  .kg-dow { text-align: center; font-size: 13px; font-weight: 700; color: var(--md-on-surface-variant); padding: 2px 0; }
+  .kg-dow[data-day="0"] { color: var(--md-error); }
+  .kg-day { position: relative; min-height: 44px; border-radius: var(--md-shape-s); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 4px 0 2px; font-family: var(--md-font-num); font-size: 15px; line-height: 1.3; color: var(--md-on-surface-variant); border: 0; background: transparent; }
+  .kg-day[data-base] { box-shadow: inset 0 0 0 2px var(--md-primary); color: var(--md-on-surface); font-weight: 700; }
+  button.kg-day { cursor: pointer; color: var(--md-on-surface); font-weight: 700; background: var(--md-surface-container); }
+  button.kg-day:hover { background: var(--md-surface-container-highest); }
+  button.kg-day[aria-pressed="true"] { background: var(--md-primary); color: var(--md-on-primary); }
+  .kg-mark { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 18px; padding: 0 5px; margin-top: 2px; border-radius: var(--md-shape-full); font-size: 12px; font-weight: 700; line-height: 1; }
+  .kg-mark[data-tone="error"] { background: var(--md-error); color: var(--md-on-error); }
+  .kg-mark[data-tone="warning"] { background: var(--md-warning); color: var(--md-surface-container-lowest); }
+  .kg-mark[data-tone="info"] { background: var(--md-primary); color: var(--md-on-primary); }
+  .kg-mark[data-tone="neutral"] { background: var(--md-outline); color: var(--md-surface-container-lowest); }
+  button.kg-day[aria-pressed="true"] .kg-mark { box-shadow: 0 0 0 2px var(--md-on-primary); }
+  .kg-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--md-on-surface-variant); }
+  .kg-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .kg-legend .kg-mark { margin: 0; min-width: 14px; height: 14px; padding: 0; }
+  /* 一覧: パソコンは表、スマートフォンはカード */
+  .kg-table .kg-sub { display: block; font-size: 13px; color: var(--md-on-surface-variant); }
+  .kg-table td.kg-strong { font-weight: 700; }
+  .kg-cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .kg-card { border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); padding: 14px 16px; background: var(--md-surface-container-lowest); }
+  .kg-card[data-tone="error"] { box-shadow: inset 4px 0 0 var(--md-error); }
+  .kg-card[data-tone="warning"] { box-shadow: inset 4px 0 0 var(--md-warning); }
+  .kg-card__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+  .kg-card__left { font-family: var(--md-font-num); font-weight: 700; font-size: 18px; }
+  .kg-card__title { font-size: 17px; font-weight: 700; margin-top: 6px; overflow-wrap: anywhere; }
+  .kg-card__meta { font-size: 15px; color: var(--md-on-surface-variant); margin-top: 2px; overflow-wrap: anywhere; }
+  .kg-card__memo { font-size: 14px; margin-top: 6px; overflow-wrap: anywhere; }
+  .kg-view-cards { display: none; }
+  @media (max-width: 40rem) {
+    .kg-view-table { display: none; }
+    .kg-view-cards { display: block; }
+    .kg-month { padding: 10px 8px; }
+  }
+  .kg-sumtext { min-width: 0; }
+  .kg-howto { margin: 8px 0 0; padding-left: 1.25em; }
+  .kg-howto li + li { margin-top: 8px; }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="event" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">期限の管理</h1>
+      <p class="md-lead text-secondary">契約・免許・車検・保険・在留カード・健康診断などの期限の一覧から、もうすぐ期限が来るものを急ぐ順に並べます。対応リストのCSVと、カレンダーに取り込めるファイルを作れます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">期限の一覧を選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">期限の一覧 <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">1行に1件。「対象（人・物・契約の名前）」と「期限日」の列が必要です。項目・担当者・メモ・周期の列はあれば使います。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">期限の一覧のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div class="md-grid" data-min="14" id="map"></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">いつから知らせるかを決める</h2>
+          <p class="md-step__desc">ふだんはそのままボタンを押すだけで大丈夫です。結果を出したあとに変えると、すぐに結果も変わります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <label class="md-field__label form-label" for="base">基準日</label>
+          <p id="base-help" class="md-field__help form-hint">この日から数えて、残り何日かを出します。先の日付にすると、その日の時点の状況を前もって確かめられます。</p>
+          <div class="kg-base">
+            <input id="base" class="md-input form-control" type="date" aria-describedby="base-help">
+            <button id="base-today" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>今日にもどす</button>
+          </div>
+        </div>
+        <fieldset class="md-fieldset" aria-describedby="range-help">
+          <legend>お知らせの範囲（期限の何日前から知らせるか）</legend>
+          <p id="range-help" class="md-field__help form-hint" style="margin-bottom:8px">この日数以内に期限が来るものを「お知らせ範囲内」にします。カレンダー用ファイルのお知らせ（通知）にも使います。</p>
+          <div class="md-choices kg-range" data-layout="row" id="range-choices">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="range" value="7"><span class="md-choice__text"><span class="md-choice__label">7日前</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="range" value="14"><span class="md-choice__text"><span class="md-choice__label">14日前</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="range" value="30" checked><span class="md-choice__text"><span class="md-choice__label">30日前</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="range" value="60"><span class="md-choice__text"><span class="md-choice__label">60日前</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="range" value="90"><span class="md-choice__text"><span class="md-choice__label">90日前</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="range" value="custom"><span class="md-choice__text"><span class="md-choice__label">日数を入れる</span></span></label>
+          </div>
+          <div id="custom-wrap" class="md-field kg-custom md-hidden">
+            <label class="md-field__label form-label" for="range-custom">日数</label>
+            <div class="md-input-suffix">
+              <input id="range-custom" class="md-input md-input--short form-control" type="number" min="1" max="999" step="1" inputmode="numeric" value="45">
+              <span>日前から</span>
+            </div>
+          </div>
+        </fieldset>
+        <details class="md-details card" id="ov-details">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span><span class="kg-sumtext">項目ごとの範囲 <span class="md-details__hint">（例: 車検は60日前から、在留カードは90日前から）</span></span></summary>
+          <div class="md-details__body card-body">
+            <p id="ov-help" class="md-field__help form-hint">準備に時間がかかる項目だけ、お知らせの範囲を変えられます。項目名は、一覧の「項目」の列と同じ書き方にします（「車検」と書くと「車検（社用車）」にも効きます）。この表はこのパソコンに保存され、次回も使えます。</p>
+            <div class="md-table-wrap card table-responsive" role="region" aria-label="項目ごとの範囲" tabindex="0">
+              <table class="md-table kg-ov-table table table-vcenter card-table">
+                <thead><tr><th scope="col">項目</th><th scope="col">何日前から</th><th scope="col"><span class="md-visually-hidden">削除</span></th></tr></thead>
+                <tbody id="ov-body"></tbody>
+              </table>
+            </div>
+            <datalist id="kind-list"></datalist>
+            <div class="md-actions">
+              <button id="ov-add" class="md-btn btn" data-variant="outlined" data-size="s" type="button"><span class="md-icon" data-icon="add" aria-hidden="true"></span>行を足す</button>
+            </div>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">基準日から数えて、期限が近い順に並べます。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>期限を調べる</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc" id="result-desc">急ぐものから順に並んでいます。件数のカードを押すと、その区分だけを表示します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button><button type="button" class="md-help-btn" data-modal="dlg-days"><span class="md-icon" data-icon="help" aria-hidden="true"></span>残り日数の数え方</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div id="invalid"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="event" data-size="20" aria-hidden="true"></span>カレンダー</h3>
+          <p class="md-body-s">期限がある日に件数が出ます。日付を押すと、その日の期限だけを下の一覧に出します。もう一度押すと元に戻ります。</p>
+          <div id="calendar"></div>
+          <div class="kg-legend" aria-hidden="true">
+            <span><span class="kg-mark" data-tone="error"></span>期限切れ・今日まで</span>
+            <span><span class="kg-mark" data-tone="warning"></span>7日以内</span>
+            <span><span class="kg-mark" data-tone="info"></span>お知らせ範囲内</span>
+            <span><span class="kg-mark" data-tone="neutral"></span>まだ先</span>
+          </div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead" id="list-title"><span class="md-icon" data-icon="schedule" data-size="20" aria-hidden="true"></span>対応リスト</h3>
+          <div class="kg-filters" role="group" aria-label="絞り込み">
+            <div class="md-field"><label class="md-field__label form-label" for="f-cls">区分</label><select id="f-cls" class="md-select form-select" data-size="s"></select></div>
+            <div class="md-field"><label class="md-field__label form-label" for="f-owner">担当者</label><select id="f-owner" class="md-select form-select" data-size="s"></select></div>
+            <div class="md-field"><label class="md-field__label form-label" for="f-kind">項目</label><select id="f-kind" class="md-select form-select" data-size="s"></select></div>
+            <div class="md-field"><label class="md-field__label form-label" for="f-q">ことばで探す</label><input id="f-q" class="md-input form-control" data-size="s" type="search" placeholder="例）山田、品川" autocomplete="off"></div>
+          </div>
+          <div class="kg-filterbar">
+            <p id="list-count" class="kg-count" aria-live="polite"></p>
+            <span id="date-chip"></span>
+            <button id="f-clear" class="md-btn md-hidden btn" data-variant="text" data-size="s" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>絞り込みをやめる</button>
+          </div>
+          <div id="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>どれを保存しますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="scope" value="filtered" checked>
+              <span class="md-choice__text"><span class="md-choice__label" id="scope-filtered-label">いま表示しているもの</span><span class="md-choice__desc">手順4の絞り込みのとおりに保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="scope" value="all">
+              <span class="md-choice__text"><span class="md-choice__label" id="scope-all-label">すべて</span><span class="md-choice__desc">絞り込みに関係なく、読み込んだ全部を保存します</span></span></label>
+          </div>
+        </fieldset>
+        <fieldset class="md-fieldset">
+          <legend>対応リストのCSVをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-csv" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>対応リスト.csv を保存</button>
+          <button id="save-ics" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="event" aria-hidden="true"></span>カレンダー用ファイル（.ics）を保存</button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+        <details class="md-details card">
+          <summary><span class="md-icon" data-icon="help" aria-hidden="true"></span><span class="kg-sumtext">カレンダーへの取り込み方 <span class="md-details__hint">（Google カレンダー・Outlook）</span></span></summary>
+          <div class="md-details__body card-body">
+            <p>カレンダー用ファイルには、1件ごとに期限日の終日の予定が入ります。お知らせ（通知）は、お知らせの範囲の日数前と1日前の、どちらも朝9時です。</p>
+            <ul class="kg-howto">
+              <li><strong>Google カレンダー</strong>: パソコンのブラウザで Google カレンダーを開き、右上の歯車（設定）→「インポート/エクスポート」で、保存した .ics ファイルを選んで「インポート」を押します。Google カレンダーではファイルのお知らせは使われず、カレンダーの通知の設定が使われます。</li>
+              <li><strong>Outlook</strong>: 保存した .ics ファイルをダブルクリックするか、Outlook の「ファイル」→「開く/エクスポート」→「インポート/エクスポート」→「iCalendar (.ics) または vCalendar ファイルのインポート」で取り込みます。Web 版の Outlook では、カレンダーの「カレンダーを追加」→「ファイルからアップロード」を使います。</li>
+            </ul>
+            <p>同じ予定には同じ番号（UID）を付けているので、対応するカレンダーでは、取り込み直すと二重にならずに上書きされます。取り込む前に、試しに新しいカレンダーを作ってそこに入れると安心です。</p>
+          </div>
+        </details>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で <code>samples/kigen/期限一覧.csv</code> を選び、手順3の基準日を 2026年11月16日 にしてください。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：区分の意味</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="error">期限切れ</span> 期限日が基準日より前（もう過ぎている）</li>
+        <li><span class="md-chip badge" data-tone="error">今日まで</span> 期限日が基準日と同じ日</li>
+        <li><span class="md-chip badge" data-tone="warning">7日以内</span> 残り1〜7日</li>
+        <li><span class="md-chip badge" data-tone="info">お知らせ範囲内</span> 残りが「お知らせの範囲」（ふつうは30日）以内</li>
+        <li><span class="md-chip badge" data-tone="neutral">まだ先</span> それより先</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-days" class="md-modal" aria-labelledby="dlg-days-title">
+    <div class="md-modal__head"><h2 id="dlg-days-title" class="md-modal__title">残り日数と次回の目安の数え方</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>「残り日数」は、期限日から基準日を引いた日数です。期限日の当日は 0日（今日まで）です。「周期」の列（1年・2年・6か月など）があれば、更新したあとの次の期限を「次回の目安」として出します。月末の日付は、その月の末日にそろえます（例: 1月31日の1か月後は2月28日。うるう年は29日）。</p>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/kigen.js"></script>
+<script src="../assets/js/ui/kigen.js"></script>
+</body>
+</html>

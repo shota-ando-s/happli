@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>全銀データ作成｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="bank" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">全銀データ作成</h1>
+      <p class="md-lead text-secondary">振込先の一覧（CSV）から、インターネットバンキングにそのまま取り込める振込用のファイル（全銀データ）を作ります。総合振込・給与振込・賞与振込に使えます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">振込一覧のファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-terms"><span class="md-icon" data-icon="help" aria-hidden="true"></span>ことばの説明</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">振込一覧 <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">1行目が見出し、2行目から振込先が1件ずつ並んだCSVです。銀行番号・支店番号・預金種目・口座番号・受取人名（カナ）・金額の列が必要です。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">振込一覧のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+        <div id="file-info"></div>
+        <div id="file-preview-wrap" class="md-stack md-hidden" data-gap="8">
+          <h3 class="md-subhead">ファイルの先頭5行</h3>
+          <div id="file-preview"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <p id="map-help" class="md-field__help md-hidden form-hint">受取人名・銀行名・支店名は、カナで入っている列を選んでください。全角カナ・ひらがなは自動で半角カナにします。</p>
+        <div id="map-fields" class="md-grid md-hidden" data-min="14"></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="sec-header" class="md-step card" data-state="active" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">振込の種類と、振込元の口座を入れる</h2>
+          <p class="md-step__desc">振込指定日のほかは、このパソコンに保存されます。次回からは振込指定日を選ぶだけで大丈夫です。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>振込の種類 <span class="md-badge badge" data-kind="required">必須</span></legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="h-type" value="21" checked>
+              <span class="md-choice__text"><span class="md-choice__label">総合振込</span><span class="md-choice__desc">取引先への支払いなど、ふだんの振込</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="h-type" value="11">
+              <span class="md-choice__text"><span class="md-choice__label">給与振込</span><span class="md-choice__desc">社員に給与を振り込むとき</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="h-type" value="12">
+              <span class="md-choice__text"><span class="md-choice__label">賞与振込</span><span class="md-choice__desc">社員に賞与（ボーナス）を振り込むとき</span></span></label>
+          </div>
+        </fieldset>
+
+        <div class="md-field">
+          <label class="md-field__label form-label" for="h-date">振込指定日 <span class="md-badge badge" data-kind="required">必須</span></label>
+          <p id="h-date-help" class="md-field__help form-hint">お金が振り込まれる日です。毎回選んでください（保存されません）。</p>
+          <input id="h-date" class="md-input md-input--short form-control" type="date" aria-describedby="h-date-help">
+        </div>
+
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="bank" data-size="20" aria-hidden="true"></span>振込元（あなたの会社）の情報</h3>
+          <p class="md-field__help form-hint">銀行から案内された内容を、そのまま入れてください。</p>
+        </div>
+        <div class="md-grid" data-min="14">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="h-code">委託者コード <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="h-code-help" class="md-field__help form-hint">銀行から割り当てられた番号（10桁以内の数字）</p>
+            <input id="h-code" class="md-input form-control" type="text" inputmode="numeric" maxlength="10" aria-describedby="h-code-help" autocomplete="off">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="h-name">委託者名（カナ） <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="h-name-help" class="md-field__help form-hint">会社名のカナ。例：カ）ヤマダショウジ（40文字まで）</p>
+            <input id="h-name" class="md-input form-control" type="text" aria-describedby="h-name-help" autocomplete="off">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="h-bank">銀行番号 <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="h-bank-help" class="md-field__help form-hint">振込元の銀行の4桁の番号</p>
+            <input id="h-bank" class="md-input form-control" type="text" inputmode="numeric" maxlength="4" aria-describedby="h-bank-help" autocomplete="off">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="h-branch">支店番号 <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="h-branch-help" class="md-field__help form-hint">振込元の支店の3桁の番号</p>
+            <input id="h-branch" class="md-input form-control" type="text" inputmode="numeric" maxlength="3" aria-describedby="h-branch-help" autocomplete="off">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="h-acctype">預金種目 <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="h-acctype-help" class="md-field__help form-hint">振込元の口座の種類</p>
+            <select id="h-acctype" class="md-select form-select" aria-describedby="h-acctype-help"><option value="1">普通</option><option value="2">当座</option></select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="h-acct">口座番号 <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="h-acct-help" class="md-field__help form-hint">7桁以内（足りない桁は前に0を足します）</p>
+            <input id="h-acct" class="md-input form-control" type="text" inputmode="numeric" maxlength="7" aria-describedby="h-acct-help" autocomplete="off">
+          </div>
+        </div>
+
+        <details class="md-details card" id="header-more">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（振込元の銀行名・支店名）</span></summary>
+          <div class="md-details__body card-body">
+            <p class="md-field__help form-hint">銀行によっては入れなくてもかまいません。銀行の案内に書かれているときだけ入れてください。</p>
+            <div class="md-grid" data-min="14">
+              <div class="md-field">
+                <label class="md-field__label form-label" for="h-bankname">銀行名（カナ） <span class="md-badge badge" data-kind="optional">任意</span></label>
+                <p id="h-bankname-help" class="md-field__help form-hint">15文字まで（長い分は切ります）</p>
+                <input id="h-bankname" class="md-input form-control" type="text" aria-describedby="h-bankname-help" autocomplete="off">
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="h-branchname">支店名（カナ） <span class="md-badge badge" data-kind="optional">任意</span></label>
+                <p id="h-branchname-help" class="md-field__help form-hint">15文字まで（長い分は切ります）</p>
+                <input id="h-branchname" class="md-input form-control" type="text" aria-describedby="h-branchname-help" autocomplete="off">
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">全銀データを作る</h2>
+          <p class="md-step__desc">手順1〜3が済んだら、ボタンを押してください。直してほしいところがあれば、ここにお知らせします。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-cta">
+          <p class="md-cta__text">振込一覧と振込元の情報から、銀行に取り込むファイルを作ります。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>全銀データを作る</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">件数と合計金額が、振込の予定と合っているか確かめてください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">ファイルの中身</h3>
+          <p class="md-field__help form-hint">1行が120文字です。行の先頭の数字で中身が分かります：
+            <span class="md-chip badge" data-tone="info">1</span> 振込元の情報
+            <span class="md-chip badge" data-tone="success">2</span> 振込1件ずつ
+            <span class="md-chip badge">8</span> 件数と合計
+            <span class="md-chip badge">9</span> 終わりの印</p>
+          <div class="md-table-wrap card table-responsive" tabindex="0" role="region" aria-label="全銀データの中身">
+            <pre id="preview" style="margin:0;padding:12px 16px;font-family:'BIZ UDGothic','MS Gothic','Osaka-Mono','Noto Sans Mono CJK JP',ui-monospace,monospace;font-size:14px;line-height:1.6;color:var(--md-on-surface)"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title">ファイルを保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。それをネットバンキングで取り込んでください。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-caution"><span class="md-icon" data-icon="help" aria-hidden="true"></span>使う前の注意</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <label class="md-field__label form-label" for="filename">ファイル名</label>
+          <p id="filename-help" class="md-field__help form-hint">そのままで大丈夫です。銀行から決まった名前を指定されたときだけ変えてください。</p>
+          <input id="filename" class="md-input form-control" type="text" aria-describedby="filename-help" autocomplete="off" style="max-width:24rem">
+        </div>
+        <details class="md-details card" id="save-more">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（改行の有無）</span></summary>
+          <div class="md-details__body card-body">
+            <fieldset class="md-fieldset">
+              <legend>1件ごとの改行</legend>
+              <div class="md-choices" data-layout="grid">
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="newline" value="CRLF" checked>
+                  <span class="md-choice__text"><span class="md-choice__label">改行を入れる（おすすめ）</span><span class="md-choice__desc">1件ごとに改行（CRLF）を入れます。分からないときはこちらで試してください</span></span></label>
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="newline" value="none">
+                  <span class="md-choice__text"><span class="md-choice__label">改行を入れない</span><span class="md-choice__desc">銀行から「改行なし」と指定されたときに選びます</span></span></label>
+              </div>
+            </fieldset>
+            <p class="md-field__help form-hint">文字コードは、銀行で使われる Shift_JIS で保存します（半角カナは1文字1バイト）。</p>
+          </div>
+        </details>
+        <div class="md-actions">
+          <button id="save" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>全銀データを保存</button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で <code>samples/zengin/振込一覧.csv</code>（架空の振込先10件）を選んでください。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-terms" class="md-modal" aria-labelledby="dlg-terms-title">
+    <div class="md-modal__head"><h2 id="dlg-terms-title" class="md-modal__title">ことばの説明</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><strong>全銀データ</strong>：全国銀行協会が決めた、銀行どうしで共通の振込ファイルの形です。1件が120文字の決まった並びになっています。</li>
+        <li><strong>委託者コード</strong>：振込を頼む会社ごとに、銀行が割り当てる番号です。銀行との契約書類やネットバンキングの画面に書かれています。</li>
+        <li><strong>カナ</strong>：名前は半角カナで銀行に送ります。全角カナやひらがなは自動で半角カナに直します。漢字は使えません。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-caution" class="md-modal" aria-labelledby="dlg-caution-title">
+    <div class="md-modal__head"><h2 id="dlg-caution-title" class="md-modal__title">はじめて使う前の注意</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>受け付ける項目や文字の決まりは、銀行ごとに少しずつ違います。はじめは<strong>少ない金額・少ない件数</strong>で取り込みを試してください。</li>
+        <li>銀行番号・支店番号と、銀行名・支店名が合っているかまでは確かめません。番号は銀行の資料で確かめてください。</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/zengin.js"></script>
+<script src="../assets/js/ui/zengin.js"></script>
+</body>
+</html>

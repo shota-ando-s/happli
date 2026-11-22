@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>棚卸の記入表と差異｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* この画面だけで使う部品（色は md.css のトークンから） */
+  .tn-terms { margin: 8px 0 0; padding-left: 1.25em; }
+  .tn-terms li + li { margin-top: 6px; }
+  .tn-nums { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); }
+  .tn-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+  .tn-toolbar .md-field { flex: 1 1 12rem; min-width: 0; }
+  .tn-legend { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .tn-locs { margin: 0; padding-left: 1.25em; }
+
+  /* 結果の表 */
+  .tn-table th, .tn-table td { padding: 8px 10px; vertical-align: middle; }
+  .tn-table tbody th { font-weight: 500; text-align: left; white-space: normal; min-width: 10rem; }
+  .tn-table tbody th, .tn-table thead th:first-child { position: sticky; left: 0; z-index: 1; background: var(--md-surface-container-lowest); }
+  .tn-table thead th:first-child { background: var(--md-surface-container); z-index: 2; }
+  .tn-table tbody tr:hover > th { background: var(--md-surface-container-low); }
+  .tn-sub { display: block; font-size: 13px; font-weight: 400; line-height: 1.5; color: var(--md-on-surface-variant); white-space: normal; }
+  .tn-table td.tn-status { white-space: normal; min-width: 9rem; }
+  .tn-table td.tn-status .tn-sub { margin-top: 4px; }
+  .tn-muted { color: var(--md-on-surface-variant); }
+  .tn-strong { font-weight: 700; }
+  .tn-minus { color: var(--md-error); font-weight: 700; }
+  .tn-plus { color: var(--md-on-surface); font-weight: 700; }
+  .tn-table tr[data-status="recount"] > th, .tn-table tr[data-status="extra"] > th { box-shadow: inset 4px 0 0 var(--md-error); }
+  .tn-table tr[data-status="diff"] > th { box-shadow: inset 4px 0 0 var(--md-warning); }
+
+  /* スマートフォンでは1行ずつのカードにする */
+  @media (max-width: 40rem) {
+    .tn-table thead { display: none; }
+    .tn-table, .tn-table tbody, .tn-table tr, .tn-table th, .tn-table td { display: block; width: 100%; }
+    .tn-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 14px 12px; border-bottom: 1px solid var(--md-outline-variant); }
+    .tn-table tbody tr:last-child { border-bottom: 0; }
+    .tn-table tbody th, .tn-table td { position: static; padding: 0 !important; border: 0; min-width: 0 !important; background: transparent !important; white-space: normal; }
+    .tn-table tbody th, .tn-table td.tn-status { grid-column: span 2; }
+    .tn-table td.is-num { text-align: left; }
+    .tn-table td::before { content: attr(data-label); display: block; font-size: 13px; font-weight: 700; color: var(--md-on-surface-variant); font-family: var(--md-font); }
+    .tn-table td.tn-status::before { content: none; }
+    .tn-table tr[data-status] > th { box-shadow: none; }
+    .tn-table tr[data-status="recount"], .tn-table tr[data-status="extra"] { box-shadow: inset 4px 0 0 var(--md-error); }
+  }
+
+  /* ---- 印刷用の記入表（白地に黒。画面には出さない） ---- */
+  .tn-print-area { display: none; }
+  .tn-report { background: #fff; color: #000; font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; font-size: 10pt; line-height: 1.4; letter-spacing: 0; }
+  .tn-report * { color: #000; }
+  .tn-r-page + .tn-r-page { break-before: page; page-break-before: always; }
+  .tn-r-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12pt; border-bottom: 2px solid #000; padding-bottom: 4pt; margin-bottom: 6pt; }
+  .tn-r-head h1 { font-size: 16pt; margin: 0; line-height: 1.3; }
+  .tn-r-loc { font-size: 13pt; font-weight: 700; margin: 2pt 0 0; }
+  .tn-r-meta { font-size: 9pt; margin: 2pt 0 0; }
+  .tn-r-stamps { display: flex; border: 1px solid #000; flex: none; }
+  .tn-r-stamps div { width: 20mm; text-align: center; font-size: 8pt; }
+  .tn-r-stamps div + div { border-left: 1px solid #000; }
+  .tn-r-stamps span { display: block; border-bottom: 1px solid #000; padding: 1pt 0; }
+  .tn-r-stamps i { display: block; height: 14mm; }
+  .tn-r-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; table-layout: fixed; }
+  .tn-r-table th, .tn-r-table td { border: 0.5pt solid #000; padding: 0 3pt; vertical-align: middle; word-break: break-all; }
+  .tn-r-table thead th { background: #eee; font-weight: 700; text-align: center; height: 7mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .tn-r-table tbody td { height: 8.4mm; }
+  .tn-r-table td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .tn-r-table td.c { text-align: center; }
+  .tn-r-table td.w { border-left-width: 1.2pt; border-right-width: 1.2pt; }
+  .tn-r-table tr { break-inside: avoid; page-break-inside: avoid; }
+  .tn-r-name { display: block; line-height: 1.25; max-height: 2.5em; overflow: hidden; }
+  .tn-r-note { font-size: 8.5pt; margin-top: 4pt; display: flex; justify-content: space-between; gap: 8pt; }
+  @page { size: A4 portrait; margin: 12mm 12mm 12mm; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    body { display: block; min-height: 0; }
+    body > *:not(#print-area) { display: none !important; }
+    .tn-print-area { display: block !important; }
+  }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="checklist" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">棚卸の記入表と差異</h1>
+      <p class="md-lead text-secondary">商品の一覧から、保管場所・棚の順に並んだ棚卸の記入表を印刷します。数えた結果を読み込むと、帳簿の数との差と金額を出し、数え直したほうがよい商品を示します。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-files" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">商品の一覧を選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-flow"><span class="md-icon" data-icon="help" aria-hidden="true"></span>進め方</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="ls-file-label">商品の一覧 <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="ls-file-help" class="md-field__help form-hint">商品コードの列が必要です。保管場所（倉庫）・棚番・単位・単価・帳簿数があれば記入表に載せます。在庫の受払集計の期末在庫.csv、商品マスタも使えます。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">商品の一覧のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="ls-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="ls-file-label" aria-describedby="ls-file-help ls-file-status">
+          </label>
+          <p id="ls-file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-ls-wrap" class="md-hidden md-stack" data-gap="8">
+          <p class="md-field__help form-hint">同じ保管場所・棚番・商品コードの行が2つあれば、帳簿数を足して1行にします。単価がなく金額があれば、金額 ÷ 帳簿数 を単価にします。</p>
+          <div class="md-grid" data-min="12" id="map-ls"></div>
+        </div>
+        <div id="list-message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="sec-sheet" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">記入表を印刷する</h2>
+          <p class="md-step__desc">保管場所 → 棚番 → 商品コードの順に並べ、保管場所ごとにページを分けます。設定はこのパソコンに保存されます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="sheet-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1で商品の一覧を選ぶと、記入表を作れます。</p>
+        <div id="sheet-body" class="md-hidden md-stack">
+          <div id="sheet-summary"></div>
+          <fieldset class="md-fieldset">
+            <legend>帳簿の数を記入表に載せますか？</legend>
+            <div class="md-choices" data-layout="grid">
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="blind" value="0" checked>
+                <span class="md-choice__text"><span class="md-choice__label">載せる</span><span class="md-choice__desc">帳簿の数を見ながら数えられます。数え間違いに気づきやすい反面、帳簿の数につられることがあります</span></span></label>
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="blind" value="1">
+                <span class="md-choice__text"><span class="md-choice__label">載せない（ブラインド）</span><span class="md-choice__desc">帳簿の数を見ずに数えるので、実際の数をそのまま書けます。監査ではこちらがよく使われます</span></span></label>
+            </div>
+          </fieldset>
+          <div class="tn-nums">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="count-date">棚卸の日 <span class="md-badge badge" data-kind="required">必須</span></label>
+              <p id="count-date-help" class="md-field__help form-hint">記入表に印刷し、手順6の受払記録の日付にもなります。</p>
+              <input id="count-date" class="md-input md-input--short form-control" type="date" aria-describedby="count-date-help">
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="org">会社名・部署名 <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="org-help" class="md-field__help form-hint">記入表の上に印刷します。</p>
+              <input id="org" class="md-input form-control" type="text" autocomplete="organization" placeholder="例）見本株式会社 物流部" aria-describedby="org-help">
+            </div>
+          </div>
+          <details class="md-details card">
+            <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（1ページの行数）</span></summary>
+            <div class="md-details__body card-body">
+              <div class="md-field">
+                <label class="md-field__label form-label" for="per-page">1ページの行数</label>
+                <p id="per-page-help" class="md-field__help form-hint">A4縦1枚に何行まで載せるか。はじめは25行です（1行の高さ約8mm）。商品名が長いときは少なめにしてください。</p>
+                <div class="md-input-suffix"><input id="per-page" class="md-input md-input--short form-control" type="number" min="5" max="30" step="1" inputmode="numeric" value="25" aria-describedby="per-page-help"><span>行</span></div>
+              </div>
+            </div>
+          </details>
+          <fieldset class="md-fieldset">
+            <legend>保存するファイルをどこで開きますか？</legend>
+            <div class="md-choices" data-layout="grid">
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+                <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+                <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+            </div>
+          </fieldset>
+          <div class="md-actions">
+            <button id="print" class="md-btn btn" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>記入表を印刷・PDFで保存</button>
+            <button id="save-sheet" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>記入表.csv を保存</button>
+          </div>
+          <ul class="tn-terms tn-legend">
+            <li><strong>記入表.csv</strong>: 印刷した記入表と同じ並び（No）で、「実数」「メモ」の列が空のCSVです。紙に書いた数をこの「実数」の列に打ち込み、手順4で読み込みます。</li>
+            <li>数えていない行は空のまま、1つもなかった商品は <strong>0</strong> と書いてください。記入表にない商品を見つけたら、最後の行に商品コード・保管場所・実数を書き足します。</li>
+          </ul>
+          <div id="sheet-message" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-count" class="md-step card" data-state="waiting" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">数えた結果を読み込んで、差異を確かめる</h2>
+          <p class="md-step__desc">実数を書き込んだ記入表.csv か、商品コードと実数だけの一覧を選んでください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="ct-file-label">数えた結果 <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="ct-file-help" class="md-field__help form-hint">商品コード・実数の列が必要です。保管場所の列があれば保管場所ごとに、なければ商品コードごとに合計して比べます。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">数えた結果のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="ct-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="ct-file-label" aria-describedby="ct-file-help ct-file-status">
+          </label>
+          <p id="ct-file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+        <div id="map-ct-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>数えた結果の列</h3>
+          <div class="md-grid" data-min="12" id="map-ct"></div>
+        </div>
+        <fieldset class="md-fieldset">
+          <legend>数え直しを勧める差異の大きさ（どれか1つでも当たれば「再カウント」）</legend>
+          <div class="tn-nums">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="lim-amount">差異金額</label>
+              <p id="lim-amount-help" class="md-field__help form-hint">差異 × 単価 がこの金額以上。空なら使いません。</p>
+              <div class="md-input-suffix"><input id="lim-amount" class="md-input md-input--short form-control" type="number" min="0" step="1" inputmode="numeric" value="10000" aria-describedby="lim-amount-help"><span>円</span></div>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="lim-rate">差異率</label>
+              <p id="lim-rate-help" class="md-field__help form-hint">差異 ÷ 帳簿の数 がこの割合以上。帳簿が0なのに数えた数があるときも当たります。空なら使いません。</p>
+              <div class="md-input-suffix"><input id="lim-rate" class="md-input md-input--short form-control" type="number" min="0" step="0.1" inputmode="decimal" value="10" aria-describedby="lim-rate-help"><span>%</span></div>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="lim-qty">差異の数</label>
+              <p id="lim-qty-help" class="md-field__help form-hint">差異の数（個・本など）がこの数以上。はじめは空（使わない）です。</p>
+              <div><input id="lim-qty" class="md-input md-input--short form-control" type="number" min="0" step="1" inputmode="numeric" value="" aria-describedby="lim-qty-help"></div>
+            </div>
+          </div>
+        </fieldset>
+        <div class="md-cta">
+          <p class="md-cta__text">帳簿の数と実数を照らし合わせて、差異と差異金額を出します。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>差異を確かめる</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">差異を確かめる</h2>
+          <p class="md-step__desc" id="result-desc"></p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="tn-toolbar">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="f-status">判定で絞り込む</label>
+            <select id="f-status" class="md-select form-select"></select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="f-loc">保管場所で絞り込む</label>
+            <select id="f-loc" class="md-select form-select"></select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="sort">並べ替え</label>
+            <select id="sort" class="md-select form-select">
+              <option value="status">判定の順（数え直すものから）</option>
+              <option value="amount">差異金額の大きい順</option>
+              <option value="no">記入表の順（No）</option>
+            </select>
+          </div>
+        </div>
+        <div id="table"></div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。文字コードは手順3で選んだものです。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>差異の一覧</h3>
+        <label class="md-inline-check"><input id="only-attention" class="md-checkbox form-check-input" type="checkbox"> 「一致」の行を除く</label>
+        <div class="md-actions">
+          <button id="save-diff" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>差異一覧.csv を保存</button>
+        </div>
+        <h3 class="md-subhead"><span class="md-icon" data-icon="inventory" data-size="20" aria-hidden="true"></span>在庫の受払集計に戻す</h3>
+        <p class="tn-legend">実数を「棚卸」の行にした受払記録です。<a href="zaiko.html">在庫の受払集計</a>で、その月の受払記録と一緒に読み込む（またはその月の受払記録の最後に貼り付ける）と、棚卸の日の帳簿の在庫が実数に置き換わり、差は「棚卸差異」として記録されます。日付は手順3の棚卸の日です。</p>
+        <fieldset class="md-fieldset">
+          <legend>在庫の受払集計で、倉庫ごとに分けて集計していますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="per-loc" value="1" checked>
+              <span class="md-choice__text"><span class="md-choice__label">倉庫ごとに分けている</span><span class="md-choice__desc">保管場所ごとに1行にし、倉庫の列に保管場所の名前を入れます</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="per-loc" value="0">
+              <span class="md-choice__text"><span class="md-choice__label">分けていない</span><span class="md-choice__desc">商品コードごとに、すべての保管場所の実数を合計して1行にします</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-move" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>棚卸の受払記録.csv を保存</button>
+        </div>
+        <p class="tn-legend">未記入の行がある商品は、帳簿の数が数えていない分だけ減ってしまうので、受払記録に入れません（保存のときに知らせます）。</p>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で <code>samples/tanaoroshi/商品一覧_2026年10月末.csv</code> を、手順4で <code>samples/tanaoroshi/数えた結果_2026年10月末.csv</code> を選んでください。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-flow" class="md-modal" aria-labelledby="dlg-flow-title">
+    <div class="md-modal__head"><h2 id="dlg-flow-title" class="md-modal__title">棚卸の進め方</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ol>
+        <li>棚卸の前に、商品の一覧を読み込んで記入表を印刷します（手順1〜3）。「在庫の受払集計」で保存した <code>期末在庫.csv</code> もそのまま使えます。</li>
+        <li>記入表を持って数え、実数の欄に書き込みます。紙に書いた数は、手順3で保存した <code>記入表.csv</code> の「実数」の列に打ち込みます（Excelで開けます）。</li>
+        <li>実数を入れた記入表.csv を手順4で読み込むと、差異の一覧が出ます。差異の大きい商品は数え直してください。</li>
+        <li>確かめ終わったら、手順6で「棚卸の受払記録」を保存し、「在庫の受払集計」に読み込むと、帳簿の在庫が数えた数に置き換わります。</li>
+      </ol>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：判定の種類</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="error">再カウント</span> 差異が大きい（数・金額・率のどれかがしきい値以上）。数え直してください</li>
+        <li><span class="md-chip badge" data-tone="error">記入表にない</span> 記入表になかった商品が書き足されている</li>
+        <li><span class="md-chip badge" data-tone="info">未記入</span> 実数の欄が空（数えていない）</li>
+        <li><span class="md-chip badge" data-tone="warning">差異あり</span> 差異はあるが、しきい値より小さい</li>
+        <li><span class="md-chip badge" data-tone="success">一致</span> 帳簿の数と同じ</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<div id="print-area" class="tn-print-area"></div>
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/zaiko.js"></script>
+<script src="../assets/js/apps/tanaoroshi.js"></script>
+<script src="../assets/js/ui/tanaoroshi.js"></script>
+</body>
+</html>

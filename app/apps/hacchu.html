@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>在庫の発注点チェック｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* この画面だけで使う部品（色は md.css のトークンから） */
+  .hc-files { grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)) !important; }
+  .hc-clear { margin-top: 4px; }
+  .hc-terms { margin: 8px 0 0; padding-left: 1.25em; }
+  .hc-terms li + li { margin-top: 6px; }
+  .hc-formula { font-size: 15px; line-height: 1.7; padding: 10px 14px; border-radius: var(--md-shape-s); border-left: 4px solid var(--md-primary); background: var(--md-surface-container-low); }
+  .hc-nums { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); }
+  .hc-kinds td, .hc-kinds th { vertical-align: middle; }
+  .hc-kinds .md-select { min-width: 9rem; }
+  .hc-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+  .hc-toolbar .md-field { flex: 1 1 12rem; min-width: 0; }
+  .hc-toolbar .md-btn { flex: none; }
+
+  /* 結果の表 */
+  .hc-table th, .hc-table td { padding: 8px 10px; vertical-align: middle; }
+  .hc-table tbody th { font-weight: 500; text-align: left; white-space: normal; min-width: 10rem; }
+  .hc-table tbody th, .hc-table thead th:first-child { position: sticky; left: 0; z-index: 1; background: var(--md-surface-container-lowest); }
+  .hc-table thead th:first-child { background: var(--md-surface-container); z-index: 2; }
+  .hc-table tbody tr:hover > th { background: var(--md-surface-container-low); }
+  .hc-sub { display: block; font-size: 13px; font-weight: 400; line-height: 1.5; color: var(--md-on-surface-variant); white-space: normal; }
+  .hc-table td.is-num .hc-sub { font-family: var(--md-font-num); white-space: nowrap; }
+  .hc-table td.hc-status { white-space: normal; min-width: 9rem; }
+  .hc-table td.hc-status .hc-sub { margin-top: 4px; }
+  .hc-muted { color: var(--md-on-surface-variant); }
+  .hc-strong { font-weight: 700; }
+  .hc-minus { color: var(--md-error); font-weight: 700; }
+  .hc-qty { width: 6.5rem; min-height: 48px; text-align: right; font-family: var(--md-font-num); }
+  .hc-qty[data-edited] { border-color: var(--md-primary); box-shadow: inset 0 0 0 1px var(--md-primary); }
+  .hc-table td.hc-order { min-width: 8rem; }
+  .hc-table td.hc-order .hc-sub { margin-top: 2px; text-align: right; }
+  .hc-warn { color: var(--md-on-surface); font-weight: 700; }
+  .hc-spark { display: block; width: 120px; height: 36px; overflow: visible; }
+  .hc-spark .hc-spark__line { fill: none; stroke: var(--md-primary); stroke-width: 1.5; stroke-linejoin: round; }
+  .hc-spark .hc-spark__base { stroke: var(--md-outline-variant); stroke-width: 1; }
+  .hc-spark .hc-spark__avg { stroke: var(--md-on-surface-variant); stroke-width: 1; stroke-dasharray: 3 3; }
+  .hc-spark .hc-spark__max { fill: var(--md-error); stroke: var(--md-surface-container-lowest); stroke-width: 1.5; }
+  .hc-table tr[data-status="now"] > th { box-shadow: inset 4px 0 0 var(--md-error); }
+  .hc-table tr[data-status="soon"] > th { box-shadow: inset 4px 0 0 var(--md-warning); }
+  .hc-legend { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+
+  /* スマートフォンでは1商品ずつのカードにする */
+  @media (max-width: 40rem) {
+    .hc-table thead { display: none; }
+    .hc-table, .hc-table tbody, .hc-table tr, .hc-table th, .hc-table td { display: block; width: 100%; }
+    .hc-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; padding: 14px 12px; border-bottom: 1px solid var(--md-outline-variant); }
+    .hc-table tbody tr:last-child { border-bottom: 0; }
+    .hc-table tbody th, .hc-table td { position: static; padding: 0 !important; border: 0; min-width: 0 !important; background: transparent !important; white-space: normal; }
+    .hc-table tbody th { grid-column: span 2; }
+    .hc-table td.hc-status, .hc-table td.hc-c-spark { grid-column: span 2; }
+    .hc-table td.is-num { text-align: left; }
+    .hc-table td.hc-order .hc-sub { text-align: left; }
+    .hc-table td::before { content: attr(data-label); display: block; font-size: 13px; font-weight: 700; color: var(--md-on-surface-variant); font-family: var(--md-font); }
+    .hc-table td.hc-status::before { content: none; }
+    .hc-table tr[data-status] > th { box-shadow: none; }
+    .hc-table tr[data-status="now"] { box-shadow: inset 4px 0 0 var(--md-error); }
+  }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="shopping_cart" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">在庫の発注点チェック</h1>
+      <p class="md-lead text-secondary">今の在庫と、これまでの出庫の実績から、商品ごとに「いま発注すべきか」と「いくつ発注するか」を出します。発注する分は、そのまま発注書を作れるCSVで保存できます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-files" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">ファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-files"><span class="md-icon" data-icon="help" aria-hidden="true"></span>使えるファイル</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid hc-files">
+          <div class="md-field">
+            <span class="md-field__label form-label" id="st-file-label">今の在庫 <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="st-file-help" class="md-field__help form-hint">商品コード・在庫数の列が必要です。「在庫の受払集計」の期末在庫.csv もそのまま使えます。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">今の在庫のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="st-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="st-file-label" aria-describedby="st-file-help st-file-status">
+            </label>
+            <p id="st-file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="sh-file-label">出庫の実績 <span class="md-badge badge" data-kind="optional">任意（おすすめ）</span></span>
+            <p id="sh-file-help" class="md-field__help form-hint">日付・商品コード・出庫数の一覧か、受払の記録（区分の列あり）。これがないと発注点を計算できません。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">出庫の実績のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="sh-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="sh-file-label" aria-describedby="sh-file-help sh-file-status">
+            </label>
+            <p id="sh-file-status" class="md-file-status" aria-live="polite"></p>
+            <button id="sh-clear" class="md-btn md-hidden hc-clear btn" data-variant="text" data-size="s" type="button"><span class="md-icon" data-icon="delete" data-size="20" aria-hidden="true"></span>出庫の実績を使わない</button>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="ms-file-label">商品マスタ <span class="md-badge badge" data-kind="optional">任意</span></span>
+            <p id="ms-file-help" class="md-field__help form-hint">仕入先・リードタイム・ケース入数・最小発注数・単価・発注残など。ない商品は下の既定値で計算します。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">商品マスタのCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="ms-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="ms-file-label" aria-describedby="ms-file-help ms-file-status">
+            </label>
+            <p id="ms-file-status" class="md-file-status" aria-live="polite"></p>
+            <button id="ms-clear" class="md-btn md-hidden hc-clear btn" data-variant="text" data-size="s" type="button"><span class="md-icon" data-icon="delete" data-size="20" aria-hidden="true"></span>商品マスタを使わない</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-st-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>今の在庫</h3>
+          <p class="md-field__help form-hint">倉庫が分かれているときは、商品コードごとに合計して判定します。</p>
+          <div class="md-grid" data-min="12" id="map-st"></div>
+        </div>
+        <div id="map-sh-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>出庫の実績</h3>
+          <fieldset class="md-fieldset">
+            <legend>ファイルの形</legend>
+            <div class="md-choices" data-layout="grid">
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="layout" value="split" checked>
+                <span class="md-choice__text"><span class="md-choice__label">出庫数の列がある</span><span class="md-choice__desc">日付・商品コード・出庫数（入庫数の列があってもかまいません）</span></span></label>
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="layout" value="kind">
+                <span class="md-choice__text"><span class="md-choice__label">区分の列がある（受払の記録）</span><span class="md-choice__desc">日付・商品コード・区分（入荷・出荷など）・数量</span></span></label>
+            </div>
+          </fieldset>
+          <div class="md-grid" data-min="12" id="map-sh"></div>
+          <div id="kinds-wrap" class="md-hidden md-stack" data-gap="8">
+            <p class="md-field__help form-hint">区分のうち「出庫」にしたものだけを、出庫の実績として数えます。入庫・返品・棚卸などは数えません。</p>
+            <div id="kinds"></div>
+          </div>
+        </div>
+        <div id="map-ms-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>商品マスタ</h3>
+          <p class="md-field__help form-hint">安全在庫・発注点の列に数が入っている商品は、計算せずにその数を使います。空の商品は計算します。</p>
+          <div class="md-grid" data-min="12" id="map-ms"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">計算の決まりを確かめてチェックする</h2>
+          <p class="md-step__desc">ふだんはそのままボタンを押すだけで大丈夫です。設定はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-calc"><span class="md-icon" data-icon="help" aria-hidden="true"></span>計算のしかた</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>安全在庫（急に売れたときや、届くのが遅れたときのための余分）の決め方</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="safety" value="days" checked>
+              <span class="md-choice__text"><span class="md-choice__label">平均の◯日分</span><span class="md-choice__desc">1日あたりの出庫 × 日数。分かりやすく、ふだんはこちらで十分です</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="safety" value="sd">
+              <span class="md-choice__text"><span class="md-choice__label">ばらつきから計算</span><span class="md-choice__desc">日によって出庫数が大きく変わる商品ほど、安全在庫を多くします</span></span></label>
+          </div>
+        </fieldset>
+        <p id="sd-explain" class="hc-formula md-hidden">安全在庫 = 安全係数 1.65 × 1日ごとの出庫数のばらつき（標準偏差）× √リードタイム。これで、出庫が多めになる日が続いても、おおよそ20回に19回（95%）は欠品しない量になります。売れ方がこれまでと大きく変わらないことが前提です。</p>
+        <div class="hc-nums">
+          <div class="md-field" id="safety-days-wrap">
+            <label class="md-field__label form-label" for="safety-days">安全在庫の日数</label>
+            <p id="safety-days-help" class="md-field__help form-hint">1日あたりの出庫の何日分を余分に持つか。はじめは3日です。</p>
+            <div class="md-input-suffix"><input id="safety-days" class="md-input md-input--short form-control" type="number" min="0" step="0.5" inputmode="decimal" value="3" aria-describedby="safety-days-help"><span>日</span></div>
+          </div>
+          <div class="md-field md-hidden" id="z-wrap">
+            <label class="md-field__label form-label" for="z">安全係数</label>
+            <p id="z-help" class="md-field__help form-hint">1.65 でおよそ95%、2.33 でおよそ99%。大きいほど欠品しにくく、在庫は増えます。</p>
+            <input id="z" class="md-input md-input--short form-control" type="number" min="0" step="0.01" inputmode="decimal" value="1.65" aria-describedby="z-help">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="lead">既定のリードタイム</label>
+            <p id="lead-help" class="md-field__help form-hint">発注してから届くまでの日数。商品マスタにない商品はこの日数で計算します。</p>
+            <div class="md-input-suffix"><input id="lead" class="md-input md-input--short form-control" type="number" min="1" step="1" inputmode="numeric" value="7" aria-describedby="lead-help"><span>日</span></div>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="cycle">発注サイクル</label>
+            <p id="cycle-help" class="md-field__help form-hint">次に発注するまでの日数。この日数分の出庫を見込んで目標在庫を決めます。</p>
+            <div class="md-input-suffix"><input id="cycle" class="md-input md-input--short form-control" type="number" min="0" step="1" inputmode="numeric" value="14" aria-describedby="cycle-help"><span>日</span></div>
+          </div>
+        </div>
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（平均を出す期間・「もうすぐ」の扱い）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="period">平均を出す期間</label>
+              <p id="period-help" class="md-field__help form-hint">出庫の実績の最後の日から数えて、何日分で1日あたりの出庫を出すか。はじめは90日です。季節で売れ方が変わる商品は短めにします。</p>
+              <div class="md-input-suffix"><input id="period" class="md-input md-input--short form-control" type="number" min="7" max="730" step="1" inputmode="numeric" value="90" aria-describedby="period-help period-info"><span>日</span></div>
+              <p id="period-info" class="md-field__help form-hint" aria-live="polite"></p>
+            </div>
+            <label class="md-inline-check"><input id="include-soon" class="md-checkbox form-check-input" type="checkbox" aria-describedby="include-soon-help"> 「もうすぐ」の商品にも発注数を入れる</label>
+            <p id="include-soon-help" class="md-field__help form-hint">ふだんは「今すぐ発注」の商品だけに発注数を入れます。同じ仕入先にまとめて発注したいときに使います。</p>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">商品ごとに発注点と目標在庫を計算し、発注が必要かを判定します。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>チェックする</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめて、発注数を決める</h2>
+          <p class="md-step__desc" id="result-desc"></p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="hc-toolbar">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="f-status">判定で絞り込む</label>
+            <select id="f-status" class="md-select form-select"></select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="f-supplier">仕入先で絞り込む</label>
+            <select id="f-supplier" class="md-select form-select"></select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="sort">並べ替え</label>
+            <select id="sort" class="md-select form-select">
+              <option value="status">判定の順（急ぐものから）</option>
+              <option value="days">在庫日数の少ない順</option>
+              <option value="amount">金額の大きい順</option>
+              <option value="code">商品コードの順</option>
+            </select>
+          </div>
+        </div>
+        <p class="hc-legend">「発注数」の欄は書き換えられます。書き換えた数は、保存するファイルにそのまま入ります。発注しない商品は 0 にしてください。</p>
+        <div id="table"></div>
+        <div class="md-actions">
+          <button id="reset-edits" class="md-btn md-hidden btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>書き換えた発注数を提案に戻す</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-order" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>発注明細.csv を保存</button>
+          <button id="save-plan" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>発注提案.csv を保存</button>
+        </div>
+        <ul class="hc-terms hc-legend">
+          <li><strong>発注明細.csv</strong>: 発注数が1以上の商品だけを、仕入先ごとに並べたものです。「<a href="chohyo.html">見積書・発注書・納品書・領収書の作成</a>」で「発注書」を選んでこのファイルを読み込むと、仕入先ごとの発注書がすぐに作れます。</li>
+          <li><strong>発注提案.csv</strong>: すべての商品の判定・発注点・目標在庫・在庫日数・発注数の一覧です。</li>
+        </ul>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で、<code>samples/hacchu/今の在庫.csv</code>・<code>samples/hacchu/出庫実績.csv</code>・<code>samples/hacchu/商品マスタ.csv</code> を選んでください。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-files" class="md-modal" aria-labelledby="dlg-files-title">
+    <div class="md-modal__head"><h2 id="dlg-files-title" class="md-modal__title">使えるファイル</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>「在庫の受払集計」で保存した <code>期末在庫.csv</code> は、そのまま今の在庫として使えます。受払の記録（日付・商品コード・区分・数量）も、そのまま出庫の実績として使えます。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：判定の種類</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="error">今すぐ発注</span> 在庫と発注残の合計が、発注点以下になっている</li>
+        <li><span class="md-chip badge" data-tone="warning">もうすぐ</span> あと7日分ほどの出庫で発注点に届く</li>
+        <li><span class="md-chip badge" data-tone="success">足りている</span> 発注点まで余裕がある</li>
+        <li><span class="md-chip badge" data-tone="info">過剰</span> 目標在庫の2倍より多い、または90日以上出庫がない</li>
+        <li><span class="md-chip badge">実績なし</span> 出庫の実績がなく、計算できない</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-calc" class="md-modal" aria-labelledby="dlg-calc-title">
+    <div class="md-modal__head"><h2 id="dlg-calc-title" class="md-modal__title">計算のしかた</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><strong>1日あたりの出庫</strong>: 期間（ふつうは最後の90日）の出庫数の合計 ÷ 日数。出庫のない日も0として数えます。</li>
+        <li><strong>発注点</strong> = 1日あたりの出庫 × リードタイム（発注してから届くまでの日数）＋ 安全在庫</li>
+        <li><strong>目標在庫</strong> = 発注点 ＋ 1日あたりの出庫 × 発注サイクル（次に発注するまでの日数）</li>
+        <li><strong>提案数</strong> = 目標在庫 −（在庫 ＋ 発注残）を、ケース入数の倍数に切り上げ、最小発注数より少なければ最小発注数にします。</li>
+        <li>安全在庫・発注点・目標在庫は、1未満の端数を切り上げます。商品マスタに安全在庫や発注点が書いてあれば、そちらを使います。</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/zaiko.js"></script>
+<script src="../assets/js/apps/hacchu.js"></script>
+<script src="../assets/js/ui/hacchu.js"></script>
+</body>
+</html>

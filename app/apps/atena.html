@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>宛名ラベル・封筒の印刷｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+/* ---- このページだけの部品 ---- */
+.ad-opts { display: flex; flex-direction: column; gap: 4px; }
+.ad-opts .md-inline-check { min-height: 48px; align-items: flex-start; padding-top: 12px; }
+.ad-opts .md-inline-check .md-checkbox { margin-top: 2px; }
+.ad-check-text { display: flex; flex-direction: column; }
+.ad-check-text small { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+.ad-offsets { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr)); }
+.ad-custom { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(11rem, 100%), 1fr)); }
+
+/* 宛先の一覧 */
+.ad-pick-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.ad-pick-bar__count { margin-left: auto; font-weight: 700; }
+.ad-list { max-height: 30rem; overflow: auto; }
+.ad-list .md-table td { vertical-align: top; }
+.ad-list .md-table td.is-wrap { min-width: 0; word-break: break-all; }
+.ad-list .md-table th, .ad-list .md-table td { padding-left: 10px; padding-right: 10px; }
+.ad-list .md-table thead th { position: sticky; top: 0; z-index: 2; background: var(--md-surface-container); }
+.ad-list .md-table td:first-child { width: 56px; padding-top: 4px; padding-bottom: 4px; }
+.ad-list .md-inline-check { min-height: 44px; min-width: 44px; justify-content: center; }
+.ad-list .ad-addr { font-size: 14px; color: var(--md-on-surface-variant); }
+.ad-list tr.is-off td:not(:first-child) { opacity: .6; }
+.ad-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+
+/* 開始位置の選択 */
+.ad-start { display: grid; gap: 4px; max-width: 20rem; padding: 8px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-s); background: var(--md-surface-container-low); }
+.ad-start__cell { min-height: 44px; min-width: 0; border: 1px solid var(--md-outline); border-radius: var(--md-shape-xs); background: var(--md-surface-container-lowest); color: var(--md-on-surface); font: inherit; font-size: 15px; font-family: var(--md-font-num); cursor: pointer; padding: 0; }
+.ad-start__cell[data-used] { background: var(--md-surface-container-highest); color: var(--md-on-surface-variant); text-decoration: line-through; border-style: dashed; }
+.ad-start__cell[aria-pressed="true"] { background: var(--md-primary); color: var(--md-on-primary); border-color: var(--md-primary); font-weight: 700; text-decoration: none; }
+.ad-start__cell:hover:not([aria-pressed="true"]) { border-color: var(--md-primary); }
+
+/* 見た目の確認 */
+.ad-preview-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.ad-preview-bar .md-field { flex: 1 1 16rem; }
+.ad-preview-bar .md-btn { flex: none; }
+.ad-preview { position: relative; overflow: hidden; border-radius: var(--md-shape-m); background: var(--md-surface-container-high); padding: 16px; }
+.ad-preview__inner { transform-origin: top left; margin: 0 auto; }
+.ad-preview .ad-sheet { box-shadow: var(--md-elev-2); }
+
+/* 測るための置き場（画面には出さない。印刷のときだけ出す） */
+.ad-print-area { position: fixed; left: 0; top: 0; width: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
+
+/* ---- 紙（画面でも印刷でも白地に黒） ---- */
+.ad-sheet { position: relative; overflow: hidden; background: #fff; color: #000; flex: none; }
+.ad-sheet * { color: #000; }
+.ad-sheet p { margin: 0; }
+.ad-sheet[data-font="gothic"] { font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "YuGothic", "Meiryo", "Noto Sans JP", sans-serif; }
+.ad-sheet[data-font="mincho"] { font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "MS PMincho", "MS Mincho", serif; }
+.ad-layer { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.ad-guide { position: absolute; border: 0.2mm dashed #9aa0a6; pointer-events: none; }
+.ad-used { position: absolute; display: grid; place-items: center; background: repeating-linear-gradient(45deg, #f1f3f4, #f1f3f4 2mm, #e3e5e8 2mm, #e3e5e8 4mm); font-size: 3.5mm; }
+.ad-used span { color: #5f6368; background: #fff; padding: 0 2mm; border-radius: 1mm; }
+.fit { white-space: nowrap; overflow: hidden; line-height: 1.3; }
+.fit > span { display: inline-block; white-space: nowrap; }
+[data-autofit="off"] .fit, [data-autofit="off"] .fit > span { white-space: normal; display: block; }
+
+/* ラベル */
+.ad-label { position: absolute; overflow: hidden; }
+.ad-label__in { display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
+.ad-label__in > * { flex-shrink: 0; }
+.ad-label__names { margin-top: auto; padding-top: 1.5mm; padding-left: 2.5mm; }
+.ad-l--addr2 { padding-left: 1em; }
+.ad-l--name { font-weight: 500; }
+.ad-l--name small { font-size: .7em; margin-right: .4em; font-weight: 400; }
+.ad-honor { margin-left: .4em; }
+.ad-sp { font-size: .5em; }
+.fit.is-wrap, .fit.is-wrap > span { white-space: normal; display: block; }
+
+/* 封筒（縦書き） */
+.ad-vert { writing-mode: vertical-rl; text-orientation: mixed; position: absolute; }
+.ad-vert .fit { height: 100%; line-height: 1.45; }
+.ad-env__addr { right: 12mm; top: 30mm; height: 190mm; }
+.ad-env__addr .ad-l--addr2 { padding-left: 0; padding-top: 2em; }
+.ad-env__addr .ad-l--org { padding-top: 10mm; }
+.ad-env__addr .ad-gap { width: 5mm; }
+.ad-env__name { top: 48mm; height: 172mm; }
+.ad-env__name .ad-l--name small { margin-right: 0; margin-bottom: .5em; font-size: .55em; }
+.ad-env__name .ad-honor { margin-left: 0; margin-top: .4em; }
+.ad-env__name .ad-l--name { letter-spacing: .08em; font-weight: 400; }
+.ad-env__name .ad-l--sub { padding-top: 8mm; }
+.ad-zip { position: absolute; display: grid; place-items: center; font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif; font-size: 5.6mm; line-height: 1; }
+.ad-zip.ad-guide { border-color: #e06666; border-style: solid; }
+
+@media print {
+  html, body { background: #fff !important; color: #000 !important; }
+  body { display: block; min-height: 0; margin: 0; }
+  body > *:not(#print-area) { display: none !important; }
+  #print-area { position: static; width: auto; height: auto; overflow: visible; visibility: visible; }
+  .ad-sheet { box-shadow: none; break-after: page; page-break-after: always; }
+  .ad-sheet:last-child { break-after: auto; page-break-after: auto; }
+  .ad-guide:not(.ad-zip), .ad-used { display: none; }
+  .ad-zip.ad-guide { border-color: transparent; }
+  #print-area[data-frame] .ad-guide:not(.ad-zip) { display: block; }
+  #print-area[data-frame] .ad-zip.ad-guide { border-color: #e06666; }
+}
+</style>
+<style id="page-rule">@page { size: A4 portrait; margin: 0; }</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="mail" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">宛名ラベル・封筒の印刷</h1>
+      <p class="md-lead text-secondary">住所録のCSVから、A4のラベル用紙（宛名シール）や長形3号の封筒に宛名を印刷します。印刷する相手だけを選べて、使いかけのラベル用紙の途中からも印刷できます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">住所録のファイルを選ぶ</h2>
+          <p class="md-step__desc">1行に1件ずつ宛先が並んだCSVです。ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">住所録 <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">住所と、会社名か氏名の列が必要です。郵便番号・建物名・部署・役職・敬称の列はあれば使います。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">住所録のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-wrap" class="md-hidden md-stack">
+          <p class="md-field__help form-hint">「住所1」は都道府県から番地まで、「住所2」はビル・マンション名などです。住所が1つの列にまとまっているときは「住所2」を「使わない」にします。「会社名」と「氏名」は、どちらか1つは必要です。</p>
+          <div class="md-grid" data-min="14" id="map"></div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="honor-mode">敬称（様・御中）の付け方</label>
+            <p id="honor-mode-help" class="md-field__help form-hint">敬称の列に書いてある行は、その敬称を使います。列がない・空の行だけ、この付け方になります。自動では、氏名がある行は「会社名・部署」の下に「氏名 様」、会社名だけの行は「御中」にします。</p>
+            <select id="honor-mode" class="md-select form-select" aria-describedby="honor-mode-help">
+              <option value="auto" selected>自動（様と御中を使い分ける）</option>
+              <option value="sama">すべて「様」</option>
+              <option value="none">付けない</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-pick" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">印刷する宛先を選ぶ</h2>
+          <p class="md-step__desc">はじめは全部に印が付いています。今回は送らない宛先の印を外してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="pick-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに宛先の一覧が出ます。</p>
+        <div id="pick-wrap" class="md-hidden md-stack" data-gap="8">
+          <div class="ad-pick-bar">
+            <button id="pick-all" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="check" data-size="20" aria-hidden="true"></span>すべて選ぶ</button>
+            <button id="pick-none" class="md-btn btn" data-variant="outlined" type="button">すべて外す</button>
+            <span id="pick-count" class="ad-pick-bar__count" aria-live="polite"></span>
+          </div>
+          <div id="pick-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-paper" class="md-step card" data-state="waiting" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">用紙を選ぶ</h2>
+          <p class="md-step__desc">選んだ内容はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>何に印刷しますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="mode" value="label" checked>
+              <span class="md-choice__text"><span class="md-choice__label">ラベル用紙（A4・横書き）</span><span class="md-choice__desc">宛名シールにまとめて印刷します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="mode" value="envelope">
+              <span class="md-choice__text"><span class="md-choice__label">封筒（長形3号・縦書き）</span><span class="md-choice__desc">A4の三つ折りが入る、いちばんよく使う封筒（12×23.5cm）です</span></span></label>
+          </div>
+        </fieldset>
+
+        <div id="label-opts" class="md-stack">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="preset">ラベル用紙の種類</label>
+            <p id="preset-help" class="md-field__help form-hint">用紙の袋に書いてある「面数」と「ラベル1枚の大きさ」で選んでください。合うものがなければ「自分で決める」を選び、用紙の寸法を入れます。</p>
+            <select id="preset" class="md-select form-select" aria-describedby="preset-help"></select>
+          </div>
+          <div id="custom-wrap" class="md-hidden md-stack" data-gap="8">
+            <p class="md-field__help form-hint">用紙の袋や説明書に書いてある寸法を、mm（ミリ）で入れてください。余白は用紙の端から最初のラベルまで、間隔はラベルとラベルのすき間です。</p>
+            <div class="ad-custom" id="custom"></div>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="start-label">どのラベルから印刷しますか？</span>
+            <p id="start-help" class="md-field__help form-hint">使いかけの用紙に印刷するときは、まだ残っている最初のラベルを押してください。それより前のラベルは空けて印刷します（2枚目からは1番目から使います）。</p>
+            <div id="start-grid" class="ad-start" role="group" aria-labelledby="start-label" aria-describedby="start-help"></div>
+            <p id="start-text" class="md-file-status" aria-live="polite"></p>
+          </div>
+        </div>
+
+        <div id="env-opts" class="md-hidden ad-opts">
+          <label class="md-inline-check"><input id="kanji" class="md-checkbox form-check-input" type="checkbox" checked>
+            <span class="ad-check-text"><span>住所の数字を漢数字にする（おすすめ）</span><small>例）見本町1-2-3 → 見本町一―二―三。ハイフンは縦の棒「―」になります</small></span></label>
+          <p class="md-field__help form-hint">郵便番号は封筒の右上の赤い枠の位置に入れます。枠の位置は封筒によって少し違うので、試し刷りで確かめてください。</p>
+        </div>
+
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（位置のずらし・文字の大きさ・書体）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="md-field">
+              <span class="md-field__label form-label">印刷の位置のずらし</span>
+              <p class="md-field__help form-hint">試し刷りで全体が少しずれていたときに使います。プリンターごとのくせを直すためのものです。</p>
+              <div class="ad-offsets">
+                <div class="md-field">
+                  <label class="md-field__label form-label" for="dy">上下（下へ ＋）</label>
+                  <div class="md-input-suffix"><input id="dy" class="md-input md-input--short form-control" type="number" step="0.5" min="-20" max="20" inputmode="decimal" value="0"><span>mm</span></div>
+                </div>
+                <div class="md-field">
+                  <label class="md-field__label form-label" for="dx">左右（右へ ＋）</label>
+                  <div class="md-input-suffix"><input id="dx" class="md-input md-input--short form-control" type="number" step="0.5" min="-20" max="20" inputmode="decimal" value="0"><span>mm</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="ad-opts">
+              <label class="md-inline-check"><input id="autofit" class="md-checkbox form-check-input" type="checkbox" checked>
+                <span class="ad-check-text"><span>長い名前や住所は、文字を小さくして収める（おすすめ）</span><small>外すと、入りきらない文字は折り返し、それでも入らない分は切れます</small></span></label>
+              <label class="md-inline-check" id="zipmark-wrap"><input id="zipmark" class="md-checkbox form-check-input" type="checkbox" checked>
+                <span class="ad-check-text"><span>郵便番号の前に「〒」を付ける</span><small>ラベル用紙のときだけ使います</small></span></label>
+              <label class="md-inline-check"><input id="frame" class="md-checkbox form-check-input" type="checkbox">
+                <span class="ad-check-text"><span>ラベルの枠・郵便番号の枠も印刷する（試し刷り用）</span><small>普通の紙に試し刷りして、用紙と重ねて比べるときに使います。本番では外してください</small></span></label>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="font">書体</label>
+              <select id="font" class="md-select form-select">
+                <option value="auto" selected>おまかせ（ラベルはゴシック・封筒は明朝）</option>
+                <option value="gothic">ゴシック体</option>
+                <option value="mincho">明朝体</option>
+              </select>
+            </div>
+          </div>
+        </details>
+
+        <div class="md-cta">
+          <p class="md-cta__text">選んだ宛先を用紙に並べて、印刷の見た目を作ります。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>印刷の見た目を作る</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="step-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">見た目を確かめて印刷する</h2>
+          <p class="md-step__desc">点線の枠は画面の目安で、印刷はされません。手順2〜4を変えると、ここもすぐに作り直します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-print"><span class="md-icon" data-icon="help" aria-hidden="true"></span>印刷のコツ</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="md-stack" data-gap="8">
+          <div class="ad-preview-bar">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="pick">表示する用紙</label>
+              <select id="pick" class="md-select form-select"></select>
+            </div>
+            <button id="prev" class="md-btn btn" data-variant="outlined" type="button" aria-label="前の用紙"><span class="md-icon" data-icon="arrow_back" aria-hidden="true"></span>前へ</button>
+            <button id="next" class="md-btn btn" data-variant="outlined" type="button" aria-label="次の用紙">次へ<span class="md-icon" data-icon="arrow_forward" aria-hidden="true"></span></button>
+          </div>
+          <div id="preview" class="ad-preview" role="region" aria-label="印刷の見た目"><div class="ad-preview__inner" id="preview-inner"></div></div>
+        </div>
+        <div class="md-cta">
+          <p class="md-cta__text" id="print-text">印刷の画面が開きます。倍率は100%（実際のサイズ）にして、「ヘッダーとフッター」は外してください。</p>
+          <button id="print" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>印刷する</button>
+        </div>
+        <p class="md-field__help form-hint">はじめての用紙では、まず普通の紙に印刷して、本物の用紙と重ねて位置を確かめてください。印刷の画面で送信先を「PDFに保存」にすると、PDFファイルにもできます。</p>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>手順1で <code>samples/atena/宛名リスト.csv</code> を選んでください（実在しない会社・人の住所録です）。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-print" class="md-modal" aria-labelledby="dlg-print-title">
+    <div class="md-modal__head"><h2 id="dlg-print-title" class="md-modal__title">きれいに印刷するコツ</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <div>
+        <p class="md-subhead">印刷の画面で必ず確かめること</p>
+        <ul>
+          <li>「倍率」は <strong>100%</strong>（「実際のサイズ」）にします。「用紙に合わせる」になっていると、位置がずれます。</li>
+          <li>「詳細設定」の「<strong>ヘッダーとフッター</strong>」のチェックを外します（日付やページ番号が印刷されないように）。</li>
+          <li>用紙サイズは、ラベルなら「A4」、封筒なら「長形3号」を選びます。余白は「なし」または「デフォルト」のままにします。</li>
+        </ul>
+      </div>
+      <div>
+        <p class="md-subhead">はじめは普通の紙で試し刷り</p>
+        <p>ラベル用紙は高価なので、最初は普通のA4の紙に印刷し、ラベル用紙と重ねて明かりに透かして、文字がラベルの中に入っているか確かめてください。手順4の「詳しい設定」で「ラベルの枠も印刷する」にすると、枠の線も印刷されて比べやすくなります。ずれていたら「印刷の位置のずらし」で直します。</p>
+        <p style="margin-top:8px">封筒は、プリンターによって差し込む向き（表・裏、上・下）が違います。プリンターの説明書で確かめ、まず1通だけ試してください。</p>
+      </div>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<div id="print-area" class="ad-print-area" aria-hidden="true"></div>
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/atena.js"></script>
+<script src="../assets/js/ui/atena.js"></script>
+</body>
+</html>

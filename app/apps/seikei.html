@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>表記ゆれの一括整形｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* このページだけの部品（色は md.css のトークンだけを使う） */
+  .seikei-rules { display: flex; flex-direction: column; gap: 12px; }
+  .seikei-rule { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 12px 20px; padding: 16px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); }
+  .seikei-rule[data-active] { border-color: var(--md-primary); box-shadow: inset 3px 0 0 var(--md-primary); }
+  .seikei-rule__name { font-weight: 700; font-size: 17px; line-height: 1.5; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; word-break: break-all; }
+  .seikei-rule__name .md-chip { height: 24px; padding: 0 8px; font-size: 13px; }
+  .seikei-rule__samples { margin-top: 6px; font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); word-break: break-all; }
+  .seikei-rule__samples code { margin-right: 4px; display: inline-block; margin-top: 4px; white-space: pre-wrap; }
+  .seikei-rule__controls { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .seikei-rule__desc { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .seikei-toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .seikei-checks { display: flex; flex-direction: column; gap: 12px; }
+  .seikei-checks .md-inline-check { align-items: flex-start; }
+  .seikei-checks .md-checkbox { margin-top: 2px; }
+  .seikei-check__desc { display: block; font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  /* 読み上げ用の隠し文字が表の外にはみ出さないように */
+  #preview .md-table td { position: relative; }
+  .md-table td.seikei-changed { background: var(--md-success-container); color: var(--md-on-success-container); }
+  .md-table td.seikei-changed del { display: block; color: var(--md-on-surface-variant); font-size: 13px; text-decoration-thickness: 1px; }
+  .md-table td.seikei-changed strong { display: block; font-weight: 700; }
+  .md-table td.seikei-bad { background: var(--md-error-container); color: var(--md-on-error-container); }
+  .md-table td.seikei-warn { background: var(--md-warning-container); color: var(--md-on-warning-container); }
+  .md-table td .seikei-empty { font-style: normal; font-size: 13px; opacity: .8; }
+  .md-table td.seikei-line { color: var(--md-on-surface-variant); font-family: var(--md-font-num); }
+  .seikei-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px; color: var(--md-on-surface-variant); }
+  .seikei-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .seikei-swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--md-outline-variant); }
+  .seikei-filter .md-choice { padding: 10px 14px; }
+  @media (max-width: 40rem) {
+    .seikei-rule { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+  }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="auto_fix" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">表記ゆれの一括整形</h1>
+      <p class="md-lead text-secondary">日付・電話番号・郵便番号・社名などのばらばらな書き方を、列ごとにまとめてそろえます。ほかの列はそのまま残し、列の並びも変えません。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">ファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。1行目が見出しのCSVです。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">整えたいCSV <span class="md-badge badge" data-kind="required">必須</span></span>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">整えたいCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-rules" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列ごとの整形ルールを選ぶ</h2>
+          <p class="md-step__desc">見出しと中身から、合いそうなルールを選んであります（<span class="md-chip badge" data-tone="info" style="height:24px;padding:0 8px;font-size:13px">おすすめ</span> の印）。違っていれば直してください。「そのまま」の列は変えません。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-kinds"><span class="md-icon" data-icon="help" aria-hidden="true"></span>そろえられるもの</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="rules-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の一覧が出ます。</p>
+        <div id="rules-wrap" class="md-hidden">
+          <div class="seikei-toolbar">
+            <p id="rules-note" class="md-body-s"></p>
+            <button id="reset-rules" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>おすすめに戻す</button>
+          </div>
+          <div id="rules" class="seikei-rules"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">整形する</h2>
+          <p class="md-step__desc">ふだんはそのままボタンを押すだけで大丈夫です。元のファイルは書き換えません。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（空白・年のない日付・Excelの日付の数字）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="seikei-checks">
+              <label class="md-inline-check"><input id="opt-tidy" class="md-checkbox form-check-input" type="checkbox" checked>
+                <span>前後の空白を取り、続いた空白を1つにする（おすすめ）
+                  <span class="seikei-check__desc">「そのまま」「全角・半角」「カタカナ・ひらがな」の列にもかけます。ほかのルールは、それぞれ空白を整えます。</span></span></label>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="opt-year">年が書かれていない日付（1/5 など）の年</label>
+              <p id="opt-year-help" class="md-field__help form-hint">「1/5」「1月5日」のように年がない日付は、この年として変換します。<span id="opt-year-note"></span></p>
+              <div class="md-input-suffix">
+                <input id="opt-year" class="md-input md-input--short form-control" type="number" min="1900" max="2100" step="1" inputmode="numeric" aria-describedby="opt-year-help">
+                <span>年</span>
+              </div>
+            </div>
+            <div class="seikei-checks">
+              <label class="md-inline-check"><input id="opt-serial" class="md-checkbox form-check-input" type="checkbox">
+                <span>5けたの数字（46027 など）を Excel の日付として読む
+                  <span class="seikei-check__desc">Excel で日付の列の表示形式が「標準」や「数値」になっていると、日付が 46027（= 2026/01/05）のような数字で保存されます。日付の列にこうした数字があるときだけオンにしてください。ふだんはオフです（オフのときは、変換できなかった値として一覧に出します）。</span></span></label>
+            </div>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">手順2で選んだルールで、列の値をまとめてそろえます。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="auto_fix" aria-hidden="true"></span>整形する</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">どのセルがどう変わったかを確かめてください。気になるところがあれば手順2のルールを直して、もう一度「整形する」を押します。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">列ごとの件数</h3>
+          <div id="per-column"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">変わったところ</h3>
+          <fieldset class="md-fieldset seikei-filter">
+            <legend class="md-visually-hidden">表に出す行</legend>
+            <div class="md-choices" data-layout="row">
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="view" value="changed" checked><span class="md-choice__text"><span class="md-choice__label" id="view-changed-label">変わった行だけ</span></span></label>
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="view" value="all"><span class="md-choice__text"><span class="md-choice__label" id="view-all-label">すべての行</span></span></label>
+            </div>
+          </fieldset>
+          <p class="seikei-legend" aria-hidden="true">
+            <span><span class="seikei-swatch" style="background:var(--md-success-container)"></span>変わったセル（上が元の値、太字が新しい値）</span>
+            <span><span class="seikei-swatch" style="background:var(--md-error-container)"></span>変換できなかったセル</span>
+            <span><span class="seikei-swatch" style="background:var(--md-warning-container)"></span>確かめてほしいセル</span>
+          </p>
+          <div id="preview"></div>
+        </div>
+        <div class="md-stack" data-gap="8" id="problems-wrap">
+          <h3 class="md-subhead">変換できなかった・確かめてほしいセル</h3>
+          <p class="md-body-s">変換できなかったセルは、保存するファイルでも元の値のままです。元のファイルを直すか、そのまま使うかを決めてください。</p>
+          <div id="problems"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">整えたファイルを保存する</h2>
+          <p class="md-step__desc">列の並びは元のファイルと同じです。保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span><span id="save-label">整形済み.csv を保存</span></button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で、<code>samples/seikei/顧客データ.csv</code> を選んでください。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-kinds" class="md-modal" aria-labelledby="dlg-kinds-title">
+    <div class="md-modal__head"><h2 id="dlg-kinds-title" class="md-modal__title">そろえられるもの（例）</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><strong>日付</strong> 2026/1/5・R8.1.5・20260105・令和8年1月5日 → 2026/01/05 など</li>
+        <li><strong>電話番号</strong> 0312345678・(03)1234-5678・+81-3-1234-5678 → 03-1234-5678</li>
+        <li><strong>郵便番号</strong> 〒1000001・１００－０００１ → 100-0001</li>
+        <li><strong>社名</strong> (株)・㈱・（株） → 株式会社（前株・後株の位置はそのまま）</li>
+        <li><strong>数値</strong> ¥1,000・1,000円・１０００ → 1000</li>
+        <li><strong>そのほか</strong> 全角・半角、カタカナ・ひらがな、空白、メールアドレス</li>
+      </ul>
+      <p>そろえられなかった値（ありえない日付、けた数の合わない電話番号など）は、<strong>元の値のまま残して</strong>一覧に出します。勝手に推測して書き換えることはありません。</p>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/seikei.js"></script>
+<script src="../assets/js/ui/seikei.js"></script>
+</body>
+</html>

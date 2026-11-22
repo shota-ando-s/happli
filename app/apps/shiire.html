@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>仕入請求の照合｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* この画面だけで使う部品（色は md.css のトークンから） */
+  .si-files { grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)) !important; }
+  .si-clear { margin-top: 4px; }
+  .si-terms { margin: 8px 0 0; padding-left: 1.25em; }
+  .si-terms li + li { margin-top: 6px; }
+  .si-nums { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); }
+  .si-kinds td, .si-kinds th { vertical-align: middle; }
+  .si-kinds .md-select { min-width: 9rem; }
+  .si-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+  .si-toolbar .md-field { flex: 1 1 12rem; min-width: 0; }
+  .si-legend { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .si-holidays { min-height: 10rem; font-family: var(--md-font-num); }
+  .si-section + .si-section { margin-top: 32px; }
+  .si-section > h3 { display: flex; align-items: center; gap: 8px; }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="fact_check" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">仕入請求の照合</h1>
+      <p class="md-lead text-secondary">仕入先から届いた請求を、発注した内容・届いた数と突き合わせて、数量や単価の違い、届いていない分の請求、二重請求の疑いを見つけます。請求書ごとの消費税と合計も確かめ、支払日の一覧を作ります。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-files" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">ファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-files"><span class="md-icon" data-icon="help" aria-hidden="true"></span>ほかのツールのファイル</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid si-files">
+          <div class="md-field">
+            <span class="md-field__label form-label" id="po-file-label">発注明細 <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="po-file-help" class="md-field__help form-hint">仕入先・商品コードか品名・数量の列が必要です。発注番号・単価もあると、より正確に確かめられます。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">発注明細のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="po-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="po-file-label" aria-describedby="po-file-help po-file-status">
+            </label>
+            <p id="po-file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="rc-file-label">納品・入庫の記録 <span class="md-badge badge" data-kind="optional">任意（おすすめ）</span></span>
+            <p id="rc-file-help" class="md-field__help form-hint">商品コードか品名・数量の一覧。受払の記録（区分の列あり）でもかまいません。ないときは発注した数と比べます。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">納品の記録のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="rc-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="rc-file-label" aria-describedby="rc-file-help rc-file-status">
+            </label>
+            <p id="rc-file-status" class="md-file-status" aria-live="polite"></p>
+            <button id="rc-clear" class="md-btn md-hidden si-clear btn" data-variant="text" data-size="s" type="button"><span class="md-icon" data-icon="delete" data-size="20" aria-hidden="true"></span>納品の記録を使わない</button>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="iv-file-label">仕入先からの請求明細 <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="iv-file-help" class="md-field__help form-hint">仕入先・商品コードか品名・数量・単価か金額の列が必要です。請求書番号・請求日・消費税・合計もあると確かめられます。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">請求明細のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="iv-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="iv-file-label" aria-describedby="iv-file-help iv-file-status">
+            </label>
+            <p id="iv-file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="sp-file-label">仕入先マスタ <span class="md-badge badge" data-kind="optional">任意</span></span>
+            <p id="sp-file-help" class="md-field__help form-hint">仕入先ごとの支払条件（「月末締め翌月末払い」など）と振込口座。ない仕入先は手順3の既定の支払条件を使います。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">仕入先マスタのCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="sp-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="sp-file-label" aria-describedby="sp-file-help sp-file-status">
+            </label>
+            <p id="sp-file-status" class="md-file-status" aria-live="polite"></p>
+            <button id="sp-clear" class="md-btn md-hidden si-clear btn" data-variant="text" data-size="s" type="button"><span class="md-icon" data-icon="delete" data-size="20" aria-hidden="true"></span>仕入先マスタを使わない</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-po-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>発注明細</h3>
+          <div class="md-grid" data-min="12" id="map-po"></div>
+        </div>
+        <div id="map-rc-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>納品・入庫の記録</h3>
+          <p class="md-field__help form-hint">仕入先の列がないときは、発注番号と商品だけで結びつけます。</p>
+          <div class="md-grid" data-min="12" id="map-rc"></div>
+          <div id="kinds-wrap" class="md-hidden md-stack" data-gap="8">
+            <p class="md-field__help form-hint">区分のうち「入庫（数える）」は納品として足し、「仕入先への返品」は引きます。「使わない」の行は数えません。</p>
+            <div id="kinds"></div>
+          </div>
+        </div>
+        <div id="map-iv-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>請求明細</h3>
+          <p class="md-field__help form-hint">請求書番号がないときは、仕入先と請求日ごとに1枚の請求書とみなします。</p>
+          <div class="md-grid" data-min="12" id="map-iv"></div>
+        </div>
+        <div id="map-sp-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>仕入先マスタ</h3>
+          <p class="md-field__help form-hint">支払条件は「支払条件」の列（「20日締め翌月10日払い」など）か、「締め日・支払月・支払日」の3つの列のどちらかで読みます。振込口座は、銀行番号・支店番号・口座番号・受取人名カナがそろっている仕入先だけ振込一覧に入ります。</p>
+          <div class="md-grid" data-min="12" id="map-sp"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">照合の決まりを確かめて照合する</h2>
+          <p class="md-step__desc">ふだんはそのままボタンを押すだけで大丈夫です。設定はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-match"><span class="md-icon" data-icon="help" aria-hidden="true"></span>突き合わせ方</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="si-nums">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="tol-yen">許容差（円）</label>
+            <p id="tol-yen-help" class="md-field__help form-hint">金額の差がこの円以内なら同じとみなします。端数の違いを見逃すため、はじめは10円です。</p>
+            <div class="md-input-suffix"><input id="tol-yen" class="md-input md-input--short form-control" type="number" min="0" step="1" inputmode="numeric" value="10" aria-describedby="tol-yen-help"><span>円</span></div>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="tol-pct">許容差（%）</label>
+            <p id="tol-pct-help" class="md-field__help form-hint">相手の金額のこの割合以内の差も同じとみなします（円と%の大きいほう）。はじめは0%です。</p>
+            <div class="md-input-suffix"><input id="tol-pct" class="md-input md-input--short form-control" type="number" min="0" max="100" step="0.1" inputmode="decimal" value="0" aria-describedby="tol-pct-help"><span>%</span></div>
+          </div>
+        </div>
+        <fieldset class="md-fieldset">
+          <legend>既定の支払条件（仕入先マスタにない仕入先に使います）</legend>
+          <div class="si-nums">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="term-close">締め日</label>
+              <select id="term-close" class="md-select form-select"></select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="term-offset">支払月</label>
+              <select id="term-offset" class="md-select form-select">
+                <option value="0">当月</option>
+                <option value="1" selected>翌月</option>
+                <option value="2">翌々月</option>
+                <option value="3">3か月後</option>
+              </select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="term-day">支払日</label>
+              <select id="term-day" class="md-select form-select"></select>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset class="md-fieldset">
+          <legend>支払日が土日・休みの日に当たったとき</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="shift" value="prev" checked>
+              <span class="md-choice__text"><span class="md-choice__label">前の営業日に払う</span><span class="md-choice__desc">支払では多いやり方です</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="shift" value="next">
+              <span class="md-choice__text"><span class="md-choice__label">次の営業日に払う</span><span class="md-choice__desc">契約で決まっているときに</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="shift" value="none">
+              <span class="md-choice__text"><span class="md-choice__label">ずらさない</span><span class="md-choice__desc">決まった日のまま一覧にします</span></span></label>
+          </div>
+        </fieldset>
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（税込・税抜、端数、請求書の消費税の列、休みの日）</span></summary>
+          <div class="md-details__body card-body">
+            <fieldset class="md-fieldset">
+              <legend>単価と金額は</legend>
+              <div class="md-choices" data-layout="grid">
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="priceMode" value="excl" checked>
+                  <span class="md-choice__text"><span class="md-choice__label">税抜</span><span class="md-choice__desc">消費税は合計に足して計算します</span></span></label>
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="priceMode" value="incl">
+                  <span class="md-choice__text"><span class="md-choice__label">税込</span><span class="md-choice__desc">合計の中に含まれる消費税を計算します</span></span></label>
+              </div>
+            </fieldset>
+            <div class="si-nums">
+              <div class="md-field">
+                <label class="md-field__label form-label" for="rounding">1円未満の端数</label>
+                <p id="rounding-help" class="md-field__help form-hint">消費税と「数量×単価」の端数の扱い。</p>
+                <select id="rounding" class="md-select form-select" aria-describedby="rounding-help">
+                  <option value="floor" selected>切り捨て</option>
+                  <option value="round">四捨五入</option>
+                  <option value="ceil">切り上げ</option>
+                </select>
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="tax-col">請求明細の「消費税」の列は</label>
+                <p id="tax-col-help" class="md-field__help form-hint">「自動」は、請求書の中で同じ値が並んでいれば請求書の消費税、違えば明細ごとの消費税の合計とみなします。</p>
+                <select id="tax-col" class="md-select form-select" aria-describedby="tax-col-help">
+                  <option value="auto" selected>自動で見分ける</option>
+                  <option value="invoice">請求書の消費税（どの行も同じ値）</option>
+                  <option value="line">明細ごとの消費税（合計する）</option>
+                </select>
+              </div>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="holidays">休みの日（土日のほか）</label>
+              <p id="holidays-help" class="md-field__help form-hint">1行に1日。「2026/11/23 勤労感謝の日」のように、日付のあとに名前を書けます。はじめは祝日と銀行の休み（12/31〜1/3）が入っています。</p>
+              <textarea id="holidays" class="md-textarea si-holidays form-control" aria-describedby="holidays-help"></textarea>
+            </div>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">発注・納品・請求を突き合わせ、請求書ごとの消費税と合計を確かめて、支払日を出します。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>照合する</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc" id="result-desc"></p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="si-section">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="compare" data-size="20" aria-hidden="true"></span>明細の照合</h3>
+          <div class="si-toolbar">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-status">判定で絞り込む</label>
+              <select id="f-status" class="md-select form-select"></select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-supplier">仕入先で絞り込む</label>
+              <select id="f-supplier" class="md-select form-select"></select>
+            </div>
+          </div>
+          <div id="table"></div>
+        </div>
+        <div class="si-section">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="receipt" data-size="20" aria-hidden="true"></span>請求書ごとの合計と消費税</h3>
+          <div id="inv-table"></div>
+        </div>
+        <div class="si-section">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="event" data-size="20" aria-hidden="true"></span>支払予定</h3>
+          <p class="si-legend">同じ仕入先で支払日が同じ請求書は、1回の支払にまとめています。「照合」が要確認の支払は、仕入先に確かめてから払ってください。</p>
+          <div id="pay-table"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-result" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>照合結果.csv を保存</button>
+          <button id="save-invoice" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>請求書ごとの確認.csv を保存</button>
+          <button id="save-supplier" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>仕入先別の要約.csv を保存</button>
+          <button id="save-pay" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>支払予定.csv を保存</button>
+        </div>
+        <div class="si-toolbar">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="tr-date">振込一覧を作る支払日</label>
+            <p id="tr-date-help" class="md-field__help form-hint">仕入先マスタに振込口座がある仕入先だけが入ります。</p>
+            <select id="tr-date" class="md-select form-select" aria-describedby="tr-date-help"></select>
+          </div>
+          <button id="save-transfer" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>振込一覧.csv を保存</button>
+        </div>
+        <ul class="si-terms si-legend">
+          <li><strong>照合結果.csv</strong>: 発注の商品ごと（と、発注にない請求・納品）の判定と理由、数量・金額の差、元のファイルの行番号です。</li>
+          <li><strong>請求書ごとの確認.csv</strong>: 請求書ごとの税率別の金額、計算した消費税・合計と、請求書に書いてある金額です。</li>
+          <li><strong>支払予定.csv</strong>: 「<a href="shikin.html">資金繰り表</a>」でそのまま支払予定として読めます。</li>
+          <li><strong>振込一覧.csv</strong>: 「<a href="zengin.html">全銀データ作成</a>」でそのまま読めます。</li>
+        </ul>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で、<code>samples/shiire/</code> の <code>発注明細.csv</code>・<code>納品記録.csv</code>・<code>請求明細.csv</code>・<code>仕入先マスタ.csv</code> を選んでください。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-files" class="md-modal" aria-labelledby="dlg-files-title">
+    <div class="md-modal__head"><h2 id="dlg-files-title" class="md-modal__title">ほかのツールのファイルを使う</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>「在庫の発注点チェック」の発注明細.csv や「見積書・発注書・納品書・領収書の作成」で使った発注書の明細は、そのまま発注明細として使えます。「在庫の受払集計」の受払の記録は、入荷の行だけを納品として数えます。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-match" class="md-modal" aria-labelledby="dlg-match-title">
+    <div class="md-modal__head"><h2 id="dlg-match-title" class="md-modal__title">突き合わせ方</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>「仕入先 ＋ 発注番号 ＋ 商品」で結びつけます。発注番号は、両方のファイルで列を選んだときだけ使います。</li>
+        <li>商品は商品コードで結び、商品コードがなければ品名で結びます。全角・半角、ひらがな・カタカナ、空白、「株式会社」「(株)」の違いは気にしません。</li>
+        <li>発注番号のない請求が、同じ商品の複数の発注に当たるときは、古い発注から順に割り当てます。</li>
+        <li>請求書ごとに、税率ごとの合計から消費税を1回だけ計算し（1円未満は切り捨て）、請求書に書いてある消費税・合計と比べます。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：判定の種類</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="success">一致</span> 数量も金額も、発注・納品と合っている</li>
+        <li><span class="md-chip badge" data-tone="error">数量違い</span> 請求の数が、届いた数（納品の記録がなければ発注した数）と違う</li>
+        <li><span class="md-chip badge" data-tone="error">単価違い</span> 請求の金額が「請求の数 × 発注の単価」と、許容差より大きく違う</li>
+        <li><span class="md-chip badge" data-tone="error">未納品なのに請求</span> 納品の記録がないのに請求がある</li>
+        <li><span class="md-chip badge" data-tone="error">発注にない請求</span> 発注明細に見つからない請求（送料などの追加も含む）</li>
+        <li><span class="md-chip badge" data-tone="error">二重請求の疑い</span> 同じ商品・数量・金額の請求がもう一度あり、足すと届いた数を超える</li>
+        <li><span class="md-chip badge" data-tone="warning">納品済み未請求</span> 届いているのに、まだ請求がない（請求漏れや、来月の請求）</li>
+        <li><span class="md-chip badge" data-tone="warning">発注にない納品</span> 発注明細に見つからない納品</li>
+        <li><span class="md-chip badge">請求なし（納品待ち）</span> 発注したが、まだ届いていない・請求がない</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/zaiko.js"></script>
+<script src="../assets/js/apps/seikyusho.js"></script>
+<script src="../assets/js/apps/kigen.js"></script>
+<script src="../assets/js/apps/shikin.js"></script>
+<script src="../assets/js/apps/shiire.js"></script>
+<script src="../assets/js/ui/shiire.js"></script>
+</body>
+</html>

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>商品ラベル・バーコード印刷｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+/* ---- このページだけの部品 ---- */
+.bc-opts { display: flex; flex-direction: column; gap: 4px; }
+.bc-opts .md-inline-check { min-height: 48px; align-items: flex-start; padding-top: 12px; }
+.bc-opts .md-inline-check .md-checkbox { margin-top: 2px; }
+.bc-check-text { display: flex; flex-direction: column; }
+.bc-check-text small { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+.bc-show { display: grid; gap: 0 16px; grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr)); }
+.bc-offsets { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr)); }
+.bc-custom { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(11rem, 100%), 1fr)); }
+.bc-list .md-table td.is-wrap { min-width: 12rem; }
+#items .md-table-wrap { max-height: 30rem; overflow: auto; }
+#items .md-table thead th { position: sticky; top: 0; z-index: 2; background: var(--md-surface-container); }
+
+/* 開始位置の選択 */
+.bc-start { display: grid; gap: 4px; max-width: 20rem; padding: 8px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-s); background: var(--md-surface-container-low); }
+.bc-start__cell { min-height: 44px; min-width: 0; border: 1px solid var(--md-outline); border-radius: var(--md-shape-xs); background: var(--md-surface-container-lowest); color: var(--md-on-surface); font: inherit; font-size: 15px; font-family: var(--md-font-num); cursor: pointer; padding: 0; }
+.bc-start__cell[data-used] { background: var(--md-surface-container-highest); color: var(--md-on-surface-variant); text-decoration: line-through; border-style: dashed; }
+.bc-start__cell[aria-pressed="true"] { background: var(--md-primary); color: var(--md-on-primary); border-color: var(--md-primary); font-weight: 700; text-decoration: none; }
+.bc-start__cell:hover:not([aria-pressed="true"]) { border-color: var(--md-primary); }
+
+/* 見た目の確認 */
+.bc-preview-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.bc-preview-bar .md-field { flex: 1 1 16rem; }
+.bc-preview-bar .md-btn { flex: none; }
+.bc-preview { position: relative; overflow: hidden; border-radius: var(--md-shape-m); background: var(--md-surface-container-high); padding: 16px; }
+.bc-preview__inner { transform-origin: top left; margin: 0 auto; }
+.bc-preview .bc-sheet { box-shadow: var(--md-elev-2); }
+.bc-print-area { position: fixed; left: 0; top: 0; width: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
+
+/* ---- 紙（画面でも印刷でも白地に黒） ---- */
+.bc-sheet { position: relative; overflow: hidden; background: #fff; color: #000; flex: none; font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "YuGothic", "Meiryo", "Noto Sans JP", sans-serif; }
+.bc-sheet * { color: #000; }
+.bc-sheet p { margin: 0; }
+.bc-guide { position: absolute; border: 0.2mm dashed #9aa0a6; pointer-events: none; }
+.bc-used { position: absolute; display: grid; place-items: center; background: repeating-linear-gradient(45deg, #f1f3f4, #f1f3f4 2mm, #e3e5e8 2mm, #e3e5e8 4mm); font-size: 3.5mm; }
+.bc-used span { color: #5f6368; background: #fff; padding: 0 2mm; border-radius: 1mm; }
+.bc-label { position: absolute; overflow: hidden; }
+.bc-text { position: absolute; display: flex; flex-direction: column; overflow: hidden; }
+.bc-label[data-kind="qr"] .bc-text { justify-content: center; }
+.bc-sym { position: absolute; line-height: 0; }
+.bc-sym svg { display: block; }
+.fit { white-space: nowrap; overflow: hidden; line-height: 1.3; flex: none; }
+.fit > span { display: inline-block; white-space: nowrap; }
+.fit.is-cut > span { display: block; overflow: hidden; text-overflow: ellipsis; }
+.bc-l--name { font-weight: 700; }
+.bc-l--price, .bc-m-price { font-weight: 700; }
+.bc-l--meta > span { display: flex; gap: .8em; justify-content: space-between; align-items: baseline; width: max-content; min-width: 100%; }
+.bc-m-code, .bc-l--code { font-family: "Roboto", "Helvetica Neue", Arial, sans-serif; letter-spacing: .02em; }
+.bc-m-code { font-size: .85em; }
+
+@media print {
+  html, body { background: #fff !important; color: #000 !important; }
+  body { display: block; min-height: 0; margin: 0; }
+  body > *:not(#print-area) { display: none !important; }
+  #print-area { position: static; width: auto; height: auto; overflow: visible; visibility: visible; }
+  .bc-sheet { box-shadow: none; break-after: page; page-break-after: always; }
+  .bc-sheet:last-child { break-after: auto; page-break-after: auto; }
+  .bc-guide, .bc-used { display: none; }
+  #print-area[data-frame] .bc-guide { display: block; }
+}
+</style>
+<style id="page-rule">@page { size: A4 portrait; margin: 0; }</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="qr_code" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">商品ラベル・バーコード印刷</h1>
+      <p class="md-lead text-secondary">商品一覧のCSVから、JANコード・Code128・QRコードの入った商品ラベルを作り、A4のラベル用紙にまとめて印刷します。商品ごとの枚数も指定できます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">商品一覧のファイルを選ぶ</h2>
+          <p class="md-step__desc">1行に1商品ずつ並んだCSVです。ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">商品一覧 <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">商品コードの列が必要です。商品名・価格・JANコード・枚数・規格などの列はあれば使います。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">商品一覧のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-wrap" class="md-hidden md-stack">
+          <p class="md-field__help form-hint">「追加の行1・2」には、規格・内容量・産地など、ラベルに小さく入れたい列を選べます。</p>
+          <div class="md-grid" data-min="14" id="map"></div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="def-count">1商品あたりの枚数</label>
+            <p id="def-count-help" class="md-field__help form-hint">「枚数」の列がないとき、または枚数が空の行は、この枚数だけ印刷します。</p>
+            <div class="md-input-suffix"><input id="def-count" class="md-input md-input--short form-control" type="number" min="0" max="999" step="1" inputmode="numeric" value="1" aria-describedby="def-count-help"><span>枚</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-code" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">バーコードの種類を選ぶ</h2>
+          <p class="md-step__desc">選ぶと、下の一覧ですぐに全部の行を確かめます。作れない行は印刷しません。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-kinds"><span class="md-icon" data-icon="help" aria-hidden="true"></span>バーコードの種類</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>どのバーコードにしますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="type" value="jan" checked>
+              <span class="md-choice__text"><span class="md-choice__label">JANコード</span><span class="md-choice__desc">お店のレジで読む13けた（8けた）の数字</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="type" value="code128">
+              <span class="md-choice__text"><span class="md-choice__label">Code128</span><span class="md-choice__desc">英字・ハイフン入りの社内コード向け</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="type" value="qr">
+              <span class="md-choice__text"><span class="md-choice__label">QRコード</span><span class="md-choice__desc">スマートフォンでも読めます。日本語も入ります</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-field">
+          <label class="md-field__label form-label" for="source">バーコードにする値</label>
+          <p id="source-help" class="md-field__help form-hint">どの列の値をバーコードにするかを選びます。</p>
+          <select id="source" class="md-select form-select" aria-describedby="source-help"></select>
+        </div>
+        <div id="template-wrap" class="md-field md-hidden">
+          <label class="md-field__label form-label" for="template">QRコードの中身</label>
+          <p id="template-help" class="md-field__help form-hint">{{商品コード}} のように {{ }} で囲んだところに、その行の値が入ります。使える名前: 商品コード・商品名・価格・JANコード・枚数・追加の行1・追加の行2、またはファイルの見出し。</p>
+          <input id="template" class="md-input form-control" type="text" value="{{商品コード}} {{商品名}}" aria-describedby="template-help">
+        </div>
+        <div id="jan-opts" class="bc-opts">
+          <label class="md-inline-check"><input id="addcheck" class="md-checkbox form-check-input" type="checkbox">
+            <span class="bc-check-text"><span>12けたならチェックデジットを付ける</span><small>最後の1けた（確認用の数字）がない12けた（8けた用は7けた）の番号に、計算して付けます。13けたの番号が合わないときは直さずに知らせます</small></span></label>
+        </div>
+        <div id="ecc-wrap" class="md-field md-hidden">
+          <label class="md-field__label form-label" for="ecc">読み取りの強さ（誤り訂正）</label>
+          <p id="ecc-help" class="md-field__help form-hint">強くするほど、汚れや欠けがあっても読めますが、同じ大きさならマスが細かくなります。ふつうは「標準」で十分です。</p>
+          <select id="ecc" class="md-select form-select" aria-describedby="ecc-help">
+            <option value="L">弱い（L・約7%まで）</option>
+            <option value="M" selected>標準（M・約15%まで）</option>
+            <option value="Q">やや強い（Q・約25%まで）</option>
+            <option value="H">強い（H・約30%まで）</option>
+          </select>
+        </div>
+        <div id="check-message" aria-live="polite"></div>
+        <div id="items" class="bc-list"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-paper" class="md-step card" data-state="waiting" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">ラベルの中身と用紙を選ぶ</h2>
+          <p class="md-step__desc">選んだ内容はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-size"><span class="md-icon" data-icon="help" aria-hidden="true"></span>読み取れる大きさ</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ラベルに入れるもの</legend>
+          <div class="bc-show bc-opts">
+            <label class="md-inline-check"><input id="show-name" class="md-checkbox form-check-input" type="checkbox" checked><span class="bc-check-text"><span>商品名</span></span></label>
+            <label class="md-inline-check"><input id="show-price" class="md-checkbox form-check-input" type="checkbox" checked><span class="bc-check-text"><span>価格</span><small>例）¥1,280（税込）</small></span></label>
+            <label class="md-inline-check"><input id="show-code" class="md-checkbox form-check-input" type="checkbox" checked><span class="bc-check-text"><span>商品コード</span><small id="show-code-note">文字でも入れます</small></span></label>
+            <label class="md-inline-check"><input id="show-extra1" class="md-checkbox form-check-input" type="checkbox" checked><span class="bc-check-text"><span>追加の行1</span><small id="show-extra1-note"></small></span></label>
+            <label class="md-inline-check"><input id="show-extra2" class="md-checkbox form-check-input" type="checkbox" checked><span class="bc-check-text"><span>追加の行2</span><small id="show-extra2-note"></small></span></label>
+          </div>
+        </fieldset>
+        <div class="md-field">
+          <label class="md-field__label form-label" for="tax">価格のあとに付ける言葉</label>
+          <p id="tax-help" class="md-field__help form-hint">ファイルの価格をそのまま印刷します。税込の金額なら「税込」を選んでください（計算はしません）。</p>
+          <select id="tax" class="md-select form-select" aria-describedby="tax-help">
+            <option value="in" selected>（税込）を付ける</option>
+            <option value="ex">（税抜）を付ける</option>
+            <option value="none">付けない</option>
+          </select>
+        </div>
+        <div class="md-field">
+          <label class="md-field__label form-label" for="preset">ラベル用紙の種類</label>
+          <p id="preset-help" class="md-field__help form-hint">用紙の袋に書いてある「面数」と「ラベル1枚の大きさ」で選んでください。合うものがなければ「自分で決める」を選び、用紙の寸法を入れます。</p>
+          <select id="preset" class="md-select form-select" aria-describedby="preset-help"></select>
+        </div>
+        <div id="custom-wrap" class="md-hidden md-stack" data-gap="8">
+          <p class="md-field__help form-hint">用紙の袋や説明書に書いてある寸法を、mm（ミリ）で入れてください。余白は用紙の端から最初のラベルまで、間隔はラベルとラベルのすき間です。</p>
+          <div class="bc-custom" id="custom"></div>
+        </div>
+        <div class="md-field">
+          <span class="md-field__label form-label" id="start-label">どのラベルから印刷しますか？</span>
+          <p id="start-help" class="md-field__help form-hint">使いかけの用紙に印刷するときは、まだ残っている最初のラベルを押してください。それより前のラベルは空けて印刷します（2枚目からは1番目から使います）。</p>
+          <div id="start-grid" class="bc-start" role="group" aria-labelledby="start-label" aria-describedby="start-help"></div>
+          <p id="start-text" class="md-file-status" aria-live="polite"></p>
+        </div>
+
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（位置のずらし・試し刷り）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="md-field">
+              <span class="md-field__label form-label">印刷の位置のずらし</span>
+              <p class="md-field__help form-hint">試し刷りで全体が少しずれていたときに使います。プリンターごとのくせを直すためのものです。</p>
+              <div class="bc-offsets">
+                <div class="md-field">
+                  <label class="md-field__label form-label" for="dy">上下（下へ ＋）</label>
+                  <div class="md-input-suffix"><input id="dy" class="md-input md-input--short form-control" type="number" step="0.5" min="-20" max="20" inputmode="decimal" value="0"><span>mm</span></div>
+                </div>
+                <div class="md-field">
+                  <label class="md-field__label form-label" for="dx">左右（右へ ＋）</label>
+                  <div class="md-input-suffix"><input id="dx" class="md-input md-input--short form-control" type="number" step="0.5" min="-20" max="20" inputmode="decimal" value="0"><span>mm</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="bc-opts">
+              <label class="md-inline-check"><input id="frame" class="md-checkbox form-check-input" type="checkbox">
+                <span class="bc-check-text"><span>ラベルの枠も印刷する（試し刷り用）</span><small>普通の紙に試し刷りして、用紙と重ねて比べるときに使います。本番では外してください</small></span></label>
+            </div>
+          </div>
+        </details>
+
+        <div class="md-cta">
+          <p class="md-cta__text">作れる商品のラベルを枚数の分だけ用紙に並べて、印刷の見た目を作ります。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>印刷の見た目を作る</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="step-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">見た目を確かめて印刷する</h2>
+          <p class="md-step__desc">点線の枠は画面の目安で、印刷はされません。手順2〜4を変えると、ここもすぐに作り直します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-print"><span class="md-icon" data-icon="help" aria-hidden="true"></span>印刷のコツ</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="md-stack" data-gap="8">
+          <div class="bc-preview-bar">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="pick">表示する用紙</label>
+              <select id="pick" class="md-select form-select"></select>
+            </div>
+            <button id="prev" class="md-btn btn" data-variant="outlined" type="button" aria-label="前の用紙"><span class="md-icon" data-icon="arrow_back" aria-hidden="true"></span>前へ</button>
+            <button id="next" class="md-btn btn" data-variant="outlined" type="button" aria-label="次の用紙">次へ<span class="md-icon" data-icon="arrow_forward" aria-hidden="true"></span></button>
+          </div>
+          <div id="preview" class="bc-preview" role="region" aria-label="印刷の見た目"><div class="bc-preview__inner" id="preview-inner"></div></div>
+        </div>
+        <div class="md-cta">
+          <p class="md-cta__text">印刷の画面が開きます。用紙サイズは「A4」、倍率は100%（実際のサイズ）にして、「ヘッダーとフッター」は外してください。</p>
+          <button id="print" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>印刷する</button>
+        </div>
+        <p class="md-field__help form-hint">はじめての用紙では、まず普通の紙に印刷して、本物の用紙と重ねて位置を確かめ、読み取り機で読めるかも試してください。印刷の画面で送信先を「PDFに保存」にすると、PDFファイルにもできます。</p>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>手順1で <code>samples/barcode/商品一覧.csv</code> を選んでください（実在しない商品の一覧です。JANコードも架空の番号です）。わざと1行だけ、JANコードの最後の1けたを間違えてあります。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-kinds" class="md-modal" aria-labelledby="dlg-kinds-title">
+    <div class="md-modal__head"><h2 id="dlg-kinds-title" class="md-modal__title">バーコードの種類</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><strong>JANコード</strong>: お店のレジで読む13けた（または8けた）の数字。最後の1けたは確認用の数字（チェックデジット）で、合わない行は印刷しません。</li>
+        <li><strong>Code128</strong>: 社内の商品コードのように、英字やハイフン（-）が入るコードに使います。</li>
+        <li><strong>QRコード</strong>: スマートフォンでも読めます。日本語や長い文字も入れられます。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-size" class="md-modal" aria-labelledby="dlg-size-title">
+    <div class="md-modal__head"><h2 id="dlg-size-title" class="md-modal__title">読み取れる大きさの目安</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>JANコードは、いちばん細いバーの幅が <strong>0.264mm 以上</strong>（標準の大きさ 0.33mm の80%以上）。この画面では標準の大きさを上限にしています。</li>
+        <li>Code128 は細いバーが 0.25mm 以上、QRコードは1マスが 0.3mm 以上を目安にしています。</li>
+        <li>バーの高さは 5mm 以上。バーコードの左右（QRは四方）には白い余白を自動で空けます。</li>
+        <li>これより小さくなるラベルでは注意を出します。項目を減らすか、大きいラベル用紙を選んでください。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-print" class="md-modal" aria-labelledby="dlg-print-title">
+    <div class="md-modal__head"><h2 id="dlg-print-title" class="md-modal__title">印刷のコツ</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p class="md-subhead">はじめは普通の紙で試し刷り</p>
+      <p>印刷の画面では「倍率」を <strong>100%</strong>（実際のサイズ）にし、「ヘッダーとフッター」を外します。最初は普通のA4の紙に印刷して、ラベル用紙と重ねて位置を確かめ、お使いの読み取り機（スキャナー）で読めるかも試してください。</p>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<div id="print-area" class="bc-print-area" aria-hidden="true"></div>
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/atena.js"></script>
+<script src="../assets/js/apps/barcode-qr.js"></script>
+<script src="../assets/js/apps/barcode.js"></script>
+<script src="../assets/js/ui/barcode.js"></script>
+</body>
+</html>

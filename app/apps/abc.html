@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ABC分析｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* この画面だけで使う部品（色は md.css のトークンから） */
+  .ab-terms { margin: 8px 0 0; padding-left: 1.25em; }
+  .ab-terms li + li { margin-top: 6px; }
+  .ab-nums { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); }
+  .ab-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+  .ab-toolbar .md-field { flex: 1 1 12rem; min-width: 0; }
+  .ab-legend { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .ab-muted { color: var(--md-on-surface-variant); }
+  .ab-sub { display: block; font-size: 13px; font-weight: 400; line-height: 1.5; color: var(--md-on-surface-variant); white-space: normal; }
+  .md-choice[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+
+  /* パレート図 */
+  .ab-chart { overflow-x: auto; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); padding: 8px 4px 4px; }
+  .ab-chart svg { display: block; width: 100%; height: auto; min-width: 34rem; }
+  .ab-chart .ab-grid { stroke: var(--md-outline-variant); stroke-width: 1; }
+  .ab-chart .ab-axis { fill: var(--md-on-surface-variant); font-size: 12px; font-family: var(--md-font-num); }
+  .ab-chart .ab-bar[data-rank="A"] { fill: var(--md-primary); }
+  .ab-chart .ab-bar[data-rank="B"] { fill: color-mix(in srgb, var(--md-primary) 50%, var(--md-surface-container-lowest)); }
+  .ab-chart .ab-bar[data-rank="C"] { fill: var(--md-outline-variant); }
+  .ab-chart .ab-bar:hover { opacity: .8; }
+  .ab-chart .ab-line { fill: none; stroke: var(--md-error); stroke-width: 2; stroke-linejoin: round; }
+  .ab-chart .ab-dot { fill: var(--md-error); stroke: var(--md-surface-container-lowest); stroke-width: 1.5; }
+  .ab-chart .ab-th { stroke: var(--md-on-surface-variant); stroke-width: 1; stroke-dasharray: 4 4; }
+  .ab-chart .ab-th-text { fill: var(--md-on-surface-variant); font-size: 12px; }
+  .ab-chart .ab-rank-text { fill: var(--md-on-surface); font-size: 13px; font-weight: 700; }
+  .ab-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0 0; font-size: 14px; color: var(--md-on-surface-variant); }
+  .ab-key span { display: inline-flex; align-items: center; gap: 6px; }
+  .ab-key i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; }
+  .ab-key i[data-rank="A"] { background: var(--md-primary); }
+  .ab-key i[data-rank="B"] { background: color-mix(in srgb, var(--md-primary) 50%, var(--md-surface-container-lowest)); }
+  .ab-key i[data-rank="C"] { background: var(--md-outline-variant); }
+  .ab-key i[data-line] { height: 3px; border-radius: 0; background: var(--md-error); }
+
+  /* クロスABC の9マス */
+  .ab-cross th, .ab-cross td { text-align: center; vertical-align: middle; padding: 10px; }
+  .ab-cross td { min-width: 8rem; }
+  .ab-cross td strong { display: block; font-size: 18px; font-family: var(--md-font-num); }
+  .ab-cross td[data-tone="good"] { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+  .ab-cross td[data-tone="bad"] { background: var(--md-warning-container); color: var(--md-on-warning-container); }
+  .ab-cross td .ab-sub { color: inherit; opacity: .85; }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="leaderboard" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">ABC分析</h1>
+      <p class="md-lead text-secondary">売上明細や出庫の実績を、商品・取引先・担当者などごとに合計して多い順に並べ、売上の大部分を占める「A」、その次の「B」、残りの「C」に分けます。力を入れる商品や、扱いを見直す商品を見つけるのに使います。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">ファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-files"><span class="md-icon" data-icon="help" aria-hidden="true"></span>読めるファイル</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <label class="md-dropzone">
+          <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+          <span class="md-dropzone__main">売上明細・出庫の実績などのCSV</span>
+          <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+          <input id="file" type="file" accept=".csv,.txt,.tsv" aria-describedby="file-status">
+        </label>
+        <p id="file-status" class="md-file-status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">何ごとに分けるかと、列を確かめる</h2>
+          <p class="md-step__desc">見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-wrap" class="md-hidden md-stack" data-gap="8">
+          <div class="md-grid" data-min="12" id="box-unit"></div>
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>数える列</h3>
+          <p class="md-field__help form-hint">使える列だけで大丈夫です。金額も数量もなければ、行の数（件数）で分けます。</p>
+          <div class="md-grid" data-min="12" id="box-nums"></div>
+          <div id="cost-mode-wrap" class="md-hidden">
+            <fieldset class="md-fieldset">
+              <legend>原価の列に入っているのは</legend>
+              <div class="md-choices" data-layout="grid">
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="costMode" value="total" checked>
+                  <span class="md-choice__text"><span class="md-choice__label">その行の原価の合計</span><span class="md-choice__desc">粗利 = 金額 − 原価</span></span></label>
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="costMode" value="unit">
+                  <span class="md-choice__text"><span class="md-choice__label">1個あたりの原価</span><span class="md-choice__desc">粗利 = 金額 − 原価 × 数量</span></span></label>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">何の多さで分けるかを選んで、分析する</h2>
+          <p class="md-step__desc">設定はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>何の多さで並べますか？</legend>
+          <div class="md-choices" data-layout="grid" id="metric-choices"></div>
+        </fieldset>
+        <div id="period-wrap" class="md-hidden">
+          <div class="ab-nums">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="from">期間のはじめ <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="from-help" class="md-field__help form-hint">空ならファイルの最初の日から</p>
+              <input id="from" class="md-input md-input--short form-control" type="date" aria-describedby="from-help">
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="to">期間のおわり <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="to-help" class="md-field__help form-hint">空ならファイルの最後の日まで</p>
+              <input id="to" class="md-input md-input--short form-control" type="date" aria-describedby="to-help">
+            </div>
+          </div>
+          <p id="period-info" class="md-field__help form-hint" aria-live="polite"></p>
+        </div>
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（ランクの境目・2つの指標の組み合わせ・グラフの件数）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="ab-nums">
+              <div class="md-field">
+                <label class="md-field__label form-label" for="th-a">A の境目</label>
+                <p id="th-a-help" class="md-field__help form-hint">累積構成比がここに届くまでを A にします。はじめは70%です。</p>
+                <div class="md-input-suffix"><input id="th-a" class="md-input md-input--short form-control" type="number" min="1" max="99" step="1" inputmode="numeric" value="70" aria-describedby="th-a-help"><span>%</span></div>
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="th-b">B の境目</label>
+                <p id="th-b-help" class="md-field__help form-hint">ここまでを B、残りを C にします。はじめは90%です。</p>
+                <div class="md-input-suffix"><input id="th-b" class="md-input md-input--short form-control" type="number" min="2" max="100" step="1" inputmode="numeric" value="90" aria-describedby="th-b-help"><span>%</span></div>
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="top-n">グラフに出す件数</label>
+                <p id="top-n-help" class="md-field__help form-hint">上位から何件までを棒グラフにするか</p>
+                <input id="top-n" class="md-input md-input--short form-control" type="number" min="5" max="200" step="1" inputmode="numeric" value="30" aria-describedby="top-n-help">
+              </div>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="metric2">もう1つの指標と組み合わせる（クロスABC）</label>
+              <p id="metric2-help" class="md-field__help form-hint">たとえば「金額」と「粗利」の両方でABCを付け、AA〜CC の9つに分けます。よく売れるのに利益が薄い商品などが見つかります。</p>
+              <select id="metric2" class="md-select form-select" aria-describedby="metric2-help"></select>
+            </div>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">選んだ単位ごとに合計し、多い順に並べて A・B・C に分けます。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>分析する</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc" id="result-desc"></p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <h3 class="md-subhead">パレート図（多い順の棒と、累積構成比の折れ線）</h3>
+        <div id="chart"></div>
+        <h3 class="md-subhead">ランクごとのまとめ</h3>
+        <div id="rank-table"></div>
+        <div id="cross-wrap" class="md-hidden">
+          <h3 class="md-subhead" id="cross-title">クロスABC</h3>
+          <p class="ab-legend">縦が1つめの指標、横が2つめの指標のランクです。マスの中は件数と、1つめの指標の合計です。</p>
+          <div id="cross"></div>
+        </div>
+        <h3 class="md-subhead">一覧</h3>
+        <div class="ab-toolbar">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="f-rank">ランクで絞り込む</label>
+            <select id="f-rank" class="md-select form-select"></select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="f-word">名前で探す</label>
+            <input id="f-word" class="md-input form-control" type="search" autocomplete="off">
+          </div>
+        </div>
+        <div id="table"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-result" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>ABC分析結果.csv を保存</button>
+          <button id="save-summary" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>ランク別要約.csv を保存</button>
+          <button id="save-rank" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>ABCランク表.csv を保存</button>
+        </div>
+        <ul class="ab-terms ab-legend">
+          <li><strong>ABC分析結果.csv</strong>: 順位・ランク・構成比・累積構成比と、金額・数量・粗利・件数の一覧です。</li>
+          <li><strong>ランク別要約.csv</strong>: ランクごとの件数と合計、その割合です（クロスABCを選んだときは9区分の表も入ります）。</li>
+          <li><strong>ABCランク表.csv</strong>: 商品コードなどとランクだけの表です。商品マスタに貼り付けておくと、「<a href="hacchu.html">在庫の発注点チェック</a>」の結果と見比べて、Aの商品は安全在庫を多めにする、Cの商品は発注を控えるといった判断に使えます。</li>
+        </ul>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で <code>samples/abc/売上明細.csv</code> を選んでください。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-files" class="md-modal" aria-labelledby="dlg-files-title">
+    <div class="md-modal__head"><h2 id="dlg-files-title" class="md-modal__title">読めるファイル</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>「在庫の発注点チェック」の出庫実績や、「在庫の受払集計」の受払の記録（区分の列あり）も、そのまま読めます。受払の記録では、出荷・売上などの出庫を足し、売上返品を差し引きます。「集計表づくり」で保存した集計表も読めます（合計の行は数えません）。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：ランクの分け方</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>商品などごとに合計し、多い順に並べます。<strong>構成比</strong>は全体に占める割合、<strong>累積構成比</strong>は1位からその商品までの割合の合計です。</li>
+        <li><span class="md-chip badge" data-tone="info">A</span> 累積構成比が70%に届くまで（全体の大部分を占める主力）</li>
+        <li><span class="md-chip badge" data-tone="neutral">B</span> 70%から90%まで</li>
+        <li><span class="md-chip badge">C</span> 残り（90%から100%）</li>
+        <li><span class="md-chip badge" data-tone="warning">対象外</span> 返品などで合計が0以下になったもの。割合の計算には入れません。</li>
+        <li>境目をまたぐ商品（たとえば累積が65%から75%になる商品）は、上のランクに入れます。そのため1位は必ずAです。境目の70%・90%は手順3で変えられます。</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/zaiko.js"></script>
+<script src="../assets/js/apps/abc.js"></script>
+<script src="../assets/js/ui/abc.js"></script>
+</body>
+</html>

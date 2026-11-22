@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>経費精算の集計｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* このページだけの部品: 科目のルールのカード、申請者ごとの明細、科目別の棒 */
+  .kh-period { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+  .kh-period .md-field { flex: 1 1 12rem; min-width: 0; }
+  .kh-period .md-input { width: 100%; }
+  .kh-rules { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .kh-rule { min-width: 0; padding: 12px 16px 16px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-low); }
+  .kh-rule__head { display: flex; align-items: flex-end; gap: 8px; }
+  .kh-rule__head .md-field { flex: 1 1 auto; min-width: 0; }
+  .kh-rule__grid { margin-top: 12px; display: grid; gap: 12px 16px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .kh-rule__grid .kh-wide { grid-column: 1 / -1; }
+  .kh-rule .md-field { gap: 4px; }
+  .kh-rule .md-field__label { font-size: 14px; }
+  .kh-rule .md-input, .kh-rule .md-select { width: 100%; }
+  .kh-rule .md-input-suffix .md-input { min-width: 0; }
+  @media (max-width: 48rem) { .kh-rule__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 26rem) { .kh-rule { padding: 12px; } .kh-rule__grid { grid-template-columns: minmax(0, 1fr); } }
+  .kh-filters { display: grid; gap: 12px 16px; grid-template-columns: repeat(auto-fill, minmax(min(13rem, 100%), 1fr)); align-items: end; }
+  .kh-filters .md-field { gap: 4px; }
+  .kh-filters .md-input, .kh-filters .md-select { width: 100%; }
+  .kh-count { font-size: 14px; color: var(--md-on-surface-variant); margin: 0; }
+  .kh-person + .kh-person { margin-top: 8px; }
+  .kh-person > summary { flex-wrap: wrap; row-gap: 6px; }
+  .kh-person__name { min-width: 0; overflow-wrap: anywhere; }
+  .kh-person__id { font-weight: 400; font-size: 14px; color: var(--md-on-surface-variant); margin-left: 4px; }
+  .kh-person__nums { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-weight: 400; font-size: 15px; color: var(--md-on-surface-variant); }
+  .kh-person__nums strong { color: var(--md-on-surface); font-family: var(--md-font-num); font-variant-numeric: tabular-nums; }
+  .kh-person__chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .kh-person__body { padding: 12px; }
+  .kh-table th, .kh-table td { padding: 8px 12px; }
+  .kh-table td.kh-check { padding: 0 4px 0 12px; vertical-align: middle; }
+  .kh-table .md-inline-check { min-height: 44px; min-width: 44px; justify-content: center; }
+  .kh-table td.kh-notes { white-space: normal; font-size: 14px; }
+  .kh-items tr.kh-has-note > td { border-bottom: 0; padding-bottom: 2px; }
+  .kh-items tr.kh-note-row > td { padding-top: 2px; }
+  .kh-items tbody tr.kh-has-note:hover, .kh-items tbody tr.kh-has-note:hover + tr.kh-note-row { background: var(--md-surface-container-low); }
+  .kh-table td.kh-wrap { white-space: normal; min-width: 10rem; }
+  .kh-table .kh-sub { display: block; font-size: 13px; color: var(--md-on-surface-variant); }
+  .kh-table .kh-note + .kh-note { margin-top: 6px; }
+  .kh-table .kh-note .md-chip { margin-right: 6px; height: 24px; padding: 0 8px; font-size: 13px; }
+  .kh-table tr[data-status="excluded"] > td:not(.kh-check):not(.kh-notes) { color: var(--md-on-surface-variant); text-decoration: line-through; text-decoration-color: color-mix(in srgb, currentColor 50%, transparent); }
+  .kh-table tr[data-status="check"] > td:first-child { box-shadow: inset 4px 0 0 var(--md-warning, #b26a00); }
+  .kh-muted { color: var(--md-on-surface-variant); }
+  .kh-bar { display: flex; align-items: center; gap: 8px; min-width: 9rem; }
+  .kh-bar__track { flex: 1 1 auto; height: 12px; border-radius: var(--md-shape-full); background: var(--md-surface-container-highest); overflow: hidden; }
+  .kh-bar__fill { display: block; height: 100%; border-radius: inherit; background: var(--md-primary); }
+  @media (max-width: 40rem) {
+    /* 狭い画面では、明細の1行をカードのように縦に並べる（横スクロールなしで「確かめること」まで読める） */
+    .kh-items thead { display: none; }
+    .kh-items, .kh-items tbody { display: block; }
+    .kh-items tr { display: grid; grid-template-columns: 48px minmax(0, 1fr); column-gap: 4px; padding: 8px 12px 8px 0; border-bottom: 1px solid var(--md-outline-variant); }
+    .kh-items tbody tr:last-child, .kh-items tr.kh-has-note { border-bottom: 0; }
+    .kh-items tr.kh-has-note { padding-bottom: 0; }
+    .kh-items tr.kh-note-row { padding-top: 0; }
+    .kh-items td { grid-column: 2; display: block; min-width: 0 !important; padding: 2px 0; border: 0; white-space: normal; text-align: left !important; }
+    .kh-items td.kh-check { grid-column: 1; grid-row: 1 / span 8; padding: 0 0 0 4px; }
+    .kh-items td[data-label]::before { content: attr(data-label) "："; font-size: 13px; color: var(--md-on-surface-variant); }
+    .kh-items td.kh-notes { padding-top: 6px; }
+    .kh-items td.is-num .kh-sub { display: inline; margin-left: 8px; }
+    .kh-acc th, .kh-acc td { padding: 8px 6px; }
+    .kh-acc th:first-child, .kh-acc td:first-child { padding-left: 12px; }
+    .kh-bar { min-width: 3.5rem; gap: 4px; }
+    .kh-bar__pct { width: 3em; }
+  }
+  .kh-bar__pct { flex: none; width: 3.5em; text-align: right; font-family: var(--md-font-num); font-variant-numeric: tabular-nums; font-size: 14px; color: var(--md-on-surface-variant); }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="receipt_long" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">経費精算の集計</h1>
+      <p class="md-lead text-secondary">社員から集めた経費の申請一覧を読み込み、重複・上限超過・領収書なし・期間外などを確かめてから、申請者ごと・科目ごとに集計します。精算一覧・仕訳・振込一覧のCSVも作れます。</p>
+      <p class="md-body-s">チェックは社内ルールの確認を助けるためのものです。税金での扱い（交際費になるかなど）は、顧問の税理士に確認してください。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-files" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">ファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid" data-min="14">
+          <div class="md-field">
+            <span class="md-field__label form-label" id="file-label">経費の申請一覧 <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="file-help" class="md-field__help form-hint">申請フォーム・表計算・経費アプリから書き出したCSV。1行に1件で、申請者・利用日・金額と、科目か内容の列が必要です。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">申請一覧のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+            </label>
+            <p id="file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="bank-file-label">社員の口座 <span class="md-badge badge" data-kind="optional">任意</span></span>
+            <p id="bank-file-help" class="md-field__help form-hint">振込一覧を作るときだけ使います。社員番号か氏名と、銀行番号・支店番号・預金種目・口座番号・口座名義カナの列が必要です。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">口座のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="bank-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="bank-file-label" aria-describedby="bank-file-help bank-file-status">
+            </label>
+            <p id="bank-file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>経費の申請一覧</h3>
+          <div class="md-grid" data-min="14" id="map"></div>
+        </div>
+        <div id="bank-map-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="bank" data-size="20" aria-hidden="true"></span>社員の口座</h3>
+          <div class="md-grid" data-min="14" id="bank-map"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">期間とルールを決めてチェックする</h2>
+          <p class="md-step__desc">設定はこのパソコンに保存され、次回も同じルールで始まります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>精算の対象期間</legend>
+          <p id="period-help" class="md-field__help form-hint" style="margin-bottom:8px">この期間に使った経費を精算します。最初は先月の1日〜末日です。空にすると、期間は確かめません。</p>
+          <div class="kh-period">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="from">はじめの日</label>
+              <input id="from" class="md-input form-control" type="date" aria-describedby="period-help">
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="to">終わりの日</label>
+              <input id="to" class="md-input form-control" type="date" aria-describedby="period-help">
+            </div>
+            <button id="last-month" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="event" aria-hidden="true"></span>先月にする</button>
+          </div>
+        </fieldset>
+        <label class="md-inline-check"><input id="exclude-outside" class="md-checkbox form-check-input" type="checkbox"> 期間外の行は、最初から精算に含めない（対象外にする）</label>
+
+        <details class="md-details card" id="rules-box">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>科目ごとのルール<span class="md-details__hint" id="rules-hint">（上限額・領収書・1人あたり・税区分）</span></summary>
+          <div class="md-details__body card-body">
+            <p class="md-field__help form-hint">金額の欄は空か 0 にすると、その項目は確かめません。「領収書が必要になる金額」は 1 にすると、すべての支払いで領収書が必要になります（交通費だけ 30000 円以上にする、などの会社もあります）。「1人あたりの上限」は、人数の列がある飲食の行で金額÷人数と比べます。見本の 10,000円 は、交際費のうち1人1万円以下の飲食を会議費などにできる税金の決まりを目安にしたものです。扱いは顧問の税理士に確認してください。</p>
+            <p class="md-field__help form-hint">「内容の言葉」は、科目の列がない行や科目が空の行で使います。内容か支払先にその言葉があれば、上から順に最初に当てはまった科目にします。</p>
+            <div id="rules-note"></div>
+            <ul id="rules" class="kh-rules" aria-label="科目ごとのルール"></ul>
+            <div class="md-actions">
+              <button id="rule-add" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="add" aria-hidden="true"></span>科目を追加</button>
+              <button id="rule-reset" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>見本のルールに戻す</button>
+            </div>
+            <div id="rules-message" aria-live="polite"></div>
+          </div>
+        </details>
+
+        <div class="md-cta">
+          <p class="md-cta__text">申請一覧の全部の行を確かめて、申請者ごと・科目ごとに集計します。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>チェックして集計する</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">申請者の行を押すと明細が開きます。精算に含めない行は、左のチェックを外してください。合計はすぐに計算し直します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">申請者ごとの精算額</h3>
+          <div class="kh-filters" role="group" aria-label="明細の絞り込み">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-status">状態</label>
+              <select id="f-status" class="md-select form-select">
+                <option value="">すべて</option>
+                <option value="check">要確認だけ</option>
+                <option value="excluded">対象外だけ</option>
+                <option value="ok">OKだけ</option>
+              </select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-account">科目</label>
+              <select id="f-account" class="md-select form-select"></select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-q">申請者・内容・支払先で探す</label>
+              <input id="f-q" class="md-input form-control" type="search" placeholder="例）見本、タクシー">
+            </div>
+          </div>
+          <p id="f-count" class="kh-count" aria-live="polite"></p>
+          <div id="people"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">科目ごとの金額</h3>
+          <div id="accounts"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。対象外の行は、明細のファイル以外には入りません。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-summary" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>精算一覧（申請者別）.csv を保存</button>
+          <button id="save-detail" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>経費明細（チェック結果つき）.csv を保存</button>
+        </div>
+
+        <h3 class="md-subhead"><span class="md-icon" data-icon="book" data-size="20" aria-hidden="true"></span>仕訳のCSV</h3>
+        <p class="md-field__help form-hint">「仕訳データの作成」と同じ汎用の形です。借方は科目（税区分は手順3のルール）、貸方は未払金（現金で精算する行は現金）にします。会計ソフトへの取り込みや、「予算と実績の比較」の実績に使えます。</p>
+        <fieldset class="md-fieldset">
+          <legend>仕訳の分け方</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="jmode" value="row" checked>
+              <span class="md-choice__text"><span class="md-choice__label">1件ずつ</span><span class="md-choice__desc">申請の1行を1つの仕訳にします。日付は利用日です</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="jmode" value="person">
+              <span class="md-choice__text"><span class="md-choice__label">申請者×科目でまとめる</span><span class="md-choice__desc">日付は精算の対象期間の終わりの日です</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-journal" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>経費精算の仕訳.csv を保存</button>
+          <a class="md-btn btn" data-variant="outlined" href="yojitsu.html"><span class="md-icon" data-icon="trending_up" aria-hidden="true"></span>予算と実績の比較を開く</a>
+        </div>
+
+        <h3 class="md-subhead"><span class="md-icon" data-icon="bank" data-size="20" aria-hidden="true"></span>振込一覧のCSV</h3>
+        <p id="transfer-none" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1で「社員の口座」のCSVを選ぶと、振込一覧も作れます。</p>
+        <div id="transfer-wrap" class="md-hidden md-stack" data-gap="12">
+          <p class="md-field__help form-hint">振込で精算する金額を、申請者ごとに合計します。「全銀データ作成」にそのまま読み込めます。Excelで開いて上書き保存すると、銀行番号などの先頭の0が消えることがあるので、開かずにそのまま使ってください。</p>
+          <div class="md-actions">
+            <button id="save-transfer" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>振込一覧.csv を保存</button>
+            <a class="md-btn btn" data-variant="outlined" href="zengin.html"><span class="md-icon" data-icon="bank" aria-hidden="true"></span>全銀データ作成を開く</a>
+          </div>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で、<code>samples/keihi/経費申請_2026年10月.csv</code> と <code>samples/keihi/社員口座.csv</code> を選び、手順3で期間を 2026/10/01〜2026/10/31 にしてください。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：行ごとの状態</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="success">OK</span> 気になる点がない行。精算に含めます</li>
+        <li><span class="md-chip badge" data-tone="warning">要確認</span> 下のどれかに当たる行。精算には含めたまま、印を付けます</li>
+        <li><span class="md-chip badge" data-tone="neutral">対象外</span> チェックを外した行、金額が読めない行。精算に含めません</li>
+      </ul>
+      <div>
+        <p class="md-subhead">確かめること</p>
+        <ul>
+          <li>重複の疑い: 同じ人・同じ利用日・同じ金額（支払先の列があれば支払先も）の行が2つ以上ある</li>
+          <li>上限超過: 科目ごとに決めた「上限額（1件）」を超えている</li>
+          <li>領収書なし: 領収書の列が「なし・×」で、科目ごとに決めた金額以上</li>
+          <li>期間外: 利用日が、精算の対象期間に入っていない</li>
+          <li>1人あたり超過: 人数の列がある飲食で、金額÷人数が科目ごとの上限を超えている</li>
+        </ul>
+      </div>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/shiwake.js"></script>
+<script src="../assets/js/apps/kyuyo.js"></script>
+<script src="../assets/js/apps/keihi.js"></script>
+<script src="../assets/js/ui/keihi.js"></script>
+</body>
+</html>

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>シフト表のチェック｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* 勤務パターンの色（記号ごと） */
+  :root {
+    --sh-p0: #dbe6ff; --sh-p1: #d3f0d9; --sh-p2: #ffe0c2; --sh-p3: #e6dcff; --sh-p4: #ffd8e1; --sh-p5: #cdeeec; --sh-p6: #f1e7b8; --sh-p7: #e4e4ea;
+    --sh-paid: #fff1bf; --sh-time: #e8eaf0; --sh-ink: #191c20;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --sh-p0: #22385f; --sh-p1: #1d3e28; --sh-p2: #4c3217; --sh-p3: #3a2d5c; --sh-p4: #532434; --sh-p5: #153f3d; --sh-p6: #463d12; --sh-p7: #33353c;
+      --sh-paid: #4a3d0a; --sh-time: #2c3038; --sh-ink: #e2e2e9;
+    }
+  }
+  .sh-list { margin: 8px 0 0; padding-left: 1.25em; }
+  .sh-list li + li { margin-top: 6px; }
+  .sh-code { display: inline-block; font-family: var(--md-font-num); background: var(--md-surface-container-highest); padding: 0 6px; border-radius: var(--md-shape-xs); }
+  .sh-ym { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+  .sh-ym .md-select { width: auto; min-width: 7.5rem; }
+  /* 編集できる表（勤務パターン・必要人数） */
+  .sh-edit { font-size: 15px; }
+  .sh-edit th, .sh-edit td { padding: 6px 8px; vertical-align: middle; white-space: nowrap; }
+  .sh-edit .md-input, .sh-edit .md-select { min-height: 44px; padding: 8px 10px; font-size: 16px; }
+  .sh-edit .sh-w-code { width: 5.5rem; }
+  .sh-edit .sh-w-time { width: 6.5rem; }
+  .sh-edit .sh-w-num { width: 5rem; }
+  .sh-edit .sh-w-kind { width: 7.5rem; }
+  .sh-edit .sh-w-days { width: 7rem; }
+  .sh-edit .sh-w-role { width: 9rem; }
+  .sh-edit .sh-swatch { display: inline-block; width: 14px; height: 28px; border-radius: 4px; vertical-align: middle; border: 1px solid var(--md-outline-variant); }
+  .sh-unknown { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .sh-unknown li { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+  .sh-unknown .sh-where { color: var(--md-on-surface-variant); font-size: 15px; }
+  /* チェックの設定 */
+  .sh-opts { display: grid; gap: 16px 20px; grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr)); }
+  /* 問題の一覧 */
+  .sh-problems { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 26rem; overflow: auto; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); padding: 6px; background: var(--md-surface-container-lowest); }
+  .sh-prob { display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left; font: inherit; font-size: 15px; line-height: 1.6; color: var(--md-on-surface); background: transparent; border: 0; border-radius: var(--md-shape-s); padding: 10px 10px; min-height: 48px; cursor: pointer; }
+  .sh-prob:hover { background: var(--md-surface-container); }
+  .sh-prob[aria-current="true"] { background: var(--md-primary-container); color: var(--md-on-primary-container); }
+  .sh-prob .md-chip { flex: none; }
+  .sh-prob__body { min-width: 0; overflow-wrap: anywhere; }
+  .sh-prob__head { font-weight: 700; display: block; }
+  .sh-filter { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+  .sh-filter .md-select { width: auto; min-width: 12rem; }
+  /* スタッフ × 日付 の表 */
+  .sh-grid-wrap { overflow: auto; max-width: 100%; max-height: 75vh; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); }
+  .sh-grid-wrap:focus-visible { outline: 3px solid var(--md-primary); outline-offset: 2px; }
+  .sh-grid { border-collapse: separate; border-spacing: 0; font-size: 15px; }
+  .sh-grid th, .sh-grid td { border-right: 1px solid var(--md-outline-variant); border-bottom: 1px solid var(--md-outline-variant); text-align: center; padding: 0; }
+  .sh-grid thead th { position: sticky; top: 0; z-index: 2; background: var(--md-surface-container-high); font-family: var(--md-font-num); font-weight: 700; min-width: 3.25rem; padding: 4px 2px; line-height: 1.25; }
+  .sh-grid thead th small { display: block; font-size: 13px; font-weight: 500; color: var(--md-on-surface-variant); }
+  .sh-grid thead th[data-daytype="weekend"] small, .sh-grid thead th[data-daytype="holiday"] small { color: var(--md-error); font-weight: 700; }
+  .sh-grid th.sh-name { position: sticky; left: 0; z-index: 1; background: var(--md-surface-container-low); text-align: left; padding: 6px 10px; min-width: 7.5rem; max-width: 10rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+  .sh-grid th.sh-name small { display: block; font-size: 12px; font-weight: 500; color: var(--md-on-surface-variant); overflow: hidden; text-overflow: ellipsis; }
+  .sh-grid thead th.sh-name { z-index: 3; background: var(--md-surface-container-high); }
+  .sh-cell { position: relative; height: 44px; min-width: 3.25rem; color: var(--sh-ink); font-weight: 700; line-height: 1.1; }
+  .sh-cell > span.sh-v { display: block; padding: 2px; font-size: 15px; }
+  .sh-cell[data-kind="time"] > span.sh-v, .sh-cell > span.sh-v.is-long { font-size: 11px; font-weight: 500; font-family: var(--md-font-num); }
+  .sh-cell[data-kind="off"] { color: var(--md-on-surface-variant); font-weight: 500; }
+  .sh-cell[data-kind="empty"] { color: var(--md-on-surface-variant); }
+  .sh-cell[data-kind="paid"] { background: var(--sh-paid); }
+  .sh-cell[data-kind="time"] { background: var(--sh-time); }
+  .sh-cell[data-p="0"] { background: var(--sh-p0); } .sh-cell[data-p="1"] { background: var(--sh-p1); } .sh-cell[data-p="2"] { background: var(--sh-p2); } .sh-cell[data-p="3"] { background: var(--sh-p3); }
+  .sh-cell[data-p="4"] { background: var(--sh-p4); } .sh-cell[data-p="5"] { background: var(--sh-p5); } .sh-cell[data-p="6"] { background: var(--sh-p6); } .sh-cell[data-p="7"] { background: var(--sh-p7); }
+  .sh-cell[data-kind="unknown"] { background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--md-warning) 18%, transparent) 6px 9px); box-shadow: inset 0 0 0 2px var(--md-warning); }
+  .sh-cell.is-problem { box-shadow: inset 0 0 0 3px var(--md-error); }
+  .sh-flag { position: absolute; top: 1px; right: 1px; width: 15px; height: 15px; border-radius: 50%; background: var(--md-error); color: var(--md-on-error); display: grid; place-items: center; }
+  .sh-flag .md-icon { width: 11px; height: 11px; }
+  .sh-flag[data-tone="warning"] { background: var(--md-warning); color: var(--md-surface-container-lowest); }
+  .sh-cell.is-flash, .sh-covcell.is-flash { outline: 4px solid var(--md-primary); outline-offset: -4px; animation: sh-flash 1.2s ease-out 2; }
+  @keyframes sh-flash { 0% { background-color: var(--md-primary-container); } 100% { } }
+  .sh-cell:focus { outline: 4px solid var(--md-primary); outline-offset: -4px; }
+  .sh-grid tfoot th, .sh-grid tfoot td { background: var(--md-surface-container-low); font-size: 13px; padding: 4px 2px; line-height: 1.25; }
+  .sh-grid tfoot th.sh-name { font-size: 14px; }
+  .sh-covcell { color: var(--md-on-surface-variant); font-family: var(--md-font-num); }
+  .sh-covcell[data-state="short"] { color: var(--md-on-error-container); background: var(--md-error-container) !important; font-weight: 700; }
+  .sh-covcell[data-state="over"] { color: var(--md-on-warning-container); background: var(--md-warning-container) !important; font-weight: 700; }
+  .sh-covcell .md-icon { width: 14px; height: 14px; }
+  .sh-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; color: var(--md-on-surface-variant); align-items: center; }
+  .sh-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+  .sh-legend .sh-sw { display: inline-grid; place-items: center; min-width: 26px; height: 24px; padding: 0 4px; border-radius: 4px; color: var(--sh-ink); font-weight: 700; border: 1px solid var(--md-outline-variant); font-size: 13px; }
+  .sh-legend .sh-sw.is-problem { box-shadow: inset 0 0 0 3px var(--md-error); border-color: transparent; }
+  .sh-legend .sh-sw[data-kind="unknown"] { box-shadow: inset 0 0 0 2px var(--md-warning); }
+  /* 日ごとの人数（30分ごと） */
+  .sh-cov { display: flex; flex-direction: column; gap: 4px; }
+  .sh-covrow { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 4px 12px; align-items: center; padding: 6px 8px; border-radius: var(--md-shape-s); }
+  .sh-covrow.is-flash { outline: 3px solid var(--md-primary); }
+  .sh-covrow__day { font-family: var(--md-font-num); font-weight: 700; font-size: 15px; }
+  .sh-covrow__day[data-daytype="weekend"], .sh-covrow__day[data-daytype="holiday"] { color: var(--md-error); }
+  .sh-bar { display: grid; grid-template-columns: repeat(48, minmax(0, 1fr)); height: 26px; border-radius: 4px; overflow: hidden; background: var(--md-surface-container); }
+  .sh-bar > span { border-right: 1px solid var(--md-surface-container-lowest); background: color-mix(in srgb, var(--md-primary) calc(var(--n, 0) * 22%), var(--md-surface-container)); }
+  .sh-bar > span:nth-child(2n) { border-right-color: transparent; }
+  .sh-bar > span[data-state="short"] { background: repeating-linear-gradient(135deg, var(--md-error) 0 3px, var(--md-error-container) 3px 6px); }
+  .sh-bar > span[data-state="over"] { background: repeating-linear-gradient(45deg, var(--md-warning) 0 3px, var(--md-warning-container) 3px 6px); }
+  .sh-scale { display: grid; grid-template-columns: repeat(4, 1fr) auto; font-size: 12px; color: var(--md-on-surface-variant); font-family: var(--md-font-num); }
+  .sh-covrow__text { grid-column: 2; font-size: 14px; line-height: 1.5; }
+  .sh-covrow__text .md-icon { width: 18px; height: 18px; color: var(--md-error); margin-right: 4px; }
+  .sh-covrow__text.is-ok { color: var(--md-on-surface-variant); }
+  @media (max-width: 40rem) {
+    .sh-covrow { grid-template-columns: minmax(0, 1fr); }
+    .sh-covrow__text { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="calendar_view_week" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">シフト表のチェック</h1>
+      <p class="md-lead text-secondary">作ったシフト表を公開する前に、人手が足りない時間帯、勤務と勤務の間が短すぎる日、連続勤務、夜勤明けの勤務、希望休との重なりなどをまとめて確かめます。スタッフごとの勤務日数や夜勤回数も一覧にします。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">シフト表のファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。Excel の表は「CSV で保存」してから選びます。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid" data-min="14">
+          <div class="md-field">
+            <span class="md-field__label form-label" id="file-label">シフト表 <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="file-help" class="md-field__help form-hint">公開する前のシフト表のCSV。表の形（1行に1人・1列に1日）でも、一覧の形（1行に1回の勤務）でもかまいません。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">シフト表のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+            </label>
+            <p id="file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="wish-label">希望休 <span class="md-badge badge" data-kind="optional">任意</span></span>
+            <p id="wish-help" class="md-field__help form-hint">スタッフから出ている休みの希望の一覧。氏名・日付の2列のCSV（1行に1日）。選ぶと、希望休の日に勤務が入っていないか確かめます。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">希望休のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="wish-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="wish-label" aria-describedby="wish-help wish-status">
+            </label>
+            <p id="wish-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">表の形と年月を確かめる</h2>
+          <p class="md-step__desc">ファイルの中身から自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-format"><span class="md-icon" data-icon="help" aria-hidden="true"></span>ファイルの形</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに選択欄が出ます。</p>
+        <div id="map-body" class="md-hidden md-stack" data-gap="24">
+          <fieldset class="md-fieldset">
+            <legend>ファイルの形</legend>
+            <div class="md-choices" data-layout="grid">
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="shape" value="grid" checked>
+                <span class="md-choice__text"><span class="md-choice__label">表の形</span><span class="md-choice__desc">1行に1人、1列に1日。セルに記号や時刻</span></span></label>
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="shape" value="list">
+                <span class="md-choice__text"><span class="md-choice__label">一覧の形</span><span class="md-choice__desc">1行に1回の勤務。日付・氏名・開始・終了の列</span></span></label>
+            </div>
+          </fieldset>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="ym-label">シフト表の年月</span>
+            <p id="ym-help" class="md-field__help form-hint">見出しが「12/1」や「1」のように年（や月）を書いていないとき、何年何月の表として読むかを決めます。表の最初の日がある年月を選んでください。</p>
+            <div class="sh-ym" role="group" aria-labelledby="ym-label" aria-describedby="ym-help">
+              <select id="ym-year" class="md-select form-select" aria-label="年"></select>
+              <select id="ym-month" class="md-select form-select" aria-label="月"></select>
+            </div>
+          </div>
+          <div id="map-cols" class="md-grid" data-min="14"></div>
+          <div id="read-message" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="sec-pattern" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">勤務パターン（記号の意味）を確かめる</h2>
+          <p class="md-step__desc">シフト表の記号ごとに、開始・終了の時刻と休憩を決めます。よくある例を入れてあるので、お店や施設の決まりに合わせて直してください。この内容はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="unknown-box"></div>
+        <p id="pattern-help" class="md-field__help form-hint">「勤務扱い」の意味: <strong>勤務</strong>＝働く日、<strong>夜勤</strong>＝日付をまたぐ夜の勤務（次の日の「明け」を確かめます）、<strong>休み</strong>＝公休・明けなど、<strong>有休</strong>＝年次有給休暇。休憩が空のときは法律の最低限（6時間を超えると45分、8時間を超えると60分）を引きます。時刻で書いたセル（9-18 など）も同じ決まりで休憩を引きます。</p>
+        <div id="pattern-table"></div>
+        <div class="md-actions">
+          <button id="pattern-add" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="add" aria-hidden="true"></span>記号を追加</button>
+          <button id="pattern-reset" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>初めの例に戻す</button>
+        </div>
+        <div id="pattern-message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-req" class="md-step card" data-state="waiting" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">必要な人数を決める</h2>
+          <p class="md-step__desc">時間帯ごとに、最低何人いてほしいかを入れます。平日と土日祝で分けられます。時刻は30分単位、終わりが翌日になる時間帯は「翌7:00」のように書きます。この内容も保存されます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="req-help" class="md-field__help form-hint">「上限」を入れると、それより多い時間帯を「人数過多」として出します（空なら確かめません）。「役割」に言葉を入れると、手順2で選んだ役割・資格の列にその言葉が入っている人だけを数えます（例: 介護福祉士 を 1人以上）。休憩中の人も、勤務の時間内ならいる人として数えます。</p>
+        <div id="req-table"></div>
+        <div class="md-actions">
+          <button id="req-add" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="add" aria-hidden="true"></span>時間帯を追加</button>
+          <button id="req-reset" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>初めの例に戻す</button>
+        </div>
+        <details class="md-details card" id="opt-holidays">
+          <summary><span class="md-icon" data-icon="event" aria-hidden="true"></span>祝日・特別な日<span class="md-details__hint">（土日祝の人数を使う日）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="holidays">土日祝と同じ人数にする日 <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="holidays-help" class="md-field__help form-hint">祝日や年末年始など、平日でも「土日祝」の人数を使う日を1行に1日ずつ書きます（例: 2026/12/31）。日付の後ろにメモを書いてもかまいません。</p>
+              <textarea id="holidays" class="md-textarea form-control" rows="4" aria-describedby="holidays-help" placeholder="例）2026/12/31 年末"></textarea>
+            </div>
+          </div>
+        </details>
+        <div id="req-message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">チェックする</h2>
+          <p class="md-step__desc">ふだんはそのままボタンを押すだけで大丈夫です。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <details class="md-details card" id="opt-rules">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>チェックの決まり<span class="md-details__hint">（インターバル・連続勤務・週の始まり）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="sh-opts">
+              <div class="md-field">
+                <label class="md-field__label form-label" for="opt-interval">勤務と勤務の間（勤務間インターバル）</label>
+                <p id="opt-interval-help" class="md-field__help form-hint">この時間より短いと知らせます。法律では努力義務で、11時間がよく使われる目安です。0 にすると確かめません。</p>
+                <div class="md-input-suffix"><input id="opt-interval" class="md-input md-input--short form-control" type="number" min="0" max="24" step="0.5" inputmode="decimal" aria-describedby="opt-interval-help" value="11"><span>時間以上</span></div>
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="opt-consec">連続勤務の上限</label>
+                <p id="opt-consec-help" class="md-field__help form-hint">この日数を超えて勤務が続くと知らせます。夜勤は始まった日の勤務として数えます。</p>
+                <div class="md-input-suffix"><input id="opt-consec" class="md-input md-input--short form-control" type="number" min="1" max="31" step="1" inputmode="numeric" aria-describedby="opt-consec-help" value="6"><span>日まで</span></div>
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="opt-week">週の始まり</label>
+                <p id="opt-week-help" class="md-field__help form-hint">週40時間を数えるときの区切り。就業規則に決めがなければ日曜です。</p>
+                <select id="opt-week" class="md-select form-select" aria-describedby="opt-week-help"></select>
+              </div>
+            </div>
+            <fieldset class="md-fieldset">
+              <legend>ほかに確かめること</legend>
+              <div class="md-stack" data-gap="8">
+                <label class="md-inline-check"><input id="opt-night" class="md-checkbox form-check-input" type="checkbox" checked>夜勤の次の日は「明」か休みになっているか</label>
+                <label class="md-inline-check"><input id="opt-day8" class="md-checkbox form-check-input" type="checkbox" checked>1日の実働が8時間を超える予定がないか</label>
+                <label class="md-inline-check"><input id="opt-week40" class="md-checkbox form-check-input" type="checkbox" checked>週の実働が40時間を超える予定がないか</label>
+              </div>
+              <p class="md-field__help form-hint" style="margin-top:8px">変形労働時間制などで1日8時間・週40時間を超えてよい決まりがあるときは、外してください。</p>
+            </fieldset>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">シフト表を、勤務パターンと必要な人数に照らして確かめます。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>チェックする</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">問題を押すと、シフト表のその場所に移動して枠で示します。設定を直すと、すぐに計算し直します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">見つかった問題</h3>
+          <div id="problems"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead" id="grid-title">シフト表（スタッフ × 日付）</h3>
+          <div id="legend" class="sh-legend"></div>
+          <div id="grid"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead" id="cov-title">日ごとの人数（30分ごと）</h3>
+          <p class="md-field__help form-hint">帯の濃さが、その時間にいる人数です。<span class="md-chip badge" data-tone="error">斜線（赤）</span> は人数不足、<span class="md-chip badge" data-tone="warning">斜線（黄）</span> は人数過多の時間帯です。</p>
+          <label class="md-inline-check"><input id="cov-only" class="md-checkbox form-check-input" type="checkbox" checked>問題のある日だけ表示する</label>
+          <div id="coverage"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">スタッフ別の集計（かたよりの確認）</h3>
+          <div id="staff"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s7">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">7</span>
+        <div class="md-step__titles">
+          <h2 id="s7" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-check" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>チェック結果.csv を保存</button>
+          <button id="save-staff" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>スタッフ別集計.csv を保存</button>
+          <button id="save-punch" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>予定の打刻データ.csv を保存</button>
+        </div>
+        <p class="md-field__help form-hint">「予定の打刻データ.csv」は、シフトの予定を 日付・氏名・出勤・退勤・休憩 の形にしたものです。<a href="kintai.html">勤怠の集計</a> でこのファイルを選ぶと列が自動で選ばれ、予定どおりに働いた場合の残業・深夜の時間を前もって確かめられます。</p>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で <code>samples/shift/シフト表_2026年12月.csv</code> を、希望休の欄に <code>samples/shift/希望休.csv</code> を選んでください。見本には、まだ登録していない記号「研」（研修）が入っています。手順3で時刻を登録してから確かめます。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-format" class="md-modal" aria-labelledby="dlg-format-title">
+    <div class="md-modal__head"><h2 id="dlg-format-title" class="md-modal__title">読めるファイルの形（どちらかの形）</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><strong>表の形</strong>: 1行に1人、1列に1日。見出しは <span class="sh-code">12/1</span> や <span class="sh-code">1</span>。セルには <span class="sh-code">早</span> <span class="sh-code">夜</span> <span class="sh-code">休</span> などの記号か、<span class="sh-code">9:00-18:00</span> <span class="sh-code">9-18</span> のような時刻を書きます。見出しの下に曜日の行があってもかまいません。</li>
+        <li><strong>一覧の形</strong>: 1行に1回の勤務。日付・氏名・開始・終了の列（休憩・役割の列は任意）。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：確かめる内容</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="error">人数不足</span> 必要な人数に届かない時間帯（30分ごとに数えます）。上限を決めれば <span class="md-chip badge" data-tone="warning">人数過多</span> も</li>
+        <li><span class="md-chip badge" data-tone="error">勤務間インターバル</span> 勤務の終わりから次の勤務までが短い（初期値 11時間。法律上は努力義務の目安）</li>
+        <li><span class="md-chip badge" data-tone="error">連続勤務</span> 決めた日数（初期値 6日）を超えて続く勤務</li>
+        <li><span class="md-chip badge" data-tone="error">法定労働時間を超える予定</span> 1日の実働が8時間、週の実働が40時間を超える予定</li>
+        <li><span class="md-chip badge" data-tone="error">夜勤明けの勤務</span> 夜勤の次の日に「明」か休み以外が入っている</li>
+        <li><span class="md-chip badge" data-tone="error">希望休との衝突</span> 希望休の日に勤務が入っている（希望休のファイルを選んだとき）</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/kintai.js"></script>
+<script src="../assets/js/apps/shift.js"></script>
+<script src="../assets/js/ui/shift.js"></script>
+</body>
+</html>

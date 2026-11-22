@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>差し込み文書の一括作成｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+/* ---- このページだけの部品 ---- */
+/* 行の一覧 */
+.sz-pick-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.sz-pick-bar .md-field { flex: 1 1 16rem; }
+.sz-pick-bar .md-btn { flex: none; }
+.sz-pick-count { font-weight: 700; }
+.sz-list { max-height: 28rem; overflow: auto; }
+.sz-list .md-table td { vertical-align: top; }
+.sz-list .md-table th, .sz-list .md-table td { padding-left: 10px; padding-right: 10px; }
+.sz-list .md-table thead th { position: sticky; top: 0; z-index: 2; background: var(--md-surface-container); }
+.sz-list .md-table td:first-child { width: 56px; padding-top: 4px; padding-bottom: 4px; }
+.sz-list .md-inline-check { min-height: 44px; min-width: 44px; justify-content: center; }
+.sz-list tr.is-off td:not(:first-child) { opacity: .6; }
+.sz-list .is-blank { color: var(--md-on-surface-variant); }
+
+/* ひな形の保存・読み込み */
+.sz-saved { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.sz-saved .md-field { flex: 1 1 16rem; }
+.sz-saved .md-btn { flex: none; }
+.sz-file-btn { position: relative; }
+.sz-file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.sz-file-btn:focus-within { outline: 3px solid var(--md-primary); outline-offset: 2px; }
+.sz-notice { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.sz-notice .md-banner { flex: 1 1 20rem; }
+
+/* 文面の編集と見た目（広い画面では左右に並べる） */
+.sz-layout { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
+.sz-layout__side { min-width: 0; }
+@media (min-width: 64rem) {
+  .sz-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .sz-layout__side { position: sticky; top: 80px; max-height: calc(100vh - 96px); overflow: auto; }
+}
+.sz-editor > * + * { margin-top: 20px; }
+.sz-chips-box { padding: 12px; border-radius: var(--md-shape-m); background: var(--md-surface-container-low); border: 1px solid var(--md-outline-variant); }
+.sz-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.sz-chip { min-height: 44px; padding: 0 14px; border-radius: var(--md-shape-s); border: 1px solid var(--md-outline); background: var(--md-surface-container-lowest); color: var(--md-on-surface);
+  font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; max-width: 100%; overflow-wrap: anywhere; text-align: left; }
+.sz-chip:hover { border-color: var(--md-primary); background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+.sz-chip:focus-visible { outline: 3px solid var(--md-primary); outline-offset: 2px; }
+.sz-chip-fmt { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-top: 8px; font-size: 15px; }
+.sz-chip-fmt .md-select { width: auto; min-width: 12rem; }
+.sz-row2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(13rem, 100%), 1fr)); }
+.sz-mono { font-family: var(--md-font); }
+.sz-map-wrap code { overflow-wrap: anywhere; }
+@media (max-width: 40rem) {
+  .sz-saved .md-btn, .sz-pick-bar .md-btn { flex: 1 1 100%; }
+}
+.sz-help-list { margin: 8px 0 0; padding-left: 1.25em; }
+.sz-help-list li + li { margin-top: 6px; }
+.sz-help-list code, .md-field__help code { font-size: .95em; }
+
+/* 見た目の確認 */
+.sz-preview-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.sz-preview-bar .md-field { flex: 1 1 14rem; min-width: 0; }
+.sz-preview-bar .md-btn { flex: none; }
+.sz-preview { position: relative; overflow: hidden; border-radius: var(--md-shape-m); background: var(--md-surface-container-high); padding: 12px; }
+.sz-preview__inner { transform-origin: top left; margin: 0 auto; }
+.sz-preview .lt-sheet { box-shadow: var(--md-elev-2); }
+.sz-print-area { display: none; }
+
+/* ---- 手紙（紙のイメージ。画面でも印刷でも白地に黒） ---- */
+.lt-sheet { width: 794px; min-height: 1123px; padding: 76px 76px 60px; background: #fff; color: #000; font-size: 14.5px; line-height: 1.85; letter-spacing: .02em;
+  display: flex; flex-direction: column; overflow-wrap: anywhere; }
+.lt-sheet[data-font="mincho"] { font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "MS PMincho", "MS Mincho", serif; }
+.lt-sheet[data-font="gothic"] { font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "YuGothic", "Meiryo", "Noto Sans JP", sans-serif; }
+.lt-sheet * { color: #000; }
+.lt-sheet p { margin: 0; }
+.lt-date { text-align: right; }
+.lt-to { margin-top: 12px; max-width: 70%; }
+.lt-to p { white-space: pre-wrap; }
+.lt-to .lt-blank { height: .9em; }
+.lt-to .lt-name { font-size: 16.5px; }
+.lt-to .lt-honor { margin-left: .5em; }
+.lt-from { margin-top: 18px; margin-left: auto; text-align: right; max-width: 60%; font-size: 13.5px; line-height: 1.7; }
+.lt-from .lt-from__co { font-size: 15px; }
+.lt-subject { margin: 44px 0 28px; text-align: center; font-size: 17px; font-weight: 700; }
+.lt-body { display: flex; flex-direction: column; gap: .9em; }
+.lt-body p { white-space: pre-wrap; }
+.lt-body .lt-right { text-align: right; }
+.lt-ki-head { margin-top: 1.6em; text-align: center; }
+.lt-ki { margin: 1em 0 0 3em; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: .3em 1.5em; }
+.lt-ki dt, .lt-ki dd { margin: 0; white-space: pre-wrap; }
+.lt-ki dd.lt-ki__only { grid-column: 1 / -1; }
+.lt-closing { margin-top: 1.2em; text-align: right; }
+.lt-empty { margin: auto; color: #666 !important; font-size: 16px; }
+
+@page { size: A4; margin: 20mm 20mm; }
+@media print {
+  html, body { background: #fff !important; color: #000 !important; }
+  body { display: block; min-height: 0; }
+  body > *:not(#print-area) { display: none !important; }
+  .sz-print-area { display: block !important; }
+  .sz-print-area .lt-sheet { width: auto; min-height: 0; padding: 0; box-shadow: none; break-after: page; page-break-after: always; }
+  .sz-print-area .lt-sheet:last-child { break-after: auto; page-break-after: auto; }
+  .sz-print-area[data-only] .lt-sheet { display: none; }
+  .sz-print-area[data-only] .lt-sheet.is-only { display: flex; break-after: auto; page-break-after: auto; }
+}
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="drafts" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">差し込み文書の一括作成</h1>
+      <p class="md-lead text-secondary">送付先の一覧（CSV）と1枚の文面から、相手ごとの案内状やお願い状をまとめて作ります。会社名・金額・日付などを1通ずつ差し込み、印刷やPDFでの保存ができます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">送付先の一覧を選ぶ</h2>
+          <p class="md-step__desc">1行に1通分の宛先や金額・日付が並んだCSVです。ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">送付先の一覧 <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">1行目が見出し（列名）のCSVなら、列はいくつでもかまいません。見出しの名前が、そのまま差し込み欄の名前になります。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">送付先の一覧のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-pick" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">文書を作る相手を選ぶ</h2>
+          <p class="md-step__desc">はじめは全部に印が付いています。今回は送らない相手の印を外してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="pick-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに一覧が出ます。</p>
+        <div id="pick-wrap" class="md-hidden md-stack" data-gap="8">
+          <div class="sz-pick-bar">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="search">一覧から探す</label>
+              <p id="search-help" class="md-field__help form-hint">会社名や氏名の一部を入れると、その行だけを表示します。空白で区切ると、全部を含む行になります。</p>
+              <input id="search" class="md-input form-control" type="search" autocomplete="off" aria-describedby="search-help">
+            </div>
+            <button id="pick-all" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="check" data-size="20" aria-hidden="true"></span>すべて選ぶ</button>
+            <button id="pick-none" class="md-btn btn" data-variant="outlined" type="button">すべて外す</button>
+          </div>
+          <p id="pick-count" class="sz-pick-count" aria-live="polite"></p>
+          <div id="pick-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-tpl" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">ひな形を選ぶ</h2>
+          <p class="md-step__desc">もとにする文面を選ぶと、手順4に入ります。差出人の欄はそのまま残ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>どの文書を作りますか？</legend>
+          <div id="presets" class="md-choices" data-layout="grid"></div>
+        </fieldset>
+        <div id="preset-msg" aria-live="polite"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">保存したひな形</h3>
+          <p class="md-field__help form-hint">手順4で名前を付けて保存したひな形や、同僚からもらったひな形のファイル（.json）を使えます。</p>
+          <div class="sz-saved">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="saved">保存したひな形</label>
+              <select id="saved" class="md-select form-select"></select>
+            </div>
+            <button id="saved-load" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>呼び出す</button>
+            <button id="saved-delete" class="md-btn btn" data-variant="danger" type="button"><span class="md-icon" data-icon="delete" data-size="20" aria-hidden="true"></span>削除</button>
+            <label class="md-btn sz-file-btn btn" data-variant="outlined"><span class="md-icon" data-icon="upload" data-size="20" aria-hidden="true"></span>ファイルから読み込む<input id="import" type="file" accept=".json,application/json" aria-label="ひな形のファイル（.json）を読み込む"></label>
+          </div>
+          <div id="saved-msg" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-edit" class="md-step card" data-state="waiting" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">文面を作る</h2>
+          <p class="md-step__desc">書いた内容は、このパソコンに自動で保存されます。右（スマートフォンでは下）に、選んだ相手の1通がそのまま出ます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-field"><span class="md-icon" data-icon="help" aria-hidden="true"></span>差し込み欄の書き方</button><button type="button" class="md-help-btn" data-modal="dlg-text"><span class="md-icon" data-icon="help" aria-hidden="true"></span>本文の決まり</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="sz-layout">
+          <div class="sz-editor">
+            <div class="sz-chips-box" role="group" aria-labelledby="chips-title">
+              <p id="chips-title" class="md-subhead" style="font-size:16px">差し込む列</p>
+              <p id="chips-help" class="md-field__help form-hint">ボタンを押すと、最後にさわった欄のカーソルの位置に <code>{{列名}}</code> が入ります。</p>
+              <div class="sz-chip-fmt">
+                <label for="chip-fmt">書式</label>
+                <select id="chip-fmt" class="md-select form-select">
+                  <option value="">そのまま</option>
+                  <option value="円">円（12,345円）</option>
+                  <option value="和暦">和暦（令和8年11月16日）</option>
+                  <option value="西暦">西暦（2026年11月16日）</option>
+                </select>
+              </div>
+              <div id="chips" class="sz-chips"><p class="md-field__help form-hint">手順1でファイルを選ぶと、列名のボタンが出ます。</p></div>
+            </div>
+
+            <fieldset class="md-fieldset">
+              <legend>発信日（右上の日付）</legend>
+              <div class="sz-row2">
+                <div class="md-field">
+                  <label class="md-field__label form-label" for="date-mode">日付の決め方</label>
+                  <select id="date-mode" class="md-select form-select">
+                    <option value="today">印刷する日の日付</option>
+                    <option value="fixed">日付を指定する</option>
+                    <option value="none">日付を入れない</option>
+                  </select>
+                </div>
+                <div class="md-field" id="date-value-field">
+                  <label class="md-field__label form-label" for="date-value">日付</label>
+                  <input id="date-value" class="md-input form-control" type="date">
+                </div>
+                <div class="md-field">
+                  <label class="md-field__label form-label" for="date-era">書き方</label>
+                  <select id="date-era" class="md-select form-select">
+                    <option value="wareki">和暦（令和8年11月16日）</option>
+                    <option value="seireki">西暦（2026年11月16日）</option>
+                  </select>
+                </div>
+              </div>
+            </fieldset>
+
+            <div class="md-field">
+              <label class="md-field__label form-label" for="to-lines">宛名（左上）</label>
+              <p id="to-lines-help" class="md-field__help form-hint">1行ずつ書きます。差し込む値がすべて空の行は、行ごと省きます（部署がない相手など）。</p>
+              <textarea id="to-lines" class="md-textarea sz-mono form-control" rows="6" spellcheck="false" aria-describedby="to-lines-help" data-tpl></textarea>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="to-honor">敬称（様・御中）の付け方</label>
+              <p id="to-honor-help" class="md-field__help form-hint">宛名の最後の行に付けます。自動では、氏名の列が入った行なら「様」、会社名や部署の行なら「御中」です。ファイルに「敬称」の列があれば、その値が優先です。自分で「様」と書いた行や、差し込み欄のない行には付けません。（宛名ラベル・封筒の印刷と同じ決まりです）</p>
+              <select id="to-honor" class="md-select form-select" aria-describedby="to-honor-help">
+                <option value="auto">自動（様と御中を使い分ける）</option>
+                <option value="sama">いつも「様」</option>
+                <option value="none">付けない</option>
+              </select>
+            </div>
+
+            <fieldset class="md-fieldset">
+              <legend>差出人（右側）</legend>
+              <p class="md-field__help form-hint" style="margin-bottom:8px">自社の情報です。ひな形を選び直しても残ります。</p>
+              <div class="sz-row2">
+                <div class="md-field"><label class="md-field__label form-label" for="from-company">会社名</label><input id="from-company" class="md-input form-control" type="text" autocomplete="organization"></div>
+                <div class="md-field"><label class="md-field__label form-label" for="from-zip">郵便番号</label><input id="from-zip" class="md-input form-control" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="100-0000"></div>
+                <div class="md-field"><label class="md-field__label form-label" for="from-tel">電話番号</label><input id="from-tel" class="md-input form-control" type="tel" autocomplete="tel" placeholder="03-0000-0000"></div>
+                <div class="md-field"><label class="md-field__label form-label" for="from-person">担当</label><input id="from-person" class="md-input form-control" type="text" placeholder="経理部 鈴木"></div>
+              </div>
+              <div class="md-field" style="margin-top:16px"><label class="md-field__label form-label" for="from-address">住所</label><input id="from-address" class="md-input form-control" type="text" autocomplete="street-address"></div>
+              <div class="md-actions" style="margin-top:12px">
+                <button id="fill-sample" class="md-btn btn" data-variant="text" data-size="s" type="button"><span class="md-icon" data-icon="edit" data-size="20" aria-hidden="true"></span>見本の差出人を入れる</button>
+              </div>
+            </fieldset>
+
+            <div class="md-field">
+              <label class="md-field__label form-label" for="subject">件名（中央に太字）</label>
+              <input id="subject" class="md-input form-control" type="text" data-tpl>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="body">本文</label>
+              <p id="body-help" class="md-field__help form-hint">改行はそのまま。空の行で段落を分けます。行の先頭に「＞」を書くと右に寄せます（例: <code>＞敬具</code>）。</p>
+              <textarea id="body" class="md-textarea form-control" rows="12" aria-describedby="body-help" data-tpl></textarea>
+            </div>
+            <div class="md-stack" data-gap="8">
+              <label class="md-inline-check"><input id="ki-on" class="md-checkbox form-check-input" type="checkbox">記書き（「記」のあとに項目を並べる）を使う</label>
+              <div id="ki-wrap" class="md-stack" data-gap="8">
+                <div class="md-field">
+                  <label class="md-field__label form-label" for="ki">記書きの項目</label>
+                  <p id="ki-help" class="md-field__help form-hint">1行に1項目、「項目：値」の形で書きます（例: <code>お支払期限：{{期日:和暦}}</code>）。</p>
+                  <textarea id="ki" class="md-textarea form-control" rows="4" aria-describedby="ki-help" data-tpl></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="closing">結び（最後に右寄せ）</label>
+              <p id="closing-help" class="md-field__help form-hint">記書きを使うときは、ふつう「以上」です。いらないときは空にします。</p>
+              <input id="closing" class="md-input md-input--short form-control" type="text" aria-describedby="closing-help" data-tpl>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="font">文字の形</label>
+              <select id="font" class="md-select md-input--short form-select">
+                <option value="mincho">明朝体（手紙向き）</option>
+                <option value="gothic">ゴシック体</option>
+              </select>
+            </div>
+
+            <div class="md-stack" data-gap="8">
+              <h3 class="md-subhead">差し込み欄と列の対応</h3>
+              <p class="md-field__help form-hint">文面で使っている差し込み欄ごとに、ファイルのどの列の値を入れるかです。列名と同じ名前の欄は自動で決まります。</p>
+              <div id="map" class="sz-map-wrap"></div>
+            </div>
+            <div id="check-msg" aria-live="polite"></div>
+          </div>
+
+          <div class="sz-layout__side md-stack" data-gap="8">
+            <h3 class="md-subhead">見た目（その場で変わります）</h3>
+            <div class="sz-preview-bar">
+              <div class="md-field">
+                <label class="md-field__label form-label" for="live-pick">表示する相手</label>
+                <select id="live-pick" class="md-select form-select"></select>
+              </div>
+            </div>
+            <div id="live-preview" class="sz-preview" role="region" aria-label="文書の見た目（編集中）"><div class="sz-preview__inner" id="live-inner"></div></div>
+          </div>
+        </div>
+
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">このひな形を保存・共有する</h3>
+          <p class="md-field__help form-hint">名前を付けて保存すると、手順3の「保存したひな形」から呼び出せます。ファイルに書き出すと、同僚に渡して同じ文面を使ってもらえます（送付先の一覧は入りません）。</p>
+          <div class="sz-saved">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="save-name">ひな形の名前</label>
+              <input id="save-name" class="md-input form-control" type="text" autocomplete="off" placeholder="例）お支払いのお願い（11月）">
+            </div>
+            <button id="save-as" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="check" data-size="20" aria-hidden="true"></span>名前を付けて保存</button>
+            <button id="export" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="download" data-size="20" aria-hidden="true"></span>ファイルに書き出す</button>
+          </div>
+          <div id="save-msg" aria-live="polite"></div>
+        </div>
+
+        <div class="md-cta">
+          <p class="md-cta__text">選んだ相手の数だけ、1通ずつ文書を作ります。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>文書を作る</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="step-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">確かめて印刷する</h2>
+          <p class="md-step__desc">1通ずつ見た目を確かめられます。印刷の画面で「PDFに保存」を選ぶとPDFになります。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-pdf"><span class="md-icon" data-icon="help" aria-hidden="true"></span>PDFにするには</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div id="warn"></div>
+        <div class="md-stack" data-gap="8">
+          <div class="sz-preview-bar">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="pick">表示する文書</label>
+              <select id="pick" class="md-select form-select"></select>
+            </div>
+            <button id="prev" class="md-btn btn" data-variant="outlined" type="button" aria-label="前の文書"><span class="md-icon" data-icon="arrow_back" aria-hidden="true"></span>前へ</button>
+            <button id="next" class="md-btn btn" data-variant="outlined" type="button" aria-label="次の文書">次へ<span class="md-icon" data-icon="arrow_forward" aria-hidden="true"></span></button>
+          </div>
+          <div id="preview" class="sz-preview" role="region" aria-label="文書の見た目"><div class="sz-preview__inner" id="preview-inner"></div></div>
+        </div>
+        <div class="md-actions">
+          <button id="print-all" class="md-btn btn" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>印刷・PDFで保存（全部）</button>
+          <button id="print-one" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>表示中の1通だけ印刷</button>
+        </div>
+        <p class="md-field__help form-hint">印刷の画面で、用紙サイズはA4・縦を選んでください。送信先を「PDFに保存」にするとPDFファイルになります。</p>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>手順1で <code>samples/sashikomi/送付先リスト.csv</code> を選び、手順3で「お支払いのお願い」を選んでください。見本の会社・住所はすべて架空のものです。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-field" class="md-modal" aria-labelledby="dlg-field-title">
+    <div class="md-modal__head"><h2 id="dlg-field-title" class="md-modal__title">差し込み欄の書き方</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><code>{{列名}}</code> と書いたところに、その行の値が入ります（例: <code>{{会社名}}</code>）。手順4の列名のボタンを押すと、カーソルの位置に入ります。</li>
+        <li><code>{{金額:円}}</code> … 12345 を「12,345円」にします。</li>
+        <li><code>{{期日:和暦}}</code> … 2026/11/30 を「令和8年11月30日」にします。<code>{{期日:西暦}}</code> なら「2026年11月30日」です。</li>
+        <li>金額や日付として読めない値は、書式を付けずにそのまま印刷します（手順5で知らせます）。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-text" class="md-modal" aria-labelledby="dlg-text-title">
+    <div class="md-modal__head"><h2 id="dlg-text-title" class="md-modal__title">本文の決まり（これだけです）</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>改行は、そのまま改行になります。</li>
+        <li>空の行をはさむと、段落が分かれて少し間があきます。</li>
+        <li>行の先頭に「＞」を書くと、その行は右に寄せます（「敬具」などに使います）。</li>
+        <li>段落の最初の1字下げは、全角の空白を入れてください。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-pdf" class="md-modal" aria-labelledby="dlg-pdf-title">
+    <div class="md-modal__head"><h2 id="dlg-pdf-title" class="md-modal__title">PDFにするには</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>手順5の「印刷・PDFで保存」を押すと印刷の画面が開きます。送信先（プリンター）で「PDFに保存」を選ぶとPDFファイルになります。用紙はA4縦で、1通ごとに改ページされます。きれいに出ないときは、印刷の画面の「詳細設定」で「ヘッダーとフッター」のチェックを外してください。</p>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<div id="print-area" class="sz-print-area"></div>
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/atena.js"></script>
+<script src="../assets/js/apps/sashikomi.js"></script>
+<script src="../assets/js/ui/sashikomi.js"></script>
+</body>
+</html>

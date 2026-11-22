@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>売上の前年比較｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* この画面だけで使う部品（色は md.css のトークンから） */
+  .zn-terms { margin: 8px 0 0; padding-left: 1.25em; }
+  .zn-terms li + li { margin-top: 6px; }
+  .zn-nums { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr)); }
+  .zn-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+  .zn-toolbar .md-field { flex: 1 1 12rem; min-width: 0; }
+  .zn-legend { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .zn-sub { display: block; font-size: 13px; font-weight: 400; line-height: 1.5; color: var(--md-on-surface-variant); white-space: normal; }
+  .zn-check-text { display: flex; flex-direction: column; }
+  .zn-check-text small { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .zn-files { margin: 8px 0 0; padding-left: 1.25em; }
+  .md-choice[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+  .zn-up { color: var(--md-success, var(--md-primary)); }
+  .zn-down { color: var(--md-error); }
+  .md-table tr[data-muted="1"] td, .md-table tr[data-muted="1"] th { color: var(--md-on-surface-variant); }
+  .zn-two { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr)); }
+
+  /* グラフ */
+  .zn-chart { overflow-x: auto; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); padding: 8px 4px 4px; }
+  .zn-chart svg { display: block; width: 100%; height: auto; min-width: 34rem; }
+  .zn-chart .zn-grid { stroke: var(--md-outline-variant); stroke-width: 1; }
+  .zn-chart .zn-axis { fill: var(--md-on-surface-variant); font-size: 12px; font-family: var(--md-font-num); }
+  .zn-chart .zn-bar-cur { fill: var(--md-primary); }
+  .zn-chart .zn-bar-prev { fill: color-mix(in srgb, var(--md-on-surface-variant) 35%, var(--md-surface-container-lowest)); }
+  .zn-chart .zn-bar-prev[data-ref="1"] { fill: none; stroke: var(--md-outline); stroke-width: 1; stroke-dasharray: 3 3; }
+  .zn-chart rect:hover { opacity: .8; }
+  .zn-chart .zn-line { fill: none; stroke: var(--md-error); stroke-width: 2; stroke-linejoin: round; }
+  .zn-chart .zn-dot { fill: var(--md-error); stroke: var(--md-surface-container-lowest); stroke-width: 1.5; }
+  .zn-chart .zn-base { stroke: var(--md-error); stroke-width: 1; stroke-dasharray: 4 4; opacity: .7; }
+  .zn-chart .zn-base-text { fill: var(--md-error); font-size: 12px; }
+  .zn-key { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0 0; font-size: 14px; color: var(--md-on-surface-variant); }
+  .zn-key span { display: inline-flex; align-items: center; gap: 6px; }
+  .zn-key i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; }
+  .zn-key i[data-k="cur"] { background: var(--md-primary); }
+  .zn-key i[data-k="prev"] { background: color-mix(in srgb, var(--md-on-surface-variant) 35%, var(--md-surface-container-lowest)); }
+  .zn-key i[data-k="ref"] { border: 1px dashed var(--md-outline); }
+  .zn-key i[data-k="line"] { height: 3px; border-radius: 0; background: var(--md-error); }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="bar_chart" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">売上の前年比較</h1>
+      <p class="md-lead text-secondary">売上明細から、今年と前年の売上を月ごとに並べて、差額・前年比・累計の前年比を出します。商品・取引先・担当者などに分けると、どれが増減を動かしたか（寄与度）や、新しく売れたもの・売れなくなったものも分かります。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">ファイルを選ぶ</h2>
+          <p class="md-step__desc">2年分の売上明細を1つ、または今年と前年の2つを選んでください（まとめて選べます）。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-files"><span class="md-icon" data-icon="help" aria-hidden="true"></span>読めるファイル</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <label class="md-dropzone">
+          <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+          <span class="md-dropzone__main">売上明細のCSV（1つ〜いくつでも）</span>
+          <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+          <input id="file" type="file" accept=".csv,.txt,.tsv" multiple aria-describedby="file-status">
+        </label>
+        <div id="file-status" class="md-file-status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-wrap" class="md-hidden md-stack" data-gap="8">
+          <div class="md-grid" data-min="12" id="box-unit"></div>
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>数える列</h3>
+          <p class="md-field__help form-hint">使える列だけで大丈夫です。金額も数量もなければ、行の数（件数）で比べます。</p>
+          <div class="md-grid" data-min="12" id="box-nums"></div>
+          <div id="cost-mode-wrap" class="md-hidden">
+            <fieldset class="md-fieldset">
+              <legend>原価の列に入っているのは</legend>
+              <div class="md-choices" data-layout="grid">
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="costMode" value="total" checked>
+                  <span class="md-choice__text"><span class="md-choice__label">その行の原価の合計</span><span class="md-choice__desc">粗利 = 金額 − 原価</span></span></label>
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="costMode" value="unit">
+                  <span class="md-choice__text"><span class="md-choice__label">1個あたりの原価</span><span class="md-choice__desc">粗利 = 金額 − 原価 × 数量</span></span></label>
+              </div>
+            </fieldset>
+          </div>
+          <p id="map-other" class="md-field__help form-hint" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">比べ方を選んで、比べる</h2>
+          <p class="md-step__desc">設定はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-rules"><span class="md-icon" data-icon="help" aria-hidden="true"></span>数え方</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="zn-nums">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="start-month">期首の月</label>
+            <p id="start-month-help" class="md-field__help form-hint">1年の始まりの月。暦どおりなら1月</p>
+            <select id="start-month" class="md-select form-select" aria-describedby="start-month-help"></select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="fy">今年として比べる年</label>
+            <p id="fy-help" class="md-field__help form-hint">はじめはデータの最後の日を含む年。前年はその1年前です</p>
+            <select id="fy" class="md-select form-select" aria-describedby="fy-help"></select>
+          </div>
+        </div>
+        <fieldset class="md-fieldset">
+          <legend>何を比べますか？</legend>
+          <div class="md-choices" data-layout="grid" id="metric-choices"></div>
+        </fieldset>
+        <label class="md-inline-check"><input id="same-range" class="md-checkbox form-check-input" type="checkbox" checked>
+          <span class="zn-check-text"><span>今年が途中までのときは、前年も同じ日までで比べる（おすすめ）</span><small>今年の最後の日より後の月は比べず、最後の月は前年も同じ日まででそろえます。外すと12か月をそのまま比べます</small></span></label>
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（営業日で割った1日あたり・増減の上位の件数）</span></summary>
+          <div class="md-details__body card-body">
+            <label class="md-inline-check"><input id="use-days" class="md-checkbox form-check-input" type="checkbox">
+              <span class="zn-check-text"><span>営業日の数で割った「1日あたり」も比べる</span><small>土日・祝日の並びで、年によって営業日の数が違うのを除いて比べます</small></span></label>
+            <div id="days-wrap" class="md-hidden md-stack" data-gap="8">
+              <fieldset class="md-fieldset">
+                <legend>休みの曜日</legend>
+                <div class="md-choices" data-layout="grid">
+                  <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="weekend" value="06" checked>
+                    <span class="md-choice__text"><span class="md-choice__label">土曜と日曜</span></span></label>
+                  <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="weekend" value="0">
+                    <span class="md-choice__text"><span class="md-choice__label">日曜だけ</span></span></label>
+                  <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="weekend" value="">
+                    <span class="md-choice__text"><span class="md-choice__label">なし（毎日営業）</span></span></label>
+                </div>
+              </fieldset>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="holidays">休みの日の一覧 <span class="md-badge badge" data-kind="optional">任意</span></label>
+                <p id="holidays-help" class="md-field__help form-hint">空なら国民の祝日を計算して休みにします（2020〜2099年）。「<a href="calendar.html">会社カレンダーの作成</a>」で保存した休みの日の一覧を貼るか、下でファイルを選ぶと、その日を休みにします（祝日も一覧に書いてください）。1行に1日、「2026/11/23 勤労感謝の日」のように書きます。</p>
+                <textarea id="holidays" class="md-textarea form-control" rows="5" aria-describedby="holidays-help" placeholder="2026/12/29 年末休み"></textarea>
+              </div>
+              <label class="md-dropzone">
+                <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+                <span class="md-dropzone__main">休みの日の一覧のファイル（任意）</span>
+                <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+                <input id="holiday-file" type="file" accept=".csv,.txt,.tsv" aria-describedby="holiday-status">
+              </label>
+              <p id="holiday-status" class="md-file-status" aria-live="polite"></p>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="top-n">増えた・減った上位の件数</label>
+              <p id="top-n-help" class="md-field__help form-hint">寄与度の表に出す件数（3〜100）</p>
+              <input id="top-n" class="md-input md-input--short form-control" type="number" min="3" max="100" step="1" inputmode="numeric" value="10" aria-describedby="top-n-help">
+            </div>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">今年と前年を月ごとに並べ、差額と前年比を出します。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>比べる</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc" id="result-desc"></p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <h3 class="md-subhead">月ごとのグラフ（今年と前年の棒、前年比の折れ線）</h3>
+        <div id="chart"></div>
+        <h3 class="md-subhead">月ごとの前年比</h3>
+        <div id="month-table"></div>
+        <div id="unit-wrap" class="md-hidden md-stack" data-gap="16">
+          <h3 class="md-subhead" id="mover-title">増減を動かしたもの（寄与度）</h3>
+          <p class="zn-legend">寄与度は、全体の前年比を何ポイント動かしたかです。全部を足すと全体の増減になります。</p>
+          <div class="zn-two">
+            <div><p class="md-subhead">増えた上位</p><div id="ups"></div></div>
+            <div><p class="md-subhead">減った上位</p><div id="downs"></div></div>
+          </div>
+          <div id="newlost"></div>
+          <h3 class="md-subhead" id="unit-title">一覧</h3>
+          <div class="zn-toolbar">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-status">状態で絞り込む</label>
+              <select id="f-status" class="md-select form-select"></select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-word">名前で探す</label>
+              <input id="f-word" class="md-input form-control" type="search" autocomplete="off">
+            </div>
+          </div>
+          <div id="unit-table"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-month" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>月別前年比.csv を保存</button>
+          <button id="save-unit" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>単位別前年比.csv を保存</button>
+          <button id="save-contrib" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>寄与度.csv を保存</button>
+        </div>
+        <ul class="zn-terms zn-legend">
+          <li><strong>月別前年比.csv</strong>: 月ごとの今年・前年・差額・前年比・累計（1日あたりを選んだときは営業日数も）です。</li>
+          <li><strong>単位別前年比.csv</strong>: 手順2で選んだ単位ごとの今年・前年・差額・前年比・寄与度・状態です（単位を選ばないときは全体の1行）。</li>
+          <li><strong>寄与度.csv</strong>: 増えた上位・減った上位と、新しく売れたもの・売れなくなったものの一覧です。</li>
+        </ul>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で <code>samples/zennen/売上明細_2025年4月〜2026年11月.csv</code> を選んでください（2025年度と、11/18 までの2026年度が入っています）。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-files" class="md-modal" aria-labelledby="dlg-files-title">
+    <div class="md-modal__head"><h2 id="dlg-files-title" class="md-modal__title">読めるファイル</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>2年分が1つのファイルに入っていても、今年と前年の2つのファイルに分かれていても読めます。「ABC分析」と同じ売上明細や、「在庫の受払集計」の受払の記録（区分の列あり）も、そのまま使えます。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-rules" class="md-modal" aria-labelledby="dlg-rules-title">
+    <div class="md-modal__head"><h2 id="dlg-rules-title" class="md-modal__title">数え方</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><strong>今年・前年</strong>: 期首の月から12か月を1年とします（期首が4月なら、2026年度 = 2026年4月〜2027年3月）。はじめはデータの最後の日を含む年が「今年」です。</li>
+        <li><strong>途中までの年</strong>: 今年のデータが11月18日までなら、12月から後は比べません（前年の値は参考に出します）。11月は前年も18日まででそろえます。</li>
+        <li><strong>前年比</strong> = 今年 ÷ 前年 × 100。100%より上なら増えています。前年が0のときは出しません。</li>
+        <li><strong>寄与度</strong>（ポイント）= その商品などの増減 ÷ 前年の合計 × 100。全部の寄与度を足すと、全体の増減（前年比 − 100）になります。たとえば全体が前年比95%（−5ポイント）で、ある商品の寄与度が −8 なら、その商品がなければ増えていた、と読めます。</li>
+        <li><strong>1日あたり</strong>: 土日や祝日の並びで営業日の数は年ごとに変わります。月の売上を営業日の数で割って比べると、その違いを除けます（手順3の詳しい設定）。</li>
+        <li>返品などのマイナスの行は差し引きます。「合計」「総計」と書かれた行は数えません。</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/zaiko.js"></script>
+<script src="../assets/js/apps/abc.js"></script>
+<script src="../assets/js/apps/kigen.js"></script>
+<script src="../assets/js/apps/calendar.js"></script>
+<script src="../assets/js/apps/zennen.js"></script>
+<script src="../assets/js/ui/zennen.js"></script>
+</body>
+</html>

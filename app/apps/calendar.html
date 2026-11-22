@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>会社カレンダーの作成｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* このページだけの部品: 曜日の選択、会社の休日の一覧、画面の12か月、印刷用のカレンダー */
+  .cl-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+  .cl-row > .md-field { flex: 1 1 12rem; min-width: 0; }
+  .cl-row .md-input, .cl-row .md-select { width: 100%; }
+  .cl-weekdays { display: flex; flex-wrap: wrap; gap: 4px 8px; }
+  .cl-weekdays .md-inline-check { min-width: 64px; }
+  .cl-items { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .cl-item { min-width: 0; padding: 12px 16px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-low); display: grid; gap: 8px 12px; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; align-items: end; }
+  .cl-item[data-kind="work"] { box-shadow: inset 4px 0 0 var(--md-primary); }
+  .cl-item .md-field { gap: 4px; }
+  .cl-item .md-field__label { font-size: 14px; }
+  .cl-item .md-input, .cl-item .md-select { width: 100%; }
+  .cl-item__src { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--md-on-surface-variant); }
+  @media (max-width: 44rem) { .cl-item { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cl-item .cl-del { grid-column: 1 / -1; justify-self: end; } }
+  .cl-count { font-size: 14px; color: var(--md-on-surface-variant); margin: 0; }
+  .cl-checks { display: flex; flex-direction: column; gap: 8px; }
+  .cl-checks .md-banner { margin: 0; }
+
+  /* 画面の12か月 */
+  .cl-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+  .cl-legend li { display: inline-flex; align-items: center; gap: 6px; }
+  .cl-swatch { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 6px; font-size: 12px; font-weight: 700; border: 1px solid var(--md-outline-variant); }
+  .cl-year { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr)); }
+  .cl-month { border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); padding: 8px 10px 10px; background: var(--md-surface); min-width: 0; }
+  .cl-month h4 { margin: 0 0 4px; font-size: 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .cl-month h4 small { font-size: 13px; font-weight: 400; color: var(--md-on-surface-variant); font-family: var(--md-font-num); }
+  .cl-grid { width: 100%; border-collapse: separate; border-spacing: 2px; table-layout: fixed; }
+  .cl-grid th { font-size: 12px; font-weight: 500; color: var(--md-on-surface-variant); padding: 2px 0; }
+  .cl-grid td { text-align: center; padding: 0; height: 32px; border-radius: 6px; font-family: var(--md-font-num); font-size: 14px; position: relative; }
+  .cl-grid td i { display: block; font-style: normal; font-size: 10px; line-height: 1; font-family: var(--md-font); font-weight: 700; }
+  .cl-grid td[data-kind] { cursor: default; }
+  .cl-d-weekend, .cl-swatch.cl-d-weekend { background: var(--md-surface-container-highest); color: var(--md-on-surface-variant); }
+  .cl-d-holiday, .cl-swatch.cl-d-holiday { background: var(--md-error-container); color: var(--md-on-error-container); }
+  .cl-d-company, .cl-swatch.cl-d-company { background: var(--md-warning-container); color: var(--md-on-warning-container); }
+  .cl-d-companyWork, .cl-swatch.cl-d-companyWork { background: var(--md-primary-container); color: var(--md-on-primary-container); outline: 2px solid var(--md-primary); outline-offset: -2px; }
+  .cl-d-work, .cl-swatch.cl-d-work { background: transparent; }
+  .cl-names { margin: 6px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--md-on-surface-variant); }
+  .cl-names li { display: flex; gap: 6px; }
+  .cl-names b { font-family: var(--md-font-num); font-weight: 500; min-width: 2.6em; color: var(--md-on-surface); }
+
+  /* ---- 印刷用（白地に黒。画面には出さない） ---- */
+  .cl-print-area { display: none; }
+  .cl-r { background: #fff; color: #000; font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; line-height: 1.35; letter-spacing: 0; }
+  .cl-r * { color: #000; }
+  .cl-r-page + .cl-r-page { break-before: page; page-break-before: always; }
+  /* 用紙の幅（A4から余白10mmずつを引いた幅）に合わせる */
+  .cl-r-page[data-size="portrait"] { width: 188mm; }
+  .cl-r-page[data-size="landscape"] { width: 274mm; }
+  .cl-r-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12pt; border-bottom: 2px solid #000; padding-bottom: 3pt; margin-bottom: 6pt; }
+  .cl-r-head h1 { font-size: 17pt; margin: 0; }
+  .cl-r-head p { margin: 0; font-size: 9pt; text-align: right; }
+  .cl-r-year { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm 5mm; }
+  .cl-r-m h2 { font-size: 11pt; margin: 0 0 1pt; display: flex; justify-content: space-between; }
+  .cl-r-m h2 small { font-size: 7.5pt; font-weight: 400; }
+  .cl-r-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .cl-r-grid th { font-size: 7.5pt; font-weight: 700; border-bottom: 0.6pt solid #000; padding: 0.5pt 0; }
+  .cl-r-grid td { text-align: center; font-size: 9pt; height: 5.6mm; padding: 0; border-bottom: 0.3pt solid #bbb; vertical-align: middle; font-variant-numeric: tabular-nums; }
+  .cl-r-grid td i { display: block; font-style: normal; font-size: 5.5pt; line-height: 1; font-weight: 700; }
+  .cl-r .off { background: #d9d9d9; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cl-r .wk { box-shadow: inset 0 0 0 1pt #000; font-weight: 700; }
+  .cl-r-names { margin: 1pt 0 0; padding: 0; list-style: none; font-size: 6.5pt; line-height: 1.25; }
+  .cl-r-foot { margin-top: 3mm; display: flex; gap: 6mm; align-items: flex-start; font-size: 8.5pt; break-inside: avoid; }
+  .cl-r-sum { border-collapse: collapse; font-size: 8pt; }
+  .cl-r-sum th, .cl-r-sum td { border: 0.5pt solid #000; padding: 1pt 3pt; text-align: center; font-variant-numeric: tabular-nums; }
+  .cl-r-sum thead th { background: #eee; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cl-r-legend { margin: 0; padding: 0; list-style: none; }
+  .cl-r-legend li { display: flex; gap: 4pt; align-items: center; margin-bottom: 2pt; }
+  .cl-r-legend span { display: inline-block; width: 10pt; height: 10pt; border: 0.5pt solid #000; text-align: center; font-size: 6pt; line-height: 10pt; font-weight: 700; }
+  /* 月ごと（A4横） */
+  .cl-r-big { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .cl-r-big th { font-size: 11pt; border: 0.6pt solid #000; padding: 2pt 0; background: #eee; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cl-r-big td { border: 0.6pt solid #000; vertical-align: top; height: 28mm; padding: 2pt 3pt; font-size: 9pt; }
+  .cl-r-big td b { display: block; font-size: 15pt; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .cl-r-big td span { display: block; font-size: 8.5pt; margin-top: 2pt; word-break: break-all; }
+  .cl-r-big.rows6 td { height: 23mm; }
+  .cl-r-mfoot { margin-top: 3mm; font-size: 10pt; display: flex; gap: 8mm; }
+  @media print {
+    :root { color-scheme: light; }
+    html, body { background: #fff !important; color: #000 !important; }
+    body { display: block; min-height: 0; }
+    body > *:not(#print-area) { display: none !important; }
+    .cl-print-area { display: block !important; }
+  }
+</style>
+<style id="page-size">@page { size: A4 portrait; margin: 10mm; }</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="calendar_month" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">会社カレンダーの作成</h1>
+      <p class="md-lead text-secondary">1年分（または期首の月からの12か月）の会社カレンダーを作ります。国民の祝日は自動で入り、年末年始・夏季休暇などの会社の休日や、祝日に出勤する日も足せます。</p>
+      <p class="md-body-s">月ごとの稼働日数・休日数・所定労働時間と、1年単位の変形労働時間制の目安を出し、年間カレンダー（A4縦）・月ごとのカレンダー（A4横）を印刷できます。休みの日の一覧は資金繰り表・仕入請求の照合にそのまま貼り付けられ、カレンダーアプリに取り込めるファイル（.ics）も作れます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-base" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">期間と休みの決まりを選ぶ</h2>
+          <p class="md-step__desc">この設定はこのパソコンに保存され、次回も同じ設定で始まります。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-holiday"><span class="md-icon" data-icon="help" aria-hidden="true"></span>祝日の決まり</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="cl-row">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="year">年 <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="year-help" class="md-field__help form-hint">期首の月が4月なら、2027 で「2027年4月〜2028年3月」です。</p>
+            <div class="md-input-suffix"><input id="year" class="md-input form-control" type="number" inputmode="numeric" min="2020" max="2098" step="1" aria-describedby="year-help"><span>年</span></div>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="start-month">期首の月</label>
+            <p id="start-month-help" class="md-field__help form-hint">1月なら暦年（1月〜12月）。決算期に合わせるなら期首の月を選びます。</p>
+            <select id="start-month" class="md-select form-select" aria-describedby="start-month-help"></select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="hours">1日の所定労働時間</label>
+            <p id="hours-help" class="md-field__help form-hint">「8」「7.5」「7:45」のように入れます。所定労働時間の合計に使います。</p>
+            <input id="hours" class="md-input form-control" type="text" inputmode="decimal" autocomplete="off" value="8" aria-describedby="hours-help hours-note">
+            <p id="hours-note" class="md-field__help form-hint" aria-live="polite"></p>
+          </div>
+        </div>
+        <fieldset class="md-fieldset">
+          <legend>毎週休みの曜日</legend>
+          <div class="cl-weekdays" id="weekdays"></div>
+        </fieldset>
+        <fieldset class="md-fieldset">
+          <legend>国民の祝日は？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="holiday" value="off" checked>
+              <span class="md-choice__text"><span class="md-choice__label">休みにする</span><span class="md-choice__desc">祝日・振替休日・国民の休日を休みにします。出勤する祝日は手順2で「出勤日」にします</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="holiday" value="work">
+              <span class="md-choice__text"><span class="md-choice__label">出勤にする</span><span class="md-choice__desc">祝日も稼働日として数えます（カレンダーには祝日の名前を出します）</span></span></label>
+          </div>
+        </fieldset>
+        <details class="md-details card">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（週の始まり）</span></summary>
+          <div class="md-details__body card-body">
+            <fieldset class="md-fieldset">
+              <legend>週の始まり</legend>
+              <p class="md-field__help form-hint">カレンダーの並びと、1週の労働時間の目安（週40時間・52時間）の区切りに使います。就業規則に決まりがなければ日曜日です。</p>
+              <div class="md-choices" data-layout="grid">
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="week-start" value="0" checked>
+                  <span class="md-choice__text"><span class="md-choice__label">日曜日</span></span></label>
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="week-start" value="1">
+                  <span class="md-choice__text"><span class="md-choice__label">月曜日</span></span></label>
+              </div>
+            </fieldset>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-company" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">会社の休日・出勤日を足す</h2>
+          <p class="md-step__desc">年末年始・夏季休暇・創立記念日などの休みと、祝日や土曜日に出勤する日です。なければ飛ばして構いません。一覧はこのパソコンに保存されます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-file"><span class="md-icon" data-icon="help" aria-hidden="true"></span>ファイルの形</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">会社の休日のファイル <span class="md-badge badge" data-kind="optional">任意</span></span>
+          <p id="file-help" class="md-field__help form-hint">去年のカレンダーやExcelの一覧から書き出したCSV。読み込むと下の一覧に足します。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">会社の休日のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+        <div id="map-wrap" class="md-hidden">
+          <details class="md-details card" id="map-box">
+            <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>ファイルの列<span class="md-details__hint" id="map-hint"></span></summary>
+            <div class="md-details__body card-body"><div class="md-grid" data-min="12" id="map"></div></div>
+          </details>
+        </div>
+        <div id="file-message" aria-live="polite"></div>
+
+        <div class="md-actions">
+          <button id="add-newyear" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="add" aria-hidden="true"></span>年末年始（12/29〜1/3）</button>
+          <button id="add-summer" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="add" aria-hidden="true"></span>夏季休暇（8/13〜8/16）</button>
+          <button id="add-item" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="add" aria-hidden="true"></span>1件足す</button>
+        </div>
+        <p id="items-count" class="cl-count" aria-live="polite"></p>
+        <ul id="items" class="cl-items" aria-label="会社の休日・出勤日"></ul>
+        <div class="md-actions" id="items-actions">
+          <button id="sort-items" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="arrow_downward" aria-hidden="true"></span>日付の順に並べる</button>
+          <button id="clear-items" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="delete" aria-hidden="true"></span>この期間の外の行を消す</button>
+        </div>
+        <div id="items-message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">カレンダーを作る</h2>
+          <p class="md-step__desc">一度作ったあとは、手順1・2を変えるとすぐに作り直します。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-cta">
+          <p class="md-cta__text">祝日を計算し、休みの曜日と会社の休日・出勤日を重ねて、月ごとの稼働日数を数えます。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>カレンダーを作る</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">カレンダーを確かめる</h2>
+          <p class="md-step__desc">日付にマウスを置くと、休みの理由が出ます。直すときは手順2に戻ってください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">1年単位の変形労働時間制の目安</h3>
+          <p class="md-field__help form-hint">法律の上限に照らした目安です。実際に使うには労使協定と労働基準監督署への届出が要ります。協定の中身（対象者・特定期間など）は確かめていません。</p>
+          <div id="checks" class="cl-checks"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">月ごとの日数</h3>
+          <div id="months"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">カレンダー</h3>
+          <ul class="cl-legend" id="legend" aria-label="色と記号の意味"></ul>
+          <div id="year-view" class="cl-year"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">保存・印刷する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="cl-row">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="title">会社名・部署名 <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <p id="title-help" class="md-field__help form-hint">印刷の見出しと、カレンダーアプリに取り込んだときのカレンダーの名前に使います。</p>
+            <input id="title" class="md-input form-control" type="text" autocomplete="organization" placeholder="例）見本株式会社" aria-describedby="title-help">
+          </div>
+        </div>
+
+        <h3 class="md-subhead"><span class="md-icon" data-icon="print" data-size="20" aria-hidden="true"></span>カレンダーを印刷する</h3>
+        <fieldset class="md-fieldset">
+          <legend>印刷の形</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="layout" value="year" checked>
+              <span class="md-choice__text"><span class="md-choice__label">年間カレンダー（A4縦1枚）</span><span class="md-choice__desc">12か月を1枚に。休みの日は灰色、祝日に出勤する日は枠で囲みます。月ごとの稼働日数の表つき</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="layout" value="month">
+              <span class="md-choice__text"><span class="md-choice__label">月ごとのカレンダー（A4横12枚）</span><span class="md-choice__desc">1か月を1枚に大きく。休みの理由（祝日・会社の休日の名前）を書き込みます</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="print" class="md-btn btn" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>カレンダーを印刷・PDFで保存</button>
+        </div>
+        <p class="md-field__help form-hint">印刷の画面で「PDFに保存」を選ぶとPDFになります。灰色が出ないときは、印刷の設定の「背景のグラフィック」に印を付けてください。</p>
+
+        <h3 class="md-subhead"><span class="md-icon" data-icon="download" data-size="20" aria-hidden="true"></span>表を保存する</h3>
+        <fieldset class="md-fieldset" id="enc-wrap">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-months" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>月ごとの日数.csv を保存</button>
+          <button id="save-days" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>日ごとの一覧.csv を保存</button>
+        </div>
+
+        <h3 class="md-subhead"><span class="md-icon" data-icon="savings" data-size="20" aria-hidden="true"></span>資金繰り表・仕入請求の照合で使う</h3>
+        <p class="md-field__help form-hint">「資金繰り表」と「仕入請求の照合」の「休みの日」の欄に貼り付ける形（1行に1日）です。土日はあちらでいつも休みとして扱うので、ただの土日は書きません。</p>
+        <fieldset class="md-fieldset">
+          <legend>書き出す休みの日</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="hmode" value="bank" checked>
+              <span class="md-choice__text"><span class="md-choice__label">銀行の休み（おすすめ）</span><span class="md-choice__desc">祝日と、12/31・1/2・1/3。振込や引き落としの日をずらすのに使います</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="hmode" value="company">
+              <span class="md-choice__text"><span class="md-choice__label">このカレンダーの休み</span><span class="md-choice__desc">休みにした祝日と会社の休日。出勤日にした日は書きません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="copy-holidays" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="file" aria-hidden="true"></span>休みの日の一覧をコピー</button>
+          <button id="save-holidays" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>休みの日の一覧.txt を保存</button>
+          <a class="md-btn btn" data-variant="text" href="shikin.html"><span class="md-icon" data-icon="savings" aria-hidden="true"></span>資金繰り表を開く</a>
+          <a class="md-btn btn" data-variant="text" href="shiire.html"><span class="md-icon" data-icon="fact_check" aria-hidden="true"></span>仕入請求の照合を開く</a>
+        </div>
+
+        <h3 class="md-subhead"><span class="md-icon" data-icon="event" data-size="20" aria-hidden="true"></span>カレンダーアプリに取り込む</h3>
+        <p class="md-field__help form-hint">Google カレンダー・Outlook・iPhone のカレンダーに取り込める .ics ファイルです。祝日・会社の休日・出勤日を終日の予定にします（続いた休みは1つの予定）。同じ期間を作り直して取り込み直しても、予定は重なりません。</p>
+        <div class="md-actions">
+          <button id="save-ics" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>会社カレンダー.ics を保存</button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で年を 2027、期首の月を 4月にし、手順2で <code>samples/calendar/会社の休日_2027年度.csv</code> を選んでください。ファイルがなくても、手順2のボタンで年末年始・夏季休暇を足せます。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-holiday" class="md-modal" aria-labelledby="dlg-holiday-title">
+    <div class="md-modal__head"><h2 id="dlg-holiday-title" class="md-modal__title">国民の祝日の決まり</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>今の「国民の祝日に関する法律」のとおりに計算します（2020〜2099年）。成人の日・海の日・敬老の日・スポーツの日は第2・第3月曜日です</li>
+        <li>振替休日: 祝日が日曜日のときは、その後のいちばん近い祝日でない日が休みになります</li>
+        <li>国民の休日: 前の日と次の日が祝日にはさまれた日も休みになります（例: 2026年9月22日）</li>
+        <li>春分の日・秋分の日は、前の年の2月1日に官報で正式に決まります。それより先の年は計算で出した予想の日です</li>
+        <li>法律が変わって祝日が増えたり動いたりしたときは、手順2で会社の休日・出勤日として直してください</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-file" class="md-modal" aria-labelledby="dlg-file-title">
+    <div class="md-modal__head"><h2 id="dlg-file-title" class="md-modal__title">会社の休日のファイルの形</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>1行に1件。「開始日」（1日だけならこの列だけ）と「終了日」「名前」「区分」の列を読みます</li>
+        <li>区分は「休日」か「出勤日」。空なら休日です。祝日や土曜日に出勤する日は「出勤日」にします</li>
+        <li>「2026/12/29〜2027/1/3」のように、1つの列に範囲を書いても読めます</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<div id="print-area" class="cl-print-area"></div>
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/kigen.js"></script>
+<script src="../assets/js/apps/calendar.js"></script>
+<script src="../assets/js/ui/calendar.js"></script>
+</body>
+</html>

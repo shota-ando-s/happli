@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Happli のダウンロード</title>
 <style>
@@ -14,6 +15,8 @@
   .muted { color:var(--muted); }
   .btn { display:inline-block; margin:1rem 0; padding:.625rem 1.25rem; border-radius:8px; background:var(--primary); color:#fff; font-weight:700; text-decoration:none; }
   ol { padding-left:1.25rem; }
+  h2 { font-size:1.0625rem; margin:1.5rem 0 .25rem; }
+  .btn-sub { background:transparent; color:var(--primary); border:1px solid var(--primary); }
   a { color:var(--primary); }
 </style>
 </head>
@@ -22,7 +25,13 @@
   <div class="card">
     <h1>Happli（はぷり）</h1>
     <p class="muted">Excelマクロの作業をブラウザだけで行えるツール集です。最新版：<strong id="ver">—</strong></p>
-    <a class="btn" href="https://github.com/shota-ando-s/happli/releases/latest/download/happli.zip">最新版をダウンロード（zip）</a>
+    <p class="muted" style="font-size:.875rem">Web版とダウンロード版では、お気に入りや設定は別々に保存されます。</p>
+    <h2>ブラウザですぐ使う</h2>
+    <p class="muted">インストールは要りません。開いたページで、いつも最新版が使えます。ファイルはお使いのブラウザの中だけで処理され、外部には送信されません。</p>
+    <a class="btn" href="app/">Web版を開く</a>
+    <h2>ダウンロードして使う</h2>
+    <p class="muted">社内のネットワークで github.io が開けないときや、ネットにつながらない場所で使うときはこちら。</p>
+    <a class="btn btn-sub" href="https://github.com/shota-ando-s/happli/releases/latest/download/happli.zip">最新版をダウンロード（zip）</a>
     <ol>
       <li>ダウンロードした zip を展開します。</li>
       <li>今お使いのフォルダを、展開した <code>happli</code> フォルダに置き換えます。お気に入りなどの設定はブラウザに残っているので、そのまま使えます。</li>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>勤怠の集計｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  .kt-table th, .kt-table td { padding: 8px 12px; }
+  /* 横に長い表でも、いちばん左の列（氏名・日付）は見えたままにする */
+  .kt-table tbody th, .kt-table thead th:first-child { position: sticky; left: 0; background: var(--md-surface-container-lowest); z-index: 1; }
+  .kt-table thead th:first-child { background: var(--md-surface-container); z-index: 2; }
+  .kt-table tbody th { font-weight: 500; text-align: left; }
+  .kt-table .kt-sub { display: block; font-size: 13px; font-weight: 400; color: var(--md-on-surface-variant); }
+  .kt-table td.kt-chips { white-space: normal; min-width: 12rem; }
+  .kt-table td.kt-chips .md-chip { margin: 2px 4px 2px 0; }
+  .kt-table td.kt-note { white-space: normal; min-width: 14rem; font-size: 14px; color: var(--md-on-surface-variant); }
+  .kt-table td.kt-muted { color: var(--md-on-surface-variant); }
+  .kt-table tr[data-type="legal"] > *, .kt-table tr[data-type="scheduled"] > * { background: var(--md-surface-container-low); }
+  .kt-table tr[data-missing] > th { box-shadow: inset 4px 0 0 var(--md-error); }
+  .kt-table td.kt-strong { font-weight: 700; }
+  .kt-weekdays { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .kt-emp + .kt-emp { margin-top: 8px; }
+  .kt-emp > summary { flex-wrap: wrap; row-gap: 4px; }
+  .kt-emp__meta { font-weight: 400; font-size: 14px; color: var(--md-on-surface-variant); }
+  .kt-emp__body { padding: 12px; }
+  .kt-legend { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="schedule" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">勤怠の集計</h1>
+      <p class="md-lead text-secondary">タイムカードや勤怠システムから書き出した打刻のCSVから、社員ごと・締め日ごとに、実労働・残業・深夜・休日労働の時間を集計します。</p>
+      <p class="md-body-s">これは目安の計算です。給与計算に使う前に、会社の就業規則や社会保険労務士に確認してください。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">打刻のファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">打刻データ <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">1行に1日分（1人1日1行）の打刻が並んだCSV。氏名・日付・出勤・退勤の列が必要です。社員番号・休憩・区分（有休・欠勤など）の列があれば使います。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">打刻データのCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <p id="map-help" class="md-field__help md-hidden form-hint">時刻は 9:00・900・9時00分・25:30（翌1:30）のどれでも読めます。休憩は 60（分）や 1:00 の形で入れてください。</p>
+        <div class="md-grid md-hidden" data-min="14" id="map"></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">集計のしかたを決めて集計する</h2>
+          <p class="md-step__desc">設定はこのパソコンに保存され、次回も同じ設定で始まります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid" data-min="14">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="scheduled">所定労働時間（1日）</label>
+            <p id="scheduled-help" class="md-field__help form-hint">就業規則で決めた1日の労働時間。8:00 や 7:30 の形で入れます。</p>
+            <input id="scheduled" class="md-input md-input--short form-control" type="text" inputmode="decimal" value="8:00" aria-describedby="scheduled-help">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="closing">締め日</label>
+            <p id="closing-help" class="md-field__help form-hint">この日までを1つの期間として、社員ごとに集計します。</p>
+            <select id="closing" class="md-select form-select" aria-describedby="closing-help"></select>
+          </div>
+        </div>
+
+        <details class="md-details card" id="opt-break">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>休憩と打刻の丸め<span class="md-details__hint">（休憩の列がないとき・端数の扱い）</span></summary>
+          <div class="md-details__body card-body">
+            <fieldset class="md-fieldset">
+              <legend>休憩の列がない（空の）とき</legend>
+              <p class="md-field__help form-hint" style="margin-bottom:8px">休憩の列に値があれば、その値を使います。</p>
+              <div class="md-choices">
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="brk" value="law" checked>
+                  <span class="md-choice__text"><span class="md-choice__label">法律の最低限を引く（おすすめ）</span><span class="md-choice__desc">出勤から退勤までが6時間を超えると45分、8時間を超えると60分（労働基準法第34条）</span></span></label>
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="brk" value="fixed">
+                  <span class="md-choice__text"><span class="md-choice__label">毎回決まった分数を引く</span><span class="md-choice__desc">短い勤務の日にも同じだけ引きます</span></span></label>
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="brk" value="none">
+                  <span class="md-choice__text"><span class="md-choice__label">引かない</span><span class="md-choice__desc">出勤・退勤がすでに休憩を除いた時刻になっている場合</span></span></label>
+              </div>
+            </fieldset>
+            <div class="md-field" id="fixed-wrap">
+              <label class="md-field__label form-label" for="fixed-break">決まった休憩の分数</label>
+              <div class="md-input-suffix">
+                <input id="fixed-break" class="md-input md-input--short form-control" type="number" min="0" max="600" step="1" inputmode="numeric" value="60">
+                <span>分</span>
+              </div>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="round">打刻の丸め</label>
+              <p id="round-help" class="md-field__help form-hint">出勤は切り上げ、退勤は切り捨てます（例: 15分単位なら 8:52 出勤 → 9:00、18:13 退勤 → 18:00）。働いた時間が短くなる丸めは法律上の問題になることがあるので、会社の決まりに従ってください。</p>
+              <select id="round" class="md-select form-select" aria-describedby="round-help">
+                <option value="0">丸めない（1分単位で計算）</option>
+                <option value="5">5分単位</option>
+                <option value="10">10分単位</option>
+                <option value="15">15分単位</option>
+                <option value="30">30分単位</option>
+              </select>
+            </div>
+          </div>
+        </details>
+
+        <details class="md-details card" id="opt-days">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>休日と週の区切り<span class="md-details__hint">（休みの曜日・祝日・深夜の時間帯）</span></summary>
+          <div class="md-details__body card-body">
+            <fieldset class="md-fieldset">
+              <legend>休日の曜日（所定休日）</legend>
+              <p class="md-field__help form-hint" style="margin-bottom:8px">この曜日に働いた時間は、所定内には数えません。</p>
+              <div class="kt-weekdays" id="holiday-weekdays"></div>
+            </fieldset>
+            <div class="md-grid" data-min="14">
+              <div class="md-field">
+                <label class="md-field__label form-label" for="legal">法定休日の曜日</label>
+                <p id="legal-help" class="md-field__help form-hint">この曜日の労働は「法定休日労働」として別に数えます。</p>
+                <select id="legal" class="md-select form-select" aria-describedby="legal-help"></select>
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="week-start">週の始まり</label>
+                <p id="week-start-help" class="md-field__help form-hint">週40時間を数えるときの区切り。就業規則に決めがなければ日曜です。</p>
+                <select id="week-start" class="md-select form-select" aria-describedby="week-start-help"></select>
+              </div>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="holidays">祝日・会社の休日 <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="holidays-help" class="md-field__help form-hint">休みの日を1行に1日ずつ書きます（例: 2026/10/12）。日付の後ろにメモを書いてもかまいません。所定休日として扱います。</p>
+              <textarea id="holidays" class="md-textarea form-control" rows="4" aria-describedby="holidays-help" placeholder="例）2026/10/12 スポーツの日"></textarea>
+            </div>
+            <p class="md-field__help form-hint"><b>深夜の時間帯</b>：22時〜翌5時（法律で決まっているので変えられません）</p>
+          </div>
+        </details>
+
+        <div class="md-cta">
+          <p class="md-cta__text">社員ごと・期間ごとに、働いた時間を分けて集計します。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>集計する</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">社員ごと・期間ごとの集計です。名前を押すと、日ごとの明細が開きます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button><button type="button" class="md-help-btn" data-modal="dlg-time"><span class="md-icon" data-icon="help" aria-hidden="true"></span>時間の分け方</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <fieldset class="md-fieldset">
+          <legend>時間の表し方</legend>
+          <div class="md-choices" data-layout="row">
+            <label class="md-inline-check"><input class="md-radio form-check-input" type="radio" name="fmt" value="hm" checked>8:30 の形（時間:分）</label>
+            <label class="md-inline-check"><input class="md-radio form-check-input" type="radio" name="fmt" value="dec">8.50 の形（給与ソフト向け）</label>
+          </div>
+        </fieldset>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">社員ごとの集計</h3>
+          <div id="table"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">日ごとの明細</h3>
+          <p class="kt-legend">灰色の行は休日（所定休日・法定休日）、左端が赤い行は未打刻です。</p>
+          <div id="details"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">時間は「8:30」の形と「8.50」（時間の10進数）の形の両方の列が入ります。保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-summary" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>集計表（社員ごと）.csv を保存</button>
+          <button id="save-detail" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>日ごとの明細.csv を保存</button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で <code>samples/kintai/打刻データ.csv</code> を選んでください（架空の4人分、2026年10月）。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：注意の印</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="warning">残業45時間超</span> 法定外残業が期間で45時間を超えた（36協定の原則の上限）</li>
+        <li><span class="md-chip badge" data-tone="error">残業60時間超（割増50%）</span> 60時間を超えた分は割増率50%以上の対象</li>
+        <li><span class="md-chip badge" data-tone="error">休日労働含め100時間以上</span> 法定外残業と法定休日労働の合計が100時間以上</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-time" class="md-modal" aria-labelledby="dlg-time-title">
+    <div class="md-modal__head"><h2 id="dlg-time-title" class="md-modal__title">時間の分け方</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><b>実労働</b>：退勤 − 出勤 − 休憩。夜勤など、退勤が出勤より前の時刻なら日付をまたいだ勤務として、出勤した日に数えます。</li>
+        <li><b>所定内</b>：会社で決めた1日の労働時間（所定労働時間）までの分。</li>
+        <li><b>所定外（法定内）</b>：所定労働時間は超えたが、法律の1日8時間・週40時間には収まる分（所定が8時間より短い会社や、所定休日に働いた日に出ます）。</li>
+        <li><b>法定外残業</b>：1日8時間を超えた分と、週40時間を超えた分（1日8時間超で数えた分は除く）。6日勤務の人は週40時間超に注意してください。</li>
+        <li><b>深夜</b>：22時〜翌5時に働いた分。残業と重なっていれば両方に数えます。休憩は深夜以外の時間帯に取ったものとみなします（勤務がすべて深夜の時間帯なら、深夜から引きます）。</li>
+        <li><b>法定休日労働</b>：法定休日（ふつうは日曜）に働いた時間すべて。残業には含めません。</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/kintai.js"></script>
+<script src="../assets/js/ui/kintai.js"></script>
+</body>
+</html>

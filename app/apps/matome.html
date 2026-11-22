@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CSVまとめ・分け｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* このページだけで使う部品: 選んだファイルの一覧 */
+  .mt-files { list-style: none; margin: 0; padding: 0; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); }
+  .mt-file { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; min-height: 56px; }
+  .mt-file + .mt-file { border-top: 1px solid var(--md-outline-variant); }
+  .mt-file > .md-icon { flex: none; color: var(--md-primary); }
+  .mt-file__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .mt-file__name { font-weight: 700; overflow-wrap: anywhere; }
+  .mt-file__meta { font-size: 14px; color: var(--md-on-surface-variant); }
+  .mt-file .md-btn { flex: none; }
+  .mt-choice-icon { flex: none; color: var(--md-primary); margin-top: 1px; }
+  .md-choice:has(input:checked) .mt-choice-icon { color: inherit; }
+  .mt-group-table td .md-btn { white-space: nowrap; }
+  .mt-group-table th:first-child { white-space: normal; }
+  @media (max-width: 40rem) {
+    .mt-group-table th, .mt-group-table td { padding: 10px 10px; }
+    .mt-group-table .md-btn { padding: 0 10px; }
+    .mt-group-table .mt-btn-text { display: none; }
+  }
+  .mt-mode { grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr)) !important; }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="merge" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">CSVまとめ・分け</h1>
+      <p class="md-lead text-secondary">支店や月ごとに分かれた複数のCSVを1つにまとめたり、1つのCSVを部署や取引先ごとのファイルに分けたりします。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-mode" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">どちらをしますか？</h2>
+          <p class="md-step__desc">選ぶと、下に続きの手順が出ます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend class="md-visually-hidden">することを選ぶ</legend>
+          <div class="md-choices mt-mode" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="mode" value="merge">
+              <span class="md-icon mt-choice-icon" data-icon="merge" aria-hidden="true"></span>
+              <span class="md-choice__text"><span class="md-choice__label">まとめる</span><span class="md-choice__desc">いくつものCSVを、1つのファイルにつなげます（例：支店ごとの売上 → 全社の売上）</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="mode" value="split">
+              <span class="md-icon mt-choice-icon" data-icon="call_split" aria-hidden="true"></span>
+              <span class="md-choice__text"><span class="md-choice__label">分ける</span><span class="md-choice__desc">1つのCSVを、部署や取引先などの値ごとに別々のファイルにします（例：全社の名簿 → 部署ごとの名簿）</span></span></label>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <p id="mode-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1で「まとめる」か「分ける」を選んでください。</p>
+
+    <!-- まとめる 2 -->
+    <section id="m-files" class="md-step md-hidden card" data-mode="merge" data-state="waiting" aria-labelledby="m2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="m2" class="md-step__title card-title">まとめるファイルを選ぶ</h2>
+          <p class="md-step__desc">いくつでも一度に選べます。あとから追加することもできます。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <label id="m-zone" class="md-dropzone" data-ready="1">
+          <span id="m-zone-icon" class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+          <span id="m-zone-main" class="md-dropzone__main">まとめたいCSV（2つ以上）</span>
+          <span class="md-dropzone__sub">ここにまとめてドラッグできます</span>
+          <span class="md-dropzone__btn btn btn-primary"><span id="m-zone-btn" class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+          <input id="m-input" type="file" accept=".csv,.txt,.tsv" multiple aria-describedby="m-files-status">
+        </label>
+        <div id="m-files-status" aria-live="polite"></div>
+        <div id="m-list-wrap" class="md-stack md-hidden" data-gap="8">
+          <div class="md-row" style="justify-content:space-between">
+            <h3 class="md-subhead" id="m-list-title">選んだファイル</h3>
+            <button id="m-clear" class="md-btn btn" data-variant="text" data-size="s" type="button"><span class="md-icon" data-icon="delete" data-size="20" aria-hidden="true"></span>すべて外す</button>
+          </div>
+          <ul id="m-list" class="mt-files" aria-labelledby="m-list-title"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- まとめる 3 -->
+    <section id="m-check" class="md-step md-hidden card" data-mode="merge" data-state="waiting" aria-labelledby="m3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="m3" class="md-step__title card-title">見出しを確かめて、まとめる</h2>
+          <p class="md-step__desc">ファイルごとの1行目（見出し）を比べます。違いがあれば、まとめる前にここで分かります。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-heading"><span class="md-icon" data-icon="help" aria-hidden="true"></span>見出しのそろえ方</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="m-check-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順2でファイルを2つ以上選ぶと、ここに見出しの比べた結果が出ます。</p>
+        <div id="m-headers" class="md-stack"></div>
+        <fieldset class="md-fieldset">
+          <legend>まとめ方</legend>
+          <div class="md-choices">
+            <label class="md-choice"><input id="m-opt-source" class="md-checkbox form-check-input" type="checkbox" checked>
+              <span class="md-choice__text"><span class="md-choice__label">「元のファイル名」の列を足す</span><span class="md-choice__desc">どの行がどのファイルから来たかを、先頭の列に書きます</span></span></label>
+            <label class="md-choice"><input id="m-opt-trim" class="md-checkbox form-check-input" type="checkbox" checked>
+              <span class="md-choice__text"><span class="md-choice__label">見出しの前後の空白を無視する</span><span class="md-choice__desc">「部署」と「部署 」（後ろに空白）のように、空白だけ違う見出しを同じ列として扱います</span></span></label>
+            <label class="md-choice"><input id="m-opt-dedupe" class="md-checkbox form-check-input" type="checkbox">
+              <span class="md-choice__text"><span class="md-choice__label">まったく同じ行を1つにする</span><span class="md-choice__desc">同じデータが2つのファイルに入っていたときなどに使います。全部の列が同じ行だけを除きます</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-cta">
+          <p class="md-cta__text">選んだファイルを、見出しの名前で列を揃えて1つにつなげます。</p>
+          <button id="m-run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="merge" aria-hidden="true"></span>まとめる</button>
+        </div>
+        <div id="m-message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- まとめる 4 -->
+    <section id="m-result" class="md-step md-hidden card" data-mode="merge" data-tone="result" aria-labelledby="m4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="m4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">まとめた結果の件数と、先頭の100行です。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="m-summary"></div>
+        <div id="m-preview"></div>
+      </div>
+    </section>
+
+    <!-- まとめる 5 -->
+    <section id="m-save" class="md-step md-hidden card" data-mode="merge" aria-labelledby="m5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="m5" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="m-enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="m-enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="m-download" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>まとめた結果.csv を保存</button>
+        </div>
+        <div id="m-save-message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 分ける 2 -->
+    <section id="s-file" class="md-step md-hidden card" data-mode="split" data-state="waiting" aria-labelledby="d2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="d2" class="md-step__title card-title">分けるファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <label class="md-dropzone">
+          <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+          <span class="md-dropzone__main">分けたいCSV（1つ）</span>
+          <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+          <input id="s-input" type="file" accept=".csv,.txt,.tsv" aria-describedby="s-file-status">
+        </label>
+        <p id="s-file-status" class="md-file-status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- 分ける 3 -->
+    <section id="s-col" class="md-step md-hidden card" data-mode="split" data-state="waiting" aria-labelledby="d3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="d3" class="md-step__title card-title">どの列で分けるかを選ぶ</h2>
+          <p class="md-step__desc">選んだ列の値ごとに、1つずつファイルを作ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="s-col-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順2でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="s-col-field"></div>
+        <div class="md-cta">
+          <p class="md-cta__text">選んだ列の値ごとに行を分けます。それぞれのファイルにも1行目の見出しが入ります。</p>
+          <button id="s-run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="call_split" aria-hidden="true"></span>分ける</button>
+        </div>
+        <div id="s-message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 分ける 4 -->
+    <section id="s-result" class="md-step md-hidden card" data-mode="split" data-tone="result" aria-labelledby="d4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="d4" class="md-step__title card-title">分けた結果を確かめて保存する</h2>
+          <p class="md-step__desc">全部のファイルを ZIP（1つにまとめたファイル）で保存するか、表から1つずつ保存できます。保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="s-summary"></div>
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="s-enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="s-enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="s-zip" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span><span id="s-zip-label">全部を ZIP で保存</span></button>
+        </div>
+        <p class="md-body-s">ZIP は、ダブルクリック（Windows では右クリック →「すべて展開」）で中のファイルを取り出せます。</p>
+        <div id="s-save-message" aria-live="polite"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">分けたファイルの一覧</h3>
+          <div id="s-groups"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。</p>
+      <ul>
+        <li><strong>まとめる</strong>：手順2で <code>samples/matome/</code> の <code>東京支店.csv</code>・<code>大阪支店.csv</code>・<code>名古屋支店.csv</code> の3つをまとめて選んでください。大阪支店だけ「担当者」の列があり、名古屋支店は列の順番が違います。</li>
+        <li><strong>分ける</strong>：手順2で <code>samples/matome/東京支店.csv</code> を選び、「取引先」で分けてください。取引先が空の行は「（空欄）.csv」に入ります。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-heading" class="md-modal" aria-labelledby="dlg-heading-title">
+    <div class="md-modal__head"><h2 id="dlg-heading-title" class="md-modal__title">見出しのそろえ方（注意すること）</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>列は<strong>1行目の見出しの名前</strong>で揃えます。列の順番が違っていてもかまいませんが、見出しの書き方が違う（「金額」と「売上金額」など）と別の列になります。</li>
+        <li>1行目が見出しになっているCSVを選んでください。</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/zip.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/matome.js"></script>
+<script src="../assets/js/ui/matome.js"></script>
+</body>
+</html>

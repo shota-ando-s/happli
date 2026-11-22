@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>案件別の工数集計｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* この画面だけで使う部品（色は md.css のトークンから） */
+  .ks-file { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: var(--md-shape-m); background: var(--md-surface-container-low); }
+  .ks-file > h3 { word-break: break-all; }
+  .ks-mode { font-size: 15px; line-height: 1.6; padding: 10px 14px; border-radius: var(--md-shape-s); border-left: 4px solid var(--md-primary); background: var(--md-surface-container-lowest); }
+  .ks-mode[data-tone="error"] { border-left-color: var(--md-error); color: var(--md-error); font-weight: 500; }
+  .ks-period { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+  .ks-period .md-field { flex: 1 1 12rem; min-width: 0; }
+  .ks-period .md-input { width: 100%; }
+  .ks-rounds { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(11rem, 100%), 1fr)); }
+  .ks-views { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr)); }
+  #summary .md-stats { grid-template-columns: repeat(auto-fill, minmax(min(11rem, 100%), 1fr)); }
+  #checks td.is-wrap { white-space: normal; min-width: 9rem; }
+  #checks td.is-wrap:last-child { min-width: 16rem; }
+  #checks th, #checks td { padding: 8px 12px; }
+  .ks-about { font-size: 15px; line-height: 1.6; color: var(--md-on-surface-variant); }
+
+  /* 切り口の表: いちばん左の列は横に動かしても見えたまま */
+  .ks-table th, .ks-table td { padding: 8px 12px; vertical-align: middle; }
+  .ks-table tbody th, .ks-table tfoot th, .ks-table thead th:first-child { position: sticky; left: 0; z-index: 1; background: var(--md-surface-container-lowest); box-shadow: 1px 0 0 var(--md-outline-variant); }
+  .ks-table thead th:first-child { background: var(--md-surface-container); z-index: 3; }
+  .ks-table tbody th { font-weight: 500; white-space: normal; min-width: 8rem; max-width: 16rem; overflow-wrap: anywhere; }
+  .ks-table tbody tr:hover > * { background: var(--md-surface-container-low); }
+  .ks-table tfoot th, .ks-table tfoot td { font-weight: 700; background: var(--md-secondary-container); color: var(--md-on-secondary-container); border-top: 2px solid var(--md-outline); border-bottom: 0; }
+  .ks-table .ks-total { font-weight: 700; border-left: 1px solid var(--md-outline-variant); }
+  .ks-table td.ks-zero { color: var(--md-on-surface-variant); }
+  .ks-table tr.ks-indirect-first > * { border-top: 2px solid var(--md-outline-variant); }
+  .ks-label { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .ks-label .md-chip { height: auto; padding: 1px 8px; line-height: 1.5; font-size: 13px; }
+  .ks-sub { display: block; font-size: 13px; color: var(--md-on-surface-variant); font-weight: 400; }
+  .ks-bar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-width: 11rem; }
+  .ks-bar__track { flex: 1; min-width: 3rem; height: 12px; border-radius: var(--md-shape-full); background: var(--md-surface-container-high); overflow: hidden; }
+  .ks-bar__fill { display: block; height: 100%; border-radius: var(--md-shape-full); background: var(--md-primary); }
+  .ks-bar__fill[data-indirect] { background: var(--md-outline); }
+  .ks-bar__num { flex: none; min-width: 4.5rem; text-align: right; }
+
+  /* 案件ごとの内容 */
+  .ks-proj + .ks-proj { margin-top: 8px; }
+  .ks-proj > summary { flex-wrap: wrap; row-gap: 6px; }
+  .ks-proj__name { min-width: 0; overflow-wrap: anywhere; }
+  .ks-proj__code { font-weight: 400; font-size: 14px; color: var(--md-on-surface-variant); margin-left: 4px; }
+  .ks-proj__nums { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-weight: 400; font-size: 15px; color: var(--md-on-surface-variant); }
+  .ks-proj__nums strong { color: var(--md-on-surface); font-family: var(--md-font-num); font-variant-numeric: tabular-nums; }
+  .ks-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .ks-proj__body { display: flex; flex-direction: column; gap: 16px; }
+  .ks-budget { display: grid; gap: 12px 24px; grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr)); padding: 16px; border-radius: var(--md-shape-m); background: var(--md-surface-container-low); }
+  .ks-budget__item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .ks-budget__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; font-size: 15px; }
+  .ks-budget__head b { font-size: 20px; font-family: var(--md-font-num); font-variant-numeric: tabular-nums; }
+  .ks-budget__note { font-size: 14px; color: var(--md-on-surface-variant); }
+  /* 予算のバー: 縦線が予算（100%）、塗りが実績。150%で頭打ち */
+  .ks-meter { position: relative; display: block; width: 100%; height: 12px; border-radius: var(--md-shape-full); background: var(--md-surface-container-highest); }
+  .ks-meter__fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: var(--md-shape-full); background: var(--md-success); }
+  .ks-meter__fill[data-tone="warning"] { background: var(--md-warning); }
+  .ks-meter__fill[data-tone="error"] { background: var(--md-error); }
+  .ks-meter__mark { position: absolute; top: -4px; bottom: -4px; left: calc(100% / 1.5); width: 2px; margin-left: -1px; background: var(--md-on-surface); border-radius: 1px; }
+  .ks-two { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr)); }
+  .ks-two > div { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .ks-mini th, .ks-mini td { padding: 8px 12px; }
+
+  /* 人ごとの稼働: 直接と間接の割合 */
+  .ks-split { display: flex; align-items: center; gap: 8px; min-width: 8.5rem; }
+  #people .ks-table th, #people .ks-table td { padding: 8px 10px; }
+  .ks-split__track { flex: 1; display: flex; min-width: 4rem; height: 12px; border-radius: var(--md-shape-full); overflow: hidden; background: var(--md-surface-container-high); }
+  .ks-split__d { background: var(--md-primary); }
+  .ks-split__i { background: var(--md-outline); }
+  .ks-split__num { flex: none; min-width: 3.5em; text-align: right; }
+  .ks-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; color: var(--md-on-surface-variant); }
+  .ks-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .ks-swatch { display: inline-block; width: 22px; height: 10px; border-radius: var(--md-shape-full); }
+  .ks-swatch[data-k="d"] { background: var(--md-primary); }
+  .ks-swatch[data-k="i"] { background: var(--md-outline); }
+  .ks-swatch[data-k="mark"] { width: 3px; height: 16px; border-radius: 1px; background: var(--md-on-surface); }
+  @media (max-width: 40rem) {
+    /* 確かめてほしい行は、1件ずつ縦に並べて横スクロールなしで読めるようにする */
+    #checks thead { display: none; }
+    #checks table, #checks tbody, #checks tr, #checks td { display: block; }
+    #checks tr { padding: 10px 12px; border-bottom: 1px solid var(--md-outline-variant); }
+    #checks tbody tr:last-child { border-bottom: 0; }
+    #checks td { padding: 2px 0 !important; border: 0; text-align: left !important; min-width: 0 !important; white-space: normal; }
+    #checks td:first-child::before { content: "行 "; color: var(--md-on-surface-variant); font-size: 13px; }
+    #checks td:first-child { display: inline-block; margin-right: 8px; font-weight: 700; }
+    #checks td:nth-child(2) { display: inline; }
+    #checks td:nth-child(3) { padding-top: 6px !important; }
+    .ks-file { padding: 16px; }
+    .ks-table th, .ks-table td { padding: 8px 8px; }
+    .ks-table tbody th { min-width: 6.5rem; }
+    .ks-bar { min-width: 8rem; gap: 6px; }
+    .ks-bar__num { min-width: 3.5rem; }
+    .ks-split { min-width: 8rem; }
+    .ks-budget { padding: 12px; }
+  }
+  @media print { .ks-bar__track, .ks-meter, .ks-split__track { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="timer" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">案件別の工数集計</h1>
+      <p class="md-lead text-secondary">作業日報のCSVから、案件ごと・人ごと・月ごとの作業時間を集計します。単価表があれば人件費を、案件マスタがあれば予算をどれだけ使ったかも出します。結果はCSVで保存できます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-files" class="md-step card" data-state="active" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">ファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid" data-min="14">
+          <div class="md-field">
+            <span class="md-field__label form-label" id="log-file-label">作業日報 <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="log-file-help" class="md-field__help form-hint">1行が1件の作業。日付・氏名（または社員番号）・案件・作業時間（または開始と終了）の列が必要です。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">作業日報のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="log-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="log-file-label" aria-describedby="log-file-help log-file-status">
+            </label>
+            <p id="log-file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="rate-file-label">単価表 <span class="md-badge badge" data-kind="optional">任意</span></span>
+            <p id="rate-file-help" class="md-field__help form-hint">人件費を出すときに使います。氏名（社員番号・職種でも可）と時間単価の列が必要です。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">単価表のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="rate-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="rate-file-label" aria-describedby="rate-file-help rate-file-status">
+            </label>
+            <p id="rate-file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="pj-file-label">案件マスタ <span class="md-badge badge" data-kind="optional">任意</span></span>
+            <p id="pj-file-help" class="md-field__help form-hint">予算と比べるときに使います。案件名（または案件コード）と、予算時間・予算金額の列があると比べられます。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">案件マスタのCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="pj-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="pj-file-label" aria-describedby="pj-file-help pj-file-status">
+            </label>
+            <p id="pj-file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-hours"><span class="md-icon" data-icon="help" aria-hidden="true"></span>作業時間の書き方</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-log-wrap" class="ks-file md-hidden">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span><span id="map-log-title">作業日報</span></h3>
+          <div class="md-grid" data-min="14" id="map-log"></div>
+          <p id="time-mode" class="ks-mode" aria-live="polite"></p>
+        </div>
+        <div id="map-rate-wrap" class="ks-file md-hidden">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span><span id="map-rate-title">単価表</span></h3>
+          <p class="md-field__help form-hint">社員番号・氏名・職種のうち、ある列だけ選んでください。作業日報の人と、社員番号 → 氏名 → 職種 の順で結びつけます。</p>
+          <div class="md-grid" data-min="14" id="map-rate"></div>
+        </div>
+        <div id="map-pj-wrap" class="ks-file md-hidden">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span><span id="map-pj-title">案件マスタ</span></h3>
+          <p class="md-field__help form-hint">作業日報の「案件」の列が、案件名と案件コードのどちらで書かれていても結びつけます。</p>
+          <div class="md-grid" data-min="14" id="map-pj"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">集計の仕方を決める</h2>
+          <p class="md-step__desc">ふだんはそのままボタンを押すだけで大丈夫です。設定はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="ks-period" role="group" aria-labelledby="period-label">
+          <p id="period-label" class="md-visually-hidden">集計する期間</p>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="from">集計する期間（はじめ） <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <input id="from" class="md-input form-control" type="date" aria-describedby="period-help">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="to">集計する期間（おわり） <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <input id="to" class="md-input form-control" type="date" aria-describedby="period-help">
+          </div>
+        </div>
+        <p id="period-help" class="md-field__help form-hint">空のままなら、ファイルにある日付をすべて集計します。</p>
+
+        <fieldset class="md-fieldset">
+          <legend>1件ごとの時間の丸め</legend>
+          <p class="md-field__help form-hint">「15分単位で記録する」などの決まりがあるときに選びます。近いほうにそろえます（例: 15分単位なら 50分 → 45分、53分 → 60分）。</p>
+          <div class="md-choices ks-rounds">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="round" value="0" checked>
+              <span class="md-choice__text"><span class="md-choice__label">丸めない</span><span class="md-choice__desc">書いてあるとおり</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="round" value="15">
+              <span class="md-choice__text"><span class="md-choice__label">15分単位</span><span class="md-choice__desc">0.25時間ごと</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="round" value="30">
+              <span class="md-choice__text"><span class="md-choice__label">30分単位</span><span class="md-choice__desc">0.5時間ごと</span></span></label>
+          </div>
+        </fieldset>
+
+        <div class="md-field">
+          <label class="md-field__label form-label" for="indirect">社内の作業として分ける案件 <span class="md-badge badge" data-kind="optional">任意</span></label>
+          <p id="indirect-help" class="md-field__help form-hint">案件名にこの言葉が入っていると、お客さまの案件ではない「間接時間」として分けて数えます。読点（、）で区切って書いてください。</p>
+          <input id="indirect" class="md-input form-control" type="text" aria-describedby="indirect-help" value="社内、会議、研修">
+        </div>
+
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span><span style="white-space:nowrap">詳しい設定</span><span class="md-details__hint">（1日の合計の上限）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="day-limit">1人1日の合計がこれを超えたら知らせる</label>
+              <p id="day-limit-help" class="md-field__help form-hint">打ち間違いや二重入力を見つけるための目安です。集計からは外しません。ふつうは 12時間 のままで大丈夫です。</p>
+              <div class="md-input-suffix">
+                <input id="day-limit" class="md-input md-input--short form-control" type="number" min="1" max="24" step="0.5" inputmode="decimal" aria-describedby="day-limit-help" value="12">
+                <span>時間</span>
+              </div>
+            </div>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">作業日報を案件ごと・人ごと・月ごとに集計します。元のファイルは変わりません。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>集計する</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">集計表を確かめる</h2>
+          <p class="md-step__desc">表の切り口を選ぶと、すぐに作り直します。手順3の設定を変えたときも自動で集計し直します。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div id="notes" aria-live="polite"></div>
+        <fieldset class="md-fieldset">
+          <legend>表の切り口</legend>
+          <div class="md-choices ks-views" id="views"></div>
+        </fieldset>
+        <p id="about" class="ks-about"></p>
+        <div id="pivot"></div>
+        <div id="checks-wrap" class="md-stack md-hidden" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="warning" data-size="20" aria-hidden="true"></span><span id="checks-title">確かめてほしい行</span></h3>
+          <p class="md-field__help form-hint">行の番号は、作業日報のファイルの行（見出しが1行目）です。「読めない時間」「読めない日付」の行だけ集計から外し、ほかは集計に入れています。</p>
+          <div id="checks"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-projects" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">案件ごとの内容を見る</h2>
+          <p class="md-step__desc">案件を押すと、人ごと・月ごとの時間と、予算との比較が開きます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="projects"></div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="sec-people" class="md-step md-hidden card" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title">人ごとの稼働を見る</h2>
+          <p class="md-step__desc">お客さまの案件（直接）と社内の作業（間接）の割合です。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p class="ks-legend" aria-hidden="true"><span><span class="ks-swatch" data-k="d"></span>直接（案件）</span><span><span class="ks-swatch" data-k="i"></span>間接（社内の作業）</span></p>
+        <div id="people"></div>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s7">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">7</span>
+        <div class="md-step__titles">
+          <h2 id="s7" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">時間は「1.50」（1時間30分）のような小数の時間で、金額はカンマなしで保存するので、Excel でそのまま計算に使えます。保存したファイルは「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-pivot" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span><span id="save-pivot-label">工数集計.csv を保存</span></button>
+          <button id="save-cost" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>案件別の人件費.csv を保存</button>
+          <button id="save-checks" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>チェック結果.csv を保存</button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で、<code>samples/kosu/作業日報_2026年10-11月.csv</code>、<code>samples/kosu/単価表.csv</code>、<code>samples/kosu/案件マスタ.csv</code> を選んでください。単価表と案件マスタはなくても集計できます。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-hours" class="md-modal" aria-labelledby="dlg-hours-title">
+    <div class="md-modal__head"><h2 id="dlg-hours-title" class="md-modal__title">作業時間の書き方</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>「1.5」「1:30」「90分」「1時間30分」のどれでも読みます。作業時間の列がない行は、開始・終了・休憩の時刻から計算します。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：予算の見方（案件マスタがあるとき）</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="success">予算内</span> 予算の80%まで使った案件</li>
+        <li><span class="md-chip badge" data-tone="warning">80%超</span> 予算の80%を超え、100%まで使った案件</li>
+        <li><span class="md-chip badge" data-tone="error">超過</span> 予算を超えた案件</li>
+      </ul>
+      <p>予算時間と予算金額の両方があるときは、消化率の高いほうで判定します。</p>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/kintai.js"></script>
+<script src="../assets/js/apps/kosu.js"></script>
+<script src="../assets/js/ui/kosu.js"></script>
+</body>
+</html>

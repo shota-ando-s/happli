@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2つのリストの照合｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* このページだけの部品（色は md.css のトークンだけを使う） */
+  .shogo-pair { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; }
+  .shogo-pair > .md-field { flex: 1 1 13rem; }
+  .shogo-pair__arrow { flex: none; align-self: flex-end; height: 52px; display: grid; place-items: center; color: var(--md-on-surface-variant); }
+  .shogo-pair__del { flex: none; }
+  .shogo-pairs > * + * { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--md-outline-variant); }
+  .shogo-checks { display: flex; flex-direction: column; gap: 12px; }
+  .shogo-checks .md-inline-check { align-items: flex-start; }
+  .shogo-checks .md-checkbox { margin-top: 2px; }
+  .shogo-check__desc { display: block; font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .md-table td.shogo-diff { position: relative; background: var(--md-warning-container); color: var(--md-on-warning-container); font-weight: 700; }
+  .shogo-filter .md-choice { padding: 10px 14px; }
+  .shogo-filter .md-choice__label { white-space: nowrap; }
+  @media (max-width: 40rem) {
+    .shogo-pair__arrow { display: none; }
+    .shogo-pair__del { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="compare" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">2つのリストの照合</h1>
+      <p class="md-lead text-secondary">2つの一覧表を、商品コードや社員番号などで結びつけて、両方にあるか・内容が同じかを調べます。Excel の VLOOKUP で行っていた照らし合わせの代わりに使えます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-files" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">2つのファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。1行目が見出しのCSVを使います。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid">
+          <div class="md-stack" data-gap="16">
+            <div class="md-field">
+              <span class="md-field__label form-label" id="file-a-label">1つ目のリスト <span class="md-badge badge" data-kind="required">必須</span></span>
+              <p id="file-a-help" class="md-field__help form-hint">元になる一覧。例）在庫台帳、社員名簿</p>
+              <label class="md-dropzone">
+                <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+                <span class="md-dropzone__main">1つ目のリストのCSV</span>
+                <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+                <input id="file-a" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-a-label" aria-describedby="file-a-help file-a-status">
+              </label>
+              <p id="file-a-status" class="md-file-status" aria-live="polite"></p>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="name-a">このリストの呼び名</label>
+              <p id="name-a-help" class="md-field__help form-hint">結果の表や保存するファイルで使います。例）台帳</p>
+              <input id="name-a" class="md-input form-control" type="text" maxlength="20" placeholder="リストA" aria-describedby="name-a-help">
+            </div>
+          </div>
+          <div class="md-stack" data-gap="16">
+            <div class="md-field">
+              <span class="md-field__label form-label" id="file-b-label">2つ目のリスト <span class="md-badge badge" data-kind="required">必須</span></span>
+              <p id="file-b-help" class="md-field__help form-hint">比べる相手。例）棚卸結果、登録一覧</p>
+              <label class="md-dropzone">
+                <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+                <span class="md-dropzone__main">2つ目のリストのCSV</span>
+                <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+                <input id="file-b" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-b-label" aria-describedby="file-b-help file-b-status">
+              </label>
+              <p id="file-b-status" class="md-file-status" aria-live="polite"></p>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="name-b">このリストの呼び名</label>
+              <p id="name-b-help" class="md-field__help form-hint">結果の表や保存するファイルで使います。例）実績</p>
+              <input id="name-b" class="md-input form-control" type="text" maxlength="20" placeholder="リストB" aria-describedby="name-b-help">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-keys" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">同じものを見分ける列（キー）を選ぶ</h2>
+          <p class="md-step__desc">商品コードや社員番号のように、1行ごとに違う値が入っている列を選びます。見出しから自動で選んであります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="keys-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1で2つのファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="keys" class="md-hidden md-stack" data-gap="20"></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="sec-pairs" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">値を比べる列を選ぶ <span class="md-badge badge" data-kind="optional">任意</span></h2>
+          <p class="md-step__desc">数量・金額・住所など、内容が同じかを確かめたい列の組を選びます。同じ見出しの列は自動で組にしてあります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="pairs-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1で2つのファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="pairs-wrap" class="md-hidden md-stack" data-gap="16">
+          <p id="pairs-none" class="md-empty md-hidden"><span class="md-icon" data-icon="info" aria-hidden="true"></span>比べる列がありません。このままだと、キーが両方にあるかどうかだけを調べます。</p>
+          <div id="pairs" class="shogo-pairs"></div>
+          <div class="md-actions">
+            <button id="add-pair" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="add" aria-hidden="true"></span>比べる列を追加</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">照らし合わせる</h2>
+          <p class="md-step__desc">ふだんはそのままボタンを押すだけで大丈夫です。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（同じ値とみなす範囲）</span></summary>
+          <div class="md-details__body card-body">
+            <fieldset class="md-fieldset">
+              <legend>次の違いは、同じ値とみなします</legend>
+              <div class="shogo-checks">
+                <label class="md-inline-check"><input id="opt-trim" class="md-checkbox form-check-input" type="checkbox" checked>
+                  <span>値の前後の空白<span class="shogo-check__desc">後ろに空白が付いた「SK-1009 」と「SK-1009」を同じとみなします。</span></span></label>
+                <label class="md-inline-check"><input id="opt-width" class="md-checkbox form-check-input" type="checkbox" checked>
+                  <span>全角と半角、大文字と小文字<span class="shogo-check__desc">「ＳＫ－１００６」「sk-1006」「SK-1006」や、「ｶﾞｲﾄﾞ」と「ガイド」を同じとみなします。ひらがなとカタカナは区別します。</span></span></label>
+                <label class="md-inline-check"><input id="opt-hyphen" class="md-checkbox form-check-input" type="checkbox">
+                  <span>キーの中のハイフンと空白<span class="shogo-check__desc">「AB-123」「AB 123」「AB123」を同じキーとみなします。キーの列だけに使います。</span></span></label>
+                <label class="md-inline-check"><input id="opt-numeric" class="md-checkbox form-check-input" type="checkbox" checked>
+                  <span>数字の書き方<span class="shogo-check__desc">「1,000」「1000」「１０００」「¥1,000」を同じ数とみなします。「00123」と「123」も同じになります。</span></span></label>
+              </div>
+            </fieldset>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">キーで2つのリストの行を結びつけ、一致・値が違う・片方だけ・キー重複に仕分けます。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>照らし合わせる</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">違っている値は色を付けて示します。表示する種類を選んで絞り込めます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <fieldset class="md-fieldset">
+          <legend>表に出す行</legend>
+          <div id="filter" class="md-choices shogo-filter" data-layout="row"></div>
+        </fieldset>
+        <div id="results"></div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。照合結果には、絞り込みに関係なく全部の行が入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-result" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span><span>照合結果.csv を保存</span></button>
+          <button id="save-a" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span><span class="js-label"></span></button>
+          <button id="save-b" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span><span class="js-label"></span></button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>在庫台帳と棚卸結果、社員名簿とシステムの登録一覧、発注データと納品データなど、2つの一覧の食い違いを探すときに使います。</p>
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で、<code>samples/shogo/在庫台帳.csv</code> と <code>samples/shogo/棚卸結果.csv</code> を選んでください。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：仕分けの種類</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="success">一致</span> 両方にあり、比べた列の値も同じ</li>
+        <li><span class="md-chip badge" data-tone="warning">値が違う</span> 両方にあるが、比べた列のどれかの値が違う（どの列がどう違うかも示します）</li>
+        <li><span class="md-chip badge" data-tone="info"><span data-name="a">リストA</span>だけ</span> 1つ目のリストにしかない</li>
+        <li><span class="md-chip badge" data-tone="neutral"><span data-name="b">リストB</span>だけ</span> 2つ目のリストにしかない</li>
+        <li><span class="md-chip badge" data-tone="error">キー重複</span> 同じキーの行が、どちらかのリストに2行以上ある（どれと比べるか決められないので、全部の行を示します）</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/shogo.js"></script>
+<script src="../assets/js/ui/shogo.js"></script>
+</body>
+</html>

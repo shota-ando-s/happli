@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>仕訳データの作成｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* このページだけの部品: 振り分けルールの編集カード、未設定の行のカード */
+  .sw-rules { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .sw-rule { min-width: 0; padding: 12px 16px 16px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-low); }
+  .sw-rule__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .sw-rule__no { flex: none; display: grid; place-items: center; min-width: 32px; height: 32px; padding: 0 6px; border-radius: var(--md-shape-full); background: var(--md-secondary-container); color: var(--md-on-secondary-container); font-family: var(--md-font-num); font-size: 15px; font-weight: 700; }
+  .sw-rule__title { flex: 1 1 10rem; min-width: 0; margin: 0; font-size: 16px; font-weight: 700; overflow-wrap: anywhere; }
+  .sw-rule__tools { display: flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+  .sw-rule__grid { margin-top: 8px; display: grid; gap: 12px 16px; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1.4fr); }
+  .sw-rule__summary { margin: 0; font-size: 15px; line-height: 1.6; color: var(--md-on-surface-variant); overflow-wrap: anywhere; }
+  .sw-rule__grid .sw-wide { grid-column: 1 / -1; }
+  .sw-rule .md-field { gap: 4px; }
+  .sw-rule .md-field__label { font-size: 14px; }
+  .sw-fix { display: flex; flex-direction: column; gap: 12px; }
+  .sw-fix__item { min-width: 0; padding: 16px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); }
+  .sw-fix__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; }
+  .sw-fix__desc { font-weight: 700; overflow-wrap: anywhere; }
+  .sw-fix__grid { display: grid; gap: 12px 16px; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, 1.2fr); align-items: end; }
+  .sw-fix__grid .md-field { gap: 4px; }
+  .sw-fix__grid .md-field__label { font-size: 14px; }
+  .sw-own { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr)); }
+  @media (max-width: 48rem) {
+    .sw-rule__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .sw-rule__grid > :first-child { grid-column: 1 / -1; }
+    .sw-fix__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .sw-fix__grid > :first-child { grid-column: 1 / -1; }
+  }
+  @media (max-width: 30rem) {
+    .sw-rule { padding: 12px; }
+    .sw-rule__grid, .sw-fix__grid { grid-template-columns: minmax(0, 1fr); }
+    .sw-rule__tools { width: 100%; margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="book" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">仕訳データの作成</h1>
+      <p class="md-lead text-secondary">銀行の入出金明細やクレジットカードの明細を、「摘要にこの言葉があればこの科目」というルールで仕訳にします。会計ソフトに取り込めるCSVで保存できます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" data-state="active" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">明細のファイルを選ぶ</h2>
+          <p class="md-step__desc">ネットバンキングやカード会社のサイトからダウンロードしたCSVを、ここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">入出金明細・カード明細のCSV <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">1つの口座（または1枚のカード）の、1か月分などの明細です。1行目が見出しになっているCSVを選んでください。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">明細のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列と、この明細の科目を確かめる</h2>
+          <p class="md-step__desc">どの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-wrap" class="md-stack md-hidden" data-gap="16">
+          <div class="md-grid" data-min="14" id="map-basic"></div>
+          <fieldset class="md-fieldset">
+            <legend>金額の列の形</legend>
+            <div class="md-choices" data-layout="grid">
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="layout" value="two" checked>
+                <span class="md-choice__text"><span class="md-choice__label">入金と出金が別の列</span><span class="md-choice__desc">「お預り金額」「お支払金額」のように2つの列に分かれている（銀行に多い形）</span></span></label>
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="layout" value="one">
+                <span class="md-choice__text"><span class="md-choice__label">金額が1つの列</span><span class="md-choice__desc">「ご利用金額」のように1つの列で、返金などはマイナスで書かれている（カードに多い形）</span></span></label>
+            </div>
+          </fieldset>
+          <div class="md-grid" data-min="14" id="map-amounts"></div>
+        </div>
+        <h3 class="md-subhead" style="margin-top:24px"><span class="md-icon" data-icon="bank" data-size="20" aria-hidden="true"></span>この明細の科目と消費税</h3>
+        <div class="sw-own">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="own-account">この明細の勘定科目 <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="own-account-help" class="md-field__help form-hint">銀行の明細なら普通預金、カードの明細なら未払金がふつうです。</p>
+            <select id="own-account" class="md-select form-select" aria-describedby="own-account-help">
+              <option value="普通預金">普通預金</option>
+              <option value="当座預金">当座預金</option>
+              <option value="現金">現金</option>
+              <option value="未払金">未払金（カード）</option>
+              <option value="__other">そのほか（自分で入力）</option>
+            </select>
+            <input id="own-account-other" class="md-input md-hidden form-control" type="text" aria-label="この明細の勘定科目（自分で入力）" placeholder="例）定期預金">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="own-sub">補助科目 <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <p id="own-sub-help" class="md-field__help form-hint">銀行名やカード名など。会計ソフトに登録してある名前と同じにします。</p>
+            <input id="own-sub" class="md-input form-control" type="text" aria-describedby="own-sub-help" placeholder="例）さくら銀行">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="tax-mode">消費税の扱い</label>
+            <p id="tax-mode-help" class="md-field__help form-hint">金額は明細のまま（税込）で出します。税抜経理のときは、会計ソフトが取り込むときに税額を分けます。</p>
+            <select id="tax-mode" class="md-select form-select" aria-describedby="tax-mode-help">
+              <option value="inclusive">税込経理（ふつうはこちら）</option>
+              <option value="exclusive">税抜経理</option>
+              <option value="exempt">消費税を申告していない（免税事業者）</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-rules" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">振り分けルールを確かめる</h2>
+          <p class="md-step__desc">摘要（取引の内容）に「キーワード」が含まれていたら、その科目にします。上のルールから順に見て、最初に当てはまったものを使います。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-howto"><span class="md-icon" data-icon="help" aria-hidden="true"></span>仕訳のでき方</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="rules-sample-note"></div>
+        <details class="md-details card">
+          <summary><span class="md-icon" data-icon="info" aria-hidden="true"></span>ルールの書き方<span class="md-details__hint">（キーワード・摘要の書き換え）</span></summary>
+          <div class="md-details__body card-body">
+            <ul style="margin:0;padding-left:1.25em">
+              <li><strong>キーワード</strong>：「、」で区切ると、どれか1つが含まれていれば当てはまります。全角・半角、ひらがな・カタカナ、大文字・小文字の違いは気にしなくて大丈夫です（「デンキ」で「ﾃﾞﾝｷ」にも当たります）。</li>
+              <li style="margin-top:6px"><strong>入金・出金</strong>：「出金」にすると出金の行だけに使います。同じ「振込」でも、入金なら売掛金、出金なら別の科目、のように分けられます。</li>
+              <li style="margin-top:6px"><strong>摘要の書き換え</strong>：空欄なら明細の摘要をそのまま使います。<code>{月}</code> は取引の月（例: 10）に、<code>{元の摘要}</code> は明細の摘要に置き換わります。例）<code>電気代 {月}月分</code> → 電気代 10月分</li>
+              <li style="margin-top:6px">ルールはこのパソコンのブラウザに自動で保存され、次回も使えます。</li>
+            </ul>
+          </div>
+        </details>
+        <ol id="rules" class="sw-rules" aria-label="振り分けルールの一覧"></ol>
+        <p id="rules-empty" class="md-empty md-hidden"><span class="md-icon" data-icon="info" aria-hidden="true"></span>ルールがありません。「ルールを追加する」を押すか、「見本のルールに戻す」を押してください。</p>
+        <div class="md-actions">
+          <button id="rule-add" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="add" aria-hidden="true"></span>ルールを追加する</button>
+          <button id="rule-reset" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>見本のルールに戻す</button>
+        </div>
+        <div id="rules-reset-confirm"></div>
+        <details class="md-details card" id="rules-file">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>ルールをファイルで保存・読み込み<span class="md-details__hint">（ほかのパソコンで使うとき）</span></summary>
+          <div class="md-details__body card-body">
+            <p class="md-body-s">ルールをファイル（.json）に保存しておくと、ほかのパソコンでも同じルールが使えます。読み込むと、いまのルールは読み込んだものに置き換わります。</p>
+            <div class="md-actions">
+              <button id="rules-export" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>ルールをファイルに保存</button>
+            </div>
+            <label class="md-dropzone" style="min-height:120px">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">ルールのファイル（.json）を読み込む</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="rules-import" type="file" accept=".json,.txt" aria-label="ルールのファイル（.json）を読み込む">
+            </label>
+          </div>
+        </details>
+        <div id="rules-message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">仕訳を作る</h2>
+          <p class="md-step__desc">明細の1行が、仕訳の1行になります。元のファイルは変わりません。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-cta">
+          <p class="md-cta__text">ルールで科目を決めて仕訳にし、残高が合っているかも確かめます。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>仕訳を作る</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">「未設定」の行は、科目を選んでルールに追加すると、すぐに作り直します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-howto"><span class="md-icon" data-icon="help" aria-hidden="true"></span>仕訳のでき方</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div id="balance-message"></div>
+        <div id="fix-wrap" class="md-stack md-hidden" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="warning" data-size="20" aria-hidden="true"></span>ルールで決まらなかった行（未設定）</h3>
+          <p class="md-body-s">このまま保存すると、出金は「仮払金」、入金は「仮受金」として出します。科目を選んで「この内容でルールに追加」を押すと、次回からも自動で決まります。</p>
+          <div id="fix" class="sw-fix"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">できあがった仕訳</h3>
+          <div id="result"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title">仕訳データを保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>どの形で保存しますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="format" value="generic" checked>
+              <span class="md-choice__text"><span class="md-choice__label">汎用の仕訳CSV</span><span class="md-choice__desc">日付・借方・貸方・金額・摘要の見出しつきCSV。Excelで確かめたり、ほかの会計ソフトに合わせて並べ替えたりするとき</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="format" value="yayoi">
+              <span class="md-choice__text"><span class="md-choice__label">弥生会計のインポート形式</span><span class="md-choice__desc">弥生会計の「仕訳日記帳」に取り込む形（見出しなし・Shift_JIS）</span></span></label>
+          </div>
+        </fieldset>
+        <fieldset class="md-fieldset" id="enc-wrap">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div id="yayoi-wrap" class="md-stack md-hidden" data-gap="12">
+          <div class="md-banner alert" data-type="warning" role="note">
+            <span class="md-icon md-banner__icon alert-icon" data-icon="warning" role="img" aria-label="注意"></span>
+            <div class="md-banner__body">
+              <p class="md-banner__title alert-heading">はじめて取り込むときは、必ず会社データのコピー（バックアップから復元した練習用のデータ）で試してください</p>
+              <ul class="md-banner__list alert-list">
+                <li>この形式は弥生会計の公開資料をもとに作っていますが、お使いの版で取り込めることはまだ確かめていません。</li>
+                <li>勘定科目・補助科目・税区分の名前が弥生会計に登録してある名前と1文字でも違うと、取り込めないか、別の科目になります。</li>
+                <li>税金額の列は空にしています。弥生会計が取り込むときに計算します。摘要は全角32文字（64バイト）までにそろえます。</li>
+              </ul>
+            </div>
+          </div>
+          <details class="md-details card">
+            <summary><span class="md-icon" data-icon="info" aria-hidden="true"></span>税区分の読み替え表<span class="md-details__hint">（弥生会計に出す名前）</span></summary>
+            <div class="md-details__body card-body">
+              <div id="yayoi-tax-table"></div>
+              <p class="md-body-s">「この明細の科目」の側（普通預金など）は、いつも「対象外」です。</p>
+            </div>
+          </details>
+        </div>
+        <div class="md-actions">
+          <button id="save" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span><span id="save-label">仕訳データを保存</span></button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ol>
+        <li>手順1で <code>samples/shiwake/入出金明細_2026年10月.csv</code> を選びます。</li>
+        <li>手順4の「仕訳を作る」を押します。見本には、残高が合わない所（明細の行が1行抜けている所）と、ルールで決まらない行がわざと入れてあります。</li>
+        <li>カードの明細は <code>samples/shiwake/カード明細_2026年10月.csv</code> で試せます。手順2で「この明細の勘定科目」を「未払金（カード）」にしてください。</li>
+      </ol>
+    </div>
+  </dialog>
+  <dialog id="dlg-howto" class="md-modal" aria-labelledby="dlg-howto-title">
+    <div class="md-modal__head"><h2 id="dlg-howto-title" class="md-modal__title">仕訳のでき方</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><strong>出金</strong>の行：借方＝ルールで決めた科目（例: 水道光熱費）、貸方＝この明細の科目（例: 普通預金）</li>
+        <li><strong>入金</strong>の行：借方＝この明細の科目、貸方＝ルールで決めた科目（例: 売掛金）</li>
+        <li>どのルールにも当たらない行は <span class="md-chip badge" data-tone="warning">未設定</span> になります。その場で科目を選んでルールに追加できます。</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<datalist id="account-list"></datalist>
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/shiwake.js"></script>
+<script src="../assets/js/ui/shiwake.js"></script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>源泉徴収の対象チェック｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* このページだけの部品: 報酬の種類のルール、判断が必要な行のカード、支払先の区分、絞り込み */
+  .gs-list { margin: 8px 0 0; padding-left: 1.25em; }
+  .gs-list li + li { margin-top: 6px; }
+  .gs-rules { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+  .gs-rule { min-width: 0; padding: 12px 16px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-low); }
+  .gs-rule__grid { display: grid; gap: 8px 16px; grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 1fr) auto; align-items: end; }
+  .gs-rule__no { display: grid; place-items: center; min-width: 32px; height: 32px; margin-bottom: 8px; padding: 0 6px; border-radius: var(--md-shape-full); background: var(--md-secondary-container); color: var(--md-on-secondary-container); font-family: var(--md-font-num); font-size: 15px; font-weight: 700; }
+  .gs-rule .md-field { gap: 4px; min-width: 0; }
+  .gs-rule .md-field__label { font-size: 14px; }
+  .gs-rule .md-input, .gs-rule .md-select { width: 100%; }
+  .gs-rule__tools { display: flex; gap: 0; }
+  .gs-rule .md-icon-btn:disabled { opacity: .38; cursor: default; background: transparent; }
+  .gs-rule .md-icon-btn[data-danger] { color: var(--md-error); }
+  .gs-rule .md-icon-btn:focus-visible { outline: 3px solid var(--md-primary); outline-offset: 0; }
+  .gs-cards { display: flex; flex-direction: column; gap: 12px; }
+  .gs-card { min-width: 0; padding: 16px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); }
+  .gs-card__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 8px; }
+  .gs-card__title { font-weight: 700; overflow-wrap: anywhere; min-width: 0; }
+  .gs-card__note { margin: 0 0 12px; font-size: 15px; color: var(--md-on-surface-variant); }
+  .gs-card__grid { display: grid; gap: 12px 16px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; }
+  .gs-card__grid .md-field { gap: 4px; min-width: 0; }
+  .gs-card__grid .md-field__label { font-size: 14px; }
+  .gs-card__grid .md-input, .gs-card__grid .md-select { width: 100%; }
+  .gs-entities { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px 16px; grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); }
+  .gs-entity { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; padding: 8px 12px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); }
+  .gs-entity__text { min-width: 0; display: flex; flex-direction: column; }
+  .gs-entity__name { font-weight: 700; overflow-wrap: anywhere; }
+  .gs-entity__src { font-size: 14px; color: var(--md-on-surface-variant); }
+  .gs-entity .md-select { width: 7.5rem; }
+  .gs-entity[data-guess="1"] { border-color: var(--md-outline); }
+  .gs-filters { display: grid; gap: 12px 16px; grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr)); align-items: end; }
+  .gs-filters .md-field { gap: 4px; min-width: 0; }
+  .gs-filters .md-input, .gs-filters .md-select { width: 100%; }
+  #summary .md-stats { grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr)); }
+  .gs-count { font-size: 14px; color: var(--md-on-surface-variant); margin: 0; }
+  .gs-taxopt { display: flex; flex-direction: column; gap: 16px; padding: 16px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-low); }
+  .gs-taxopt .md-select { max-width: 100%; }
+  @media (max-width: 40rem) {
+    .gs-rule__grid { grid-template-columns: auto minmax(0, 1fr); }
+    .gs-rule__grid > .md-field { grid-column: 2; }
+    .gs-rule__tools { grid-column: 2; justify-content: flex-end; margin-top: -4px; }
+    .gs-card__grid { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="percent" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">源泉徴収の対象チェック</h1>
+      <p class="md-lead text-secondary">個人に支払った原稿料・デザイン料・講演料・税理士の報酬などの一覧から、源泉徴収が必要かどうかと、税額・差引支払額の目安を出します。支払先ごとの年間合計も作れます。</p>
+    </div>
+  </div>
+
+  <div class="md-banner alert" data-type="info" role="note" style="margin-bottom:16px">
+    <span class="md-icon md-banner__icon alert-icon" data-icon="info" role="img" aria-label="お知らせ"></span>
+    <div class="md-banner__body">
+      <p class="md-banner__title alert-heading">税額は目安です。契約の内容や支払先の状況で変わることがあります。迷うものは税理士・税務署に確認してください。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" data-state="active" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">支払一覧のファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-about"><span class="md-icon" data-icon="help" aria-hidden="true"></span>源泉徴収とは</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">支払一覧のCSV <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">1行に1回の支払い。支払先・内容（報酬の種類）・支払金額の列が必要です。支払先の区分（個人／法人）・消費税額・支払日の列はあれば使います。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">支払一覧のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div class="md-grid md-hidden" data-min="14" id="map"></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-rules" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">報酬の種類の決め方を確かめる</h2>
+          <p class="md-step__desc">内容の列に「キーワード」が含まれていたら、その報酬の種類にします。上のルールから順に見て、最初に当てはまったものを使います。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="rules-sample-note"></div>
+        <details class="md-details card">
+          <summary><span class="md-icon" data-icon="info" aria-hidden="true"></span>ルールの書き方<span class="md-details__hint">（キーワード・対象外の例）</span></summary>
+          <div class="md-details__body card-body">
+            <ul class="gs-list" style="margin-top:0">
+              <li><strong>キーワード</strong>：「、」で区切ると、どれか1つが含まれていれば当てはまります。全角・半角、ひらがな・カタカナの違いは気にしなくて大丈夫です。</li>
+              <li><strong>対象外の可能性が高い</strong>：物品の購入・運送・清掃などです。システム開発の請負のように、契約の内容（デザインなどが含まれるか）で判断が変わるものもあります。</li>
+              <li><strong>外交員報酬</strong>：その月の合計や給与の額で税額が変わるため、このツールでは計算しないで「判断が必要」にします。</li>
+              <li>ルールはこのパソコンのブラウザに自動で保存され、次回も使えます。</li>
+            </ul>
+          </div>
+        </details>
+        <ol id="rules" class="gs-rules" aria-label="報酬の種類のルールの一覧"></ol>
+        <p id="rules-empty" class="md-empty md-hidden"><span class="md-icon" data-icon="info" aria-hidden="true"></span>ルールがありません。「ルールを追加する」を押すか、「見本のルールに戻す」を押してください。</p>
+        <div class="md-actions">
+          <button id="rule-add" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="add" aria-hidden="true"></span>ルールを追加する</button>
+          <button id="rule-reset" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>見本のルールに戻す</button>
+        </div>
+        <div id="rules-message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">調べる</h2>
+          <p class="md-step__desc">ふだんはそのままボタンを押すだけで大丈夫です。元のファイルは変わりません。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="taxopt" class="gs-taxopt md-hidden" role="group" aria-labelledby="taxopt-title">
+          <p id="taxopt-title" class="md-subhead" style="margin:0"><span class="md-icon" data-icon="receipt" data-size="20" aria-hidden="true"></span>消費税の扱い</p>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="amount-mode">支払金額の列は</label>
+            <p id="amount-mode-help" class="md-field__help form-hint">請求書の合計（消費税込み）をそのまま入れているなら、このままで大丈夫です。</p>
+            <select id="amount-mode" class="md-select form-select" aria-describedby="amount-mode-help">
+              <option value="gross">消費税込み（請求書の合計）</option>
+              <option value="net">消費税抜き（消費税は別の列）</option>
+            </select>
+          </div>
+          <div>
+            <label class="md-inline-check"><input id="exclude-tax" class="md-checkbox form-check-input" type="checkbox" checked aria-describedby="exclude-tax-help"> 消費税額を除いた金額で源泉徴収を計算する</label>
+            <p id="exclude-tax-help" class="md-field__help form-hint">請求書などで報酬の額と消費税の額がはっきり分けて書かれている場合は、消費税を除いた金額をもとに計算できます。消費税額が空の行は、支払金額のまま計算します。</p>
+          </div>
+        </div>
+        <div class="md-cta">
+          <p class="md-cta__text">支払いごとに、源泉徴収が必要かどうかと税額の目安を出します。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>調べる</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">「判断が必要」の行は、その場で種類を選べます。個人・法人の推測が違うときも、ここで直せます。直すとすぐに計算し直します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div id="fix-wrap" class="md-stack md-hidden" data-gap="8">
+          <h3 class="md-subhead" id="fix-title"><span class="md-icon" data-icon="warning" data-size="20" aria-hidden="true"></span>判断が必要な行</h3>
+          <p class="md-body-s">報酬の種類を選んで「この種類にする」を押してください。迷うときは、契約書や請求書の内容を確かめるか、税理士に相談してください。</p>
+          <div id="fix" class="gs-cards"></div>
+        </div>
+        <details class="md-details card" id="entity-wrap">
+          <summary><span class="md-icon" data-icon="person" aria-hidden="true"></span>支払先の個人・法人<span class="md-details__hint" id="entity-hint"></span></summary>
+          <div class="md-details__body card-body">
+            <p class="md-body-s" style="margin:0">区分の列が空の支払先は、名前に「株式会社」「(株)」「合同会社」「一般社団法人」などがあれば法人、なければ個人と推測しています。違っているときは選び直してください。選んだ区分はこのパソコンに保存され、次回も使えます。</p>
+            <ul id="entities" class="gs-entities" aria-label="支払先の一覧"></ul>
+          </div>
+        </details>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">支払いごとの結果</h3>
+          <div class="gs-filters" role="group" aria-label="結果の絞り込み">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-status">判定</label>
+              <select id="f-status" class="md-select form-select">
+                <option value="">すべて</option>
+                <option value="対象">対象だけ</option>
+                <option value="対象外">対象外だけ</option>
+                <option value="判断が必要">判断が必要だけ</option>
+              </select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-kind">報酬の種類</label>
+              <select id="f-kind" class="md-select form-select"></select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-entity">区分</label>
+              <select id="f-entity" class="md-select form-select">
+                <option value="">すべて</option>
+                <option value="個人">個人だけ</option>
+                <option value="法人">法人だけ</option>
+              </select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="f-q">支払先・内容で探す</label>
+              <input id="f-q" class="md-input form-control" type="search" placeholder="例）見本、翻訳">
+            </div>
+          </div>
+          <p id="f-count" class="gs-count" aria-live="polite"></p>
+          <div id="result"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">支払先ごとの合計</h3>
+          <p class="md-body-s" style="margin:0">1月〜12月の1年分のファイルなら、年間の合計になります。支払調書を作るときの参考にしてください。</p>
+          <div id="payees"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">支払った月ごとの源泉徴収税額</h3>
+          <p class="md-body-s" style="margin:0">納期限は原則の日付（翌月10日）です。10日が土日祝日のときは次の平日になります。「納期の特例」を受けている場合は、経理の担当者か税理士に確かめてください。</p>
+          <div id="months"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。絞り込みに関係なく、全部の行を保存します。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-result" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>源泉徴収チェック結果.csv を保存</button>
+          <button id="save-payee" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>支払先別の合計.csv を保存</button>
+          <button id="save-transfer" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>振込用の差引支払額.csv を保存</button>
+        </div>
+        <p class="md-body-s" style="margin:0">「振込用の差引支払額」は、支払先・差引支払額・支払日の3列です。口座の情報は入っていないので、振込データを作るときは口座の一覧と合わせて使ってください。</p>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ol>
+        <li>手順1で <code>samples/gensen/支払一覧_2026年.csv</code> を選び、手順4の「調べる」を押します。</li>
+        <li>手順5に、報酬の種類が決まらない行（<span class="md-chip badge" data-tone="warning">判断が必要</span>）が出ます。種類を選んでみてください。</li>
+        <li>「スタジオみなと」は会社ですが、名前に会社の種類が入っていないので個人と推測されます。手順5の「支払先の個人・法人」で法人に直してみてください。</li>
+      </ol>
+    </div>
+  </dialog>
+  <dialog id="dlg-about" class="md-modal" aria-labelledby="dlg-about-title">
+    <div class="md-modal__head"><h2 id="dlg-about-title" class="md-modal__title">源泉徴収とは</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>会社が個人に原稿料やデザイン料、講演料、税理士などの報酬を払うときは、相手の所得税をあらかじめ差し引いて、会社が代わりに国に納めます。これを源泉徴収といいます。差し引く額は、ふつう支払金額の 10.21%（1回の支払いが100万円を超える部分は 20.42%）です。相手には、差し引いた残り（差引支払額）を振り込みます。</p>
+      <div>
+        <p class="md-subhead">納める期限</p>
+        <p>差し引いた税金は、原則として<strong>支払った月の翌月10日</strong>までに納めます（10日が土日祝日なら次の平日）。会社が「納期の特例」の承認を受けている場合は納める時期が違うことがあるので、経理の担当者か税理士に確かめてください。</p>
+      </div>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：判定の種類</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="info">対象</span> 源泉徴収が必要と思われる支払い。税額の目安を出します</li>
+        <li><span class="md-chip badge" data-tone="neutral">対象外</span> 法人への支払いや、物品の購入・運送・清掃など、ふつうは源泉徴収しない支払い</li>
+        <li><span class="md-chip badge" data-tone="warning">判断が必要</span> 報酬の種類が決まらない行や、外交員報酬など、このツールでは決められない行</li>
+      </ul>
+      <p class="md-body-s">法人への支払いでも、ごく一部（馬主に払う競馬の賞金など）は源泉徴収が必要です。ふだんの事務ではまず出てきませんが、心当たりがあれば確かめてください。</p>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/gensen.js"></script>
+<script src="../assets/js/ui/gensen.js"></script>
+</body>
+</html>

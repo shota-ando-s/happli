@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>在庫の受払集計｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  .zk-table th, .zk-table td { padding: 8px 12px; }
+  .zk-table tbody th, .zk-table thead th:first-child { position: sticky; left: 0; background: var(--md-surface-container-lowest); z-index: 1; }
+  .zk-table thead th:first-child { background: var(--md-surface-container); z-index: 2; }
+  .zk-table tbody th { font-weight: 500; text-align: left; }
+  .zk-table tbody tr:hover > th { background: var(--md-surface-container-low); }
+  .zk-table .zk-sub { display: block; font-size: 13px; font-weight: 400; color: var(--md-on-surface-variant); white-space: normal; min-width: 8rem; }
+  .zk-table td.zk-chips { white-space: normal; min-width: 10rem; }
+  .zk-table td.zk-chips .md-chip { margin: 2px 4px 2px 0; }
+  .zk-table td.zk-note { white-space: normal; min-width: 12rem; font-size: 14px; color: var(--md-on-surface-variant); }
+  .zk-table .zk-muted { color: var(--md-on-surface-variant); }
+  .zk-table td.zk-strong { font-weight: 700; }
+  .zk-table td.zk-minus { color: var(--md-error); font-weight: 700; }
+  .zk-table tr[data-kind="opening"] > * { background: var(--md-surface-container-low); }
+  .zk-table tr[data-kind="count"] > * { background: var(--md-surface-container-low); }
+  .zk-table tr[data-negative] > th { box-shadow: inset 4px 0 0 var(--md-error); }
+  .zk-kinds td, .zk-kinds th { vertical-align: middle; }
+  .zk-kinds .md-select { min-width: 11rem; }
+  .zk-filter .md-choice { padding: 10px 14px; }
+  .zk-filter .md-choice__label { white-space: nowrap; }
+  .zk-prod + .zk-prod { margin-top: 8px; }
+  .zk-prod > summary { flex-wrap: wrap; row-gap: 4px; }
+  .zk-prod__meta { font-weight: 400; font-size: 14px; color: var(--md-on-surface-variant); }
+  .zk-prod__body { padding: 12px; }
+  .zk-legend { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .zk-period { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .zk-period .md-input { width: auto; min-width: 11rem; }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="inventory" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">在庫の受払集計</h1>
+      <p class="md-lead text-secondary">入庫・出庫・返品・棚卸の記録から、商品ごとの月末の在庫数（と在庫金額）を計算し、商品ごとの受払台帳（商品有高帳）を作ります。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-files" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">ファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid" data-min="14">
+          <div class="md-field">
+            <span class="md-field__label form-label" id="mv-file-label">受払の記録 <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="mv-file-help" class="md-field__help form-hint">入庫・出庫などを1行ずつ書いた一覧。日付・商品コード・区分（入荷／出荷など）・数量の列が必要です。単価と倉庫の列は任意です。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">受払の記録のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="mv-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="mv-file-label" aria-describedby="mv-file-help mv-file-status">
+            </label>
+            <p id="mv-file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="op-file-label">前期末の在庫 <span class="md-badge badge" data-kind="optional">任意</span></span>
+            <p id="op-file-help" class="md-field__help form-hint">先月末の在庫の一覧（商品コード・数量・金額）。先月この画面で保存した「期末在庫.csv」をそのまま使えます。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">前期末の在庫のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="op-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="op-file-label" aria-describedby="op-file-help op-file-status">
+            </label>
+            <p id="op-file-status" class="md-file-status" aria-live="polite"></p>
+            <button id="op-clear" class="md-btn md-hidden btn" data-variant="text" data-size="s" type="button"><span class="md-icon" data-icon="delete" aria-hidden="true"></span>前期末の在庫を使わない</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列と区分を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1で受払の記録を選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-mv-wrap" class="md-hidden md-stack" data-gap="16">
+          <fieldset class="md-fieldset">
+            <legend>入庫と出庫は、ファイルの中でどう分かれていますか？</legend>
+            <div class="md-choices" data-layout="grid">
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="layout" value="kind" checked>
+                <span class="md-choice__text"><span class="md-choice__label">「区分」の列で分けている</span><span class="md-choice__desc">例）区分「入荷」数量 10、区分「出荷」数量 3</span></span></label>
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="layout" value="split">
+                <span class="md-choice__text"><span class="md-choice__label">入庫数と出庫数が別の列</span><span class="md-choice__desc">例）入庫数 10・出庫数 空欄。返品や棚卸は扱えません</span></span></label>
+            </div>
+          </fieldset>
+          <div class="md-stack" data-gap="8">
+            <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>受払の記録の列</h3>
+            <div class="md-grid" data-min="14" id="map-mv"></div>
+          </div>
+          <div id="kinds-wrap" class="md-stack" data-gap="8">
+            <h3 class="md-subhead"><span class="md-icon" data-icon="tune" data-size="20" aria-hidden="true"></span>区分の読み替え</h3>
+            <p id="kinds-help" class="md-field__help form-hint">「区分」の列に出てくる値ごとに、何として数えるかを選んでください。「使わない」にした行は集計に入れません。</p>
+            <div id="kinds"></div>
+          </div>
+        </div>
+        <div id="map-op-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>前期末の在庫の列</h3>
+          <div class="md-grid" data-min="14" id="map-op"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">集計のしかたを決める</h2>
+          <p class="md-step__desc">期間は、ファイルの中でいちばん新しい日付の月を選んであります。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-rules"><span class="md-icon" data-icon="help" aria-hidden="true"></span>計算の決まり</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>集計する期間</legend>
+          <p id="period-help" class="md-field__help form-hint">期間より後の行は使いません。期間より前の行は、前期末の在庫を選んでいないときだけ、積み上げて期首（期間の初め）の在庫にします。</p>
+          <div class="zk-period">
+            <label class="md-visually-hidden" for="from">期間の初めの日</label>
+            <input id="from" class="md-input form-control" type="date" aria-describedby="period-help">
+            <span aria-hidden="true">〜</span>
+            <label class="md-visually-hidden" for="to">期間の終わりの日</label>
+            <input id="to" class="md-input form-control" type="date" aria-describedby="period-help">
+          </div>
+        </fieldset>
+        <div id="wh-wrap" class="md-field md-hidden">
+          <label class="md-inline-check"><input id="by-wh" class="md-checkbox form-check-input" type="checkbox" aria-describedby="by-wh-help"> 倉庫ごとに分けて集計する</label>
+          <p id="by-wh-help" class="md-field__help form-hint">外すと、同じ商品はすべての倉庫を合わせた数にします。</p>
+        </div>
+        <fieldset class="md-fieldset">
+          <legend>在庫の金額も計算しますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="val" value="none" checked>
+              <span class="md-choice__text"><span class="md-choice__label">しない（数量だけ）</span><span class="md-choice__desc">個数だけを集計します。単価の列はなくてもかまいません</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="val" value="moving">
+              <span class="md-choice__text"><span class="md-choice__label">移動平均法</span><span class="md-choice__desc">入庫のたびに平均の単価を計算し直し、出庫はそのときの平均単価で金額にします</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="val" value="total">
+              <span class="md-choice__text"><span class="md-choice__label">総平均法</span><span class="md-choice__desc">期首と期間中の入庫をまとめた平均単価を1つ出し、すべての出庫と期末在庫にその単価を使います</span></span></label>
+          </div>
+        </fieldset>
+        <fieldset id="round-wrap" class="md-fieldset md-hidden">
+          <legend>円未満の端数</legend>
+          <p id="round-help" class="md-field__help form-hint">1行ごとの金額（数量 × 単価）の端数をどうするかです。会社の決まりに合わせてください。</p>
+          <div class="md-row">
+            <label class="md-inline-check"><input class="md-radio form-check-input" type="radio" name="round" value="round" checked aria-describedby="round-help"> 四捨五入</label>
+            <label class="md-inline-check"><input class="md-radio form-check-input" type="radio" name="round" value="floor" aria-describedby="round-help"> 切り捨て</label>
+          </div>
+        </fieldset>
+        <div class="md-cta">
+          <p class="md-cta__text">記録を日付の順に積み上げて、商品ごとの期末在庫を計算します。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>集計する</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc" id="result-desc">商品ごとの在庫の集計と、商品ごとの受払台帳です。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div id="negatives"></div>
+        <fieldset class="md-fieldset">
+          <legend>表示する商品</legend>
+          <div id="filter" class="md-choices zk-filter" data-layout="row">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="filter" value="all" checked><span class="md-choice__text"><span class="md-choice__label" id="f-all">すべて</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="filter" value="moved"><span class="md-choice__text"><span class="md-choice__label" id="f-moved">動きがあった</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="filter" value="attention"><span class="md-choice__text"><span class="md-choice__label" id="f-attention">注意があるもの</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">商品ごとの集計</h3>
+          <div id="table"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">商品ごとの受払台帳（商品有高帳）</h3>
+          <p class="zk-legend">商品名を押すと、その商品の受け払いを日付の順に並べた台帳が開きます。灰色の行は前期繰越と棚卸、左端が赤い行は帳簿の数がマイナスになった行です。</p>
+          <div id="ledgers"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-summary" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>在庫集計表.csv を保存</button>
+          <button id="save-closing" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>期末在庫.csv を保存</button>
+          <button id="save-ledger" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>商品有高帳.csv を保存</button>
+        </div>
+        <p class="md-field__help form-hint">「期末在庫.csv」は、翌月の集計で手順1の「前期末の在庫」に選ぶと、続きから計算できます。</p>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で、<code>samples/zaiko/受払記録_2026年10月.csv</code> と <code>samples/zaiko/期末在庫_2026年9月.csv</code> を選んでください（架空の文房具10商品・2倉庫）。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-rules" class="md-modal" aria-labelledby="dlg-rules-title">
+    <div class="md-modal__head"><h2 id="dlg-rules-title" class="md-modal__title">計算の決まり</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>記録は日付の順に積み上げます。同じ日の中は「入庫・返品（入）→ 出庫・返品（出）→ 調整 → 棚卸」の順に数えます。</li>
+        <li><strong>棚卸（実数）</strong>の行は、その日の帳簿の数を数えた数に置き換えます。差（数えた数 − 帳簿の数）を「棚卸差異」として示します。</li>
+        <li><strong>調整（±）</strong>の行は、数量の符号のとおりに増減します（「-3」なら3個減らす）。</li>
+        <li>途中で帳簿の数がマイナスになっても計算は止めずに、日付と商品を一覧で知らせます。入力漏れや日付の誤りがないか確かめてください。</li>
+        <li>保存した「期末在庫.csv」は、翌月にこの画面の「前期末の在庫」としてそのまま使えます。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：結果の印</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="error">マイナス在庫あり</span> 期間中に帳簿の数が0より少なくなったことがある商品</li>
+        <li><span class="md-chip badge" data-tone="warning">棚卸差異あり</span> 数えた数と帳簿の数が合わなかった商品</li>
+        <li><span class="md-chip badge" data-tone="warning">単価なしの入庫あり</span> 金額を計算するのに、入庫の単価が空の行があった商品</li>
+        <li><span class="md-chip badge">動きなし</span> 期間中に入庫も出庫もなかった商品</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/zaiko.js"></script>
+<script src="../assets/js/ui/zaiko.js"></script>
+</body>
+</html>

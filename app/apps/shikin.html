@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>資金繰り表｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* この画面だけで使う部品（色は md.css のトークンから） */
+  .sk-file { display: flex; flex-direction: column; gap: 16px; padding: 20px; border-radius: var(--md-shape-m); background: var(--md-surface-container-low); border: 1px solid var(--md-outline-variant); }
+  .sk-file__head { display: flex; align-items: flex-start; gap: 12px; }
+  .sk-file__head > .md-icon { flex: none; color: var(--md-primary); margin-top: 2px; }
+  .sk-file__title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .sk-file__name { font-weight: 700; overflow-wrap: anywhere; }
+  .sk-file__meta { font-size: 14px; color: var(--md-on-surface-variant); }
+  .sk-file__head .md-btn { flex: none; }
+  .sk-file__note { font-size: 15px; line-height: 1.6; padding: 10px 14px; border-radius: var(--md-shape-s); border-left: 4px solid var(--md-primary); background: var(--md-surface-container-lowest); }
+  .sk-file__note[data-tone="error"] { border-left-color: var(--md-error); }
+  .sk-kind { grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr)) !important; }
+
+  /* 定例の表 */
+  .sk-rules th, .sk-rules td { padding: 8px 8px; vertical-align: middle; white-space: normal; }
+  .sk-rules th:first-child, .sk-rules td:first-child { padding-left: 12px; }
+  .sk-rules .md-input, .sk-rules .md-select { min-width: 0; width: 100%; }
+  .sk-rules td.sk-c-name { min-width: 9rem; }
+  .sk-rules td.sk-c-amount { min-width: 9rem; }
+  .sk-rules td.sk-c-freq { min-width: 7rem; }
+  .sk-rules td.sk-c-when { min-width: 9.5rem; }
+  .sk-rules td.sk-c-shift { min-width: 9rem; }
+  .sk-rules td.sk-c-del { width: 1%; }
+  @media (max-width: 40rem) {
+    .sk-rules thead { display: none; }
+    .sk-rules, .sk-rules tbody, .sk-rules tr, .sk-rules td { display: block; width: 100%; }
+    .sk-rules tr { padding: 12px; border-bottom: 1px solid var(--md-outline-variant); display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+    .sk-rules tbody tr:last-child { border-bottom: 0; }
+    .sk-rules td { padding: 0 !important; border: 0; min-width: 0 !important; }
+    .sk-rules td.sk-c-name, .sk-rules td.sk-c-amount { grid-column: span 2; }
+    .sk-rules td.sk-c-del { grid-column: span 2; width: auto; }
+    .sk-rules td::before { content: attr(data-label); display: block; font-size: 13px; font-weight: 700; color: var(--md-on-surface-variant); }
+    .sk-rules td.sk-c-del::before { content: none; }
+  }
+
+  /* 単位の切り替え */
+  .sk-seg { display: inline-flex; border: 1px solid var(--md-outline); border-radius: var(--md-shape-full); overflow: hidden; }
+  .sk-seg label { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 20px; cursor: pointer; font-weight: 500; }
+  .sk-seg label + label { border-left: 1px solid var(--md-outline); }
+  .sk-seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .sk-seg label:has(input:checked) { background: var(--md-secondary-container); color: var(--md-on-secondary-container); font-weight: 700; }
+  .sk-seg label:has(input:checked)::before { content: "✓"; }
+  .sk-seg label:has(input:focus-visible) { outline: 3px solid var(--md-primary); outline-offset: -3px; }
+  .sk-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+
+  /* グラフ */
+  .sk-chart { position: relative; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); padding: 12px 8px 4px; }
+  .sk-chart svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+  .sk-chart .sk-grid { stroke: var(--md-outline-variant); stroke-width: 1; }
+  .sk-chart .sk-axis-text { fill: var(--md-on-surface-variant); font-size: 12px; font-family: var(--md-font-num); }
+  .sk-chart .sk-line { fill: none; stroke: var(--md-primary); stroke-width: 2; stroke-linejoin: round; }
+  .sk-chart .sk-area { fill: var(--md-primary); opacity: .08; }
+  .sk-chart .sk-safe { stroke: var(--md-error); stroke-width: 1.5; stroke-dasharray: 6 4; }
+  .sk-chart .sk-safe-band { fill: var(--md-error-container); opacity: .45; }
+  .sk-chart .sk-zero { stroke: var(--md-on-surface-variant); stroke-width: 1; }
+  .sk-chart .sk-label { fill: var(--md-on-surface); font-size: 12px; font-weight: 700; stroke: var(--md-surface-container-lowest); stroke-width: 4px; stroke-linejoin: round; paint-order: stroke; }
+  @media (prefers-color-scheme: dark) { .sk-chart .sk-safe-band { opacity: .3; } .sk-chart .sk-area { opacity: .12; } }
+  .sk-chart .sk-label--safe { fill: var(--md-error); }
+  .sk-chart .sk-min { fill: var(--md-error); stroke: var(--md-surface-container-lowest); stroke-width: 2; }
+  .sk-chart .sk-cross { stroke: var(--md-on-surface-variant); stroke-width: 1; }
+  .sk-chart .sk-dot { fill: var(--md-primary); stroke: var(--md-surface-container-lowest); stroke-width: 2; }
+  .sk-chart .sk-sel { fill: var(--md-primary); opacity: .10; }
+  .sk-tip { position: absolute; pointer-events: none; z-index: 2; padding: 8px 12px; border-radius: var(--md-shape-s); background: var(--md-surface-container-highest); color: var(--md-on-surface); box-shadow: var(--md-elev-2); font-size: 14px; line-height: 1.5; white-space: nowrap; }
+  .sk-tip b { font-family: var(--md-font-num); font-variant-numeric: tabular-nums; }
+  .sk-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; color: var(--md-on-surface-variant); padding: 4px 8px 8px; }
+  .sk-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sk-sw { display: inline-block; width: 22px; height: 0; border-top: 2px solid var(--md-primary); }
+  .sk-sw[data-k="safe"] { border-top: 2px dashed var(--md-error); }
+  .sk-sw[data-k="band"] { height: 10px; border: 0; background: var(--md-error-container); }
+
+  /* 資金繰り表 */
+  .sk-table th, .sk-table td { padding: 8px 10px; vertical-align: middle; }
+  .sk-table thead th { text-align: right; padding: 4px 4px; }
+  .sk-table tbody th { position: sticky; left: 0; z-index: 1; background: var(--md-surface-container-lowest); text-align: left; font-weight: 500; }
+  .sk-table thead th.sk-first { position: sticky; left: 0; z-index: 2; text-align: left; padding-left: 12px; }
+  .sk-table tbody tr:hover th { background: var(--md-surface-container-low); }
+  .sk-table tr.sk-r-group th { font-weight: 700; }
+  .sk-table tr.sk-r-sub th { padding-left: 28px; font-weight: 400; color: var(--md-on-surface-variant); }
+  .sk-table tr.sk-r-sum > * { border-top: 1px solid var(--md-outline); }
+  .sk-table tr.sk-r-bal > * { font-weight: 700; background: var(--md-surface-container-low); }
+  .sk-table tr.sk-r-bal th { background: var(--md-surface-container-low); }
+  .sk-table td.sk-total, .sk-table th.sk-total { border-left: 2px solid var(--md-outline-variant); }
+  .sk-table .sk-col { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0; min-height: 44px; justify-content: center; padding: 2px 8px; border: 0; border-radius: var(--md-shape-s); background: transparent; color: var(--md-primary); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+  .sk-table .sk-col:hover { background: var(--md-surface-container-high); }
+  .sk-table .sk-col[aria-pressed="true"] { background: var(--md-primary-container); color: var(--md-on-primary-container); text-decoration: none; }
+  .sk-table td.is-sel { background: var(--md-surface-container); }
+  .sk-cell { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .sk-table .md-chip { height: 24px; padding: 0 8px; font-size: 13px; }
+  .sk-table .sk-zero-val { color: var(--md-on-surface-variant); font-weight: 400; }
+  .sk-neg { color: var(--md-error); }
+
+  .sk-drill { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: var(--md-shape-m); background: var(--md-surface-container-low); }
+  #summary .md-stats { grid-template-columns: repeat(auto-fill, minmax(min(12.5rem, 100%), 1fr)); }
+  .sk-pastbox { display: flex; flex-direction: column; gap: 12px; }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="savings" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">資金繰り表</h1>
+      <p class="md-lead text-secondary">入金の予定と支払の予定から、口座の残高が日・週・月ごとにどう動くかを見通します。残高が足りなくなりそうな日を先に知らせます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-files" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">入金・支払の予定のファイルを選ぶ</h2>
+          <p class="md-step__desc">いくつでも選べます。ファイルごとに「入金予定」か「支払予定」かを選んでください。ファイルがなく、手順2の定例だけで作ることもできます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-files"><span class="md-icon" data-icon="help" aria-hidden="true"></span>使えるファイル</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <label id="zone" class="md-dropzone" data-ready="1">
+          <span id="zone-icon" class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+          <span id="zone-main" class="md-dropzone__main">入金予定・支払予定のCSV</span>
+          <span class="md-dropzone__sub">ここにまとめてドラッグできます。文字コードは自動で判別します</span>
+          <span class="md-dropzone__btn btn btn-primary"><span id="zone-btn" class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+          <input id="file" type="file" accept=".csv,.txt,.tsv" multiple aria-describedby="files-status">
+        </label>
+        <div id="files-status" aria-live="polite"></div>
+        <div id="files" class="md-stack" data-gap="16"></div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-rules" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">毎月の定例を入れる <span class="md-badge badge" data-kind="optional">任意</span></h2>
+          <p class="md-step__desc">家賃・社会保険料・借入の返済・税金など、ファイルにない決まった入出金を書きます。出ていくお金は「-300000」のようにマイナスを付けます。この表はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="rules-wrap"></div>
+        <div class="md-actions">
+          <button id="rule-add" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="add" aria-hidden="true"></span>行を足す</button>
+          <button id="rule-sample" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="edit" aria-hidden="true"></span>見本の行を入れる</button>
+        </div>
+        <div id="rules-message" aria-live="polite"></div>
+        <details class="md-details card" id="holidays-box">
+          <summary><span class="md-icon" data-icon="event" aria-hidden="true"></span>休みの日の一覧<span class="md-details__hint">（祝日・銀行の休み。土曜・日曜はいつも休み）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="holidays">祝日と銀行の休み</label>
+              <p id="holidays-help" class="md-field__help form-hint">「前営業日」「翌営業日」でずらすときに、この日を休みとして扱います。1行に1日、「2026/11/23 勤労感謝の日」のように書きます。2026年と2027年の祝日、年末年始の銀行の休み（12/31〜1/3）を入れてあります。それより先の年を使うときは書き足してください。</p>
+              <textarea id="holidays" class="md-textarea form-control" rows="8" aria-describedby="holidays-help"></textarea>
+            </div>
+            <div class="md-actions"><button id="holidays-reset" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>最初の一覧に戻す</button></div>
+            <div id="holidays-message" aria-live="polite"></div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">期間と残高を決めて、資金繰り表を作る</h2>
+          <p class="md-step__desc">開始時点の残高は、口座の今の残高（複数の口座なら合計）を入れてください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid" data-min="14">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="start">開始日 <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="start-help" class="md-field__help form-hint">この日の朝の残高から数えはじめます。ふつうは今日です。</p>
+            <input id="start" class="md-input form-control" type="date" aria-describedby="start-help">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="months">期間</label>
+            <p id="months-help" class="md-field__help form-hint">開始日から何か月先まで見るか。</p>
+            <select id="months" class="md-select form-select" aria-describedby="months-help">
+              <option value="1">1か月</option>
+              <option value="3" selected>3か月</option>
+              <option value="6">6か月</option>
+              <option value="12">12か月</option>
+            </select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="opening">開始時点の残高 <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="opening-help" class="md-field__help form-hint">開始日の朝の時点の残高（円）。</p>
+            <div class="md-input-suffix">
+              <input id="opening" class="md-input form-control" type="text" inputmode="numeric" autocomplete="off" aria-describedby="opening-help opening-err" placeholder="例）3,000,000">
+              <span>円</span>
+            </div>
+            <p id="opening-err" class="md-field__error invalid-feedback d-block" aria-live="polite"></p>
+            <label class="md-inline-check"><input id="remember-opening" class="md-checkbox form-check-input" type="checkbox"><span>この残高を覚えておく</span></label>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="safety">注意する残高（安全ライン）</label>
+            <p id="safety-help" class="md-field__help form-hint">残高がこの金額より少なくなる日を知らせます。最低限残しておきたい金額です。</p>
+            <div class="md-input-suffix">
+              <input id="safety" class="md-input form-control" type="text" inputmode="numeric" autocomplete="off" aria-describedby="safety-help safety-err" value="0">
+              <span>円</span>
+            </div>
+            <p id="safety-err" class="md-field__error invalid-feedback d-block" aria-live="polite"></p>
+          </div>
+        </div>
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（ファイルの日付が休みの日のとき）</span></summary>
+          <div class="md-details__body card-body">
+            <fieldset class="md-fieldset">
+              <legend>ファイルの予定の日付が土日・祝日のとき</legend>
+              <div class="md-choices" data-layout="grid">
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="file-shift" value="none" checked>
+                  <span class="md-choice__text"><span class="md-choice__label">そのまま（おすすめ）</span><span class="md-choice__desc">ファイルに書いてある日のまま数えます</span></span></label>
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="file-shift" value="prev">
+                  <span class="md-choice__text"><span class="md-choice__label">前営業日にずらす</span><span class="md-choice__desc">休みの日の前の平日に数えます</span></span></label>
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="file-shift" value="next">
+                  <span class="md-choice__text"><span class="md-choice__label">翌営業日にずらす</span><span class="md-choice__desc">休みの日の次の平日に数えます</span></span></label>
+              </div>
+            </fieldset>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">予定を日付ごとに足し引きして、残高の見通しを作ります。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>資金繰り表を作る</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">残高の見通しを確かめる</h2>
+          <p id="result-desc" class="md-step__desc"></p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div id="alert"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead" id="chart-title">残高の動き（1日ごと）</h3>
+          <div id="chart"></div>
+          <details class="md-details card">
+            <summary><span class="md-icon" data-icon="summarize" aria-hidden="true"></span>グラフの数字を表で見る</summary>
+            <div class="md-details__body card-body"><div id="chart-table"></div></div>
+          </details>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead" id="table-title">資金繰り表</h3>
+          <div class="sk-toolbar">
+            <fieldset class="md-fieldset" style="margin:0">
+              <legend class="md-visually-hidden">表示の単位</legend>
+              <span class="md-field__label form-label" aria-hidden="true" style="margin-right:12px">表示の単位</span>
+              <span class="sk-seg">
+                <label><input type="radio" name="unit" value="day">日</label>
+                <label><input type="radio" name="unit" value="week">週</label>
+                <label><input type="radio" name="unit" value="month" checked>月</label>
+              </span>
+            </fieldset>
+            <label id="skip-wrap" class="md-inline-check"><input id="skip-empty" class="md-checkbox form-check-input" type="checkbox" checked><span>入出金のない日を省く</span></label>
+          </div>
+          <p class="md-field__help form-hint">列の見出し（日付）を押すと、その期間の入出金の明細が表の下に出ます。</p>
+          <div id="table"></div>
+          <div id="drill" aria-live="polite"></div>
+        </div>
+        <div id="past" class="md-stack" data-gap="8"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-table" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>資金繰り表.csv を保存</button>
+          <button id="save-detail" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>入出金予定の明細.csv を保存</button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ol>
+        <li>手順1で、<code>samples/shikin/入金予定.csv</code> と <code>samples/shikin/支払予定.csv</code> をまとめて選びます。</li>
+        <li>手順2で「見本の行を入れる」を押すと、家賃などの定例が入ります（なくてもかまいません）。</li>
+        <li>手順3で、開始日を <strong>2026/11/17</strong>、期間を <strong>3か月</strong>、開始時点の残高を <strong>3,000,000</strong>、注意する残高を <strong>1,000,000</strong> にして「資金繰り表を作る」を押します。12月10日の賞与で残高が一度だけ注意する残高を下回ります。</li>
+      </ol>
+    </div>
+  </dialog>
+  <dialog id="dlg-files" class="md-modal" aria-labelledby="dlg-files-title">
+    <div class="md-modal__head"><h2 id="dlg-files-title" class="md-modal__title">使えるファイル</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p class="md-subhead">ほかのツールで作ったファイルをそのまま使う</p>
+      <p>次のファイルは、選ぶだけで列が自動で決まります。</p>
+      <ul>
+        <li><strong>請求書の一括作成</strong>の「請求一覧.csv」… お支払期限の日に入金があるものとして数えます。</li>
+        <li><strong>売掛金の年齢表</strong>の「未回収明細.csv」… まだ回収していない額を、お支払期限の日に数えます。期限を過ぎたものは「過去の日付」に出ます。</li>
+        <li><strong>定期請求の明細づくり</strong>の「売上見込み.csv」… 月ごとの金額（税抜）なので、入金される日（例: 翌月の末日）と、消費税10%を足すかを選びます。</li>
+        <li><strong>給与明細の一括印刷</strong>・<strong>経費精算の集計</strong>の「振込一覧」… 支払予定として読みます。振込する日（給与の支給日など）を選んでください。</li>
+      </ul>
+      <p class="md-subhead">自分で予定のCSVを作るとき</p>
+      <p>1行目を見出しにして、<strong>日付・相手・金額・内容</strong>の列を作ります（内容はなくてもかまいません）。入金と支払は別のファイルにし、金額はマイナスを付けずに書きます。</p>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/kigen.js"></script>
+<script src="../assets/js/apps/shikin.js"></script>
+<script src="../assets/js/ui/shikin.js"></script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>固定資産の減価償却｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* この画面だけで使う部品（色は md.css のトークンから） */
+  .sk-terms { margin: 8px 0 0; padding-left: 1.25em; }
+  .sk-terms li + li { margin-top: 6px; }
+  .sk-period { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+  .sk-period .md-field { flex: 0 1 12rem; min-width: 0; }
+  .sk-period__info { flex: 1 1 14rem; margin: 0 0 12px; font-size: 15px; color: var(--md-on-surface-variant); }
+  .sk-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
+  .sk-toolbar .md-field { flex: 1 1 12rem; min-width: 0; }
+  .sk-legend { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .sk-accounts { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="domain" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">固定資産の減価償却</h1>
+      <p class="md-lead text-secondary">固定資産台帳から、その期の償却費と期末の帳簿価額を資産ごとに計算します。勘定科目ごとの合計、来期からの償却予定、会計ソフトに取り込める償却仕訳も作れます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">固定資産台帳を選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。1行に1つの資産のCSVです。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">固定資産台帳 <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">資産名・取得日・取得価額・耐用年数・償却方法の列があると計算できます。勘定科目・事業供用日・期首帳簿価額・事業専用割合・除却日の列は任意です。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">固定資産台帳のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div class="md-grid md-hidden" data-min="12" id="map"></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">対象の期を選んで計算する</h2>
+          <p class="md-step__desc">償却費を出したい期の、期首の年と月を選んでください。設定はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-methods"><span class="md-icon" data-icon="help" aria-hidden="true"></span>償却の方法</button><button type="button" class="md-help-btn" data-modal="dlg-calc"><span class="md-icon" data-icon="help" aria-hidden="true"></span>計算のしかた</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="sk-period">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="fy-year">期首の年</label>
+            <div class="md-input-suffix"><input id="fy-year" class="md-input md-input--short form-control" type="number" min="1990" max="2200" step="1" inputmode="numeric" value="2026"><span>年</span></div>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="fy-month">期首の月</label>
+            <select id="fy-month" class="md-select form-select"></select>
+          </div>
+          <p id="fy-info" class="sk-period__info" aria-live="polite"></p>
+        </div>
+        <fieldset class="md-fieldset">
+          <legend>償却方法の列が空の行は、どちらで計算しますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="defmethod" value="teigaku" checked>
+              <span class="md-choice__text"><span class="md-choice__label">定額法</span><span class="md-choice__desc">個人事業で、償却方法を届け出ていないときはこちら</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="defmethod" value="teiritsu">
+              <span class="md-choice__text"><span class="md-choice__label">定率法</span><span class="md-choice__desc">法人で、償却方法を届け出ていないときはこちら（建物などは定額法になります）</span></span></label>
+          </div>
+        </fieldset>
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（端数・空の勘定科目）</span></summary>
+          <div class="md-details__body card-body">
+            <fieldset class="md-fieldset">
+              <legend>1円未満の端数</legend>
+              <div class="md-choices" data-layout="grid">
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="rounding" value="floor" checked>
+                  <span class="md-choice__text"><span class="md-choice__label">切り捨て（おすすめ）</span><span class="md-choice__desc">償却限度額を超えないように切り捨てます</span></span></label>
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="rounding" value="ceil">
+                  <span class="md-choice__text"><span class="md-choice__label">切り上げ</span><span class="md-choice__desc">これまでの台帳を切り上げで作っているとき</span></span></label>
+              </div>
+            </fieldset>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="def-account">勘定科目が空の行の科目</label>
+              <p id="def-account-help" class="md-field__help form-hint">勘定科目の列がないとき、または空の行に使います。</p>
+              <input id="def-account" class="md-input form-control" type="text" value="工具器具備品" aria-describedby="def-account-help">
+            </div>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">資産ごとに、この期の償却費と期末の帳簿価額を計算します。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>計算する</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc" id="result-desc"></p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="sk-toolbar">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="view">表示する表</label>
+            <select id="view" class="md-select form-select">
+              <option value="detail">償却明細（資産ごと）</option>
+              <option value="account">勘定科目ごとの合計</option>
+              <option value="schedule">今後の償却予定（10期分）</option>
+            </select>
+          </div>
+          <div class="md-field" id="f-status-wrap">
+            <label class="md-field__label form-label" for="f-status">状態で絞り込む</label>
+            <select id="f-status" class="md-select form-select"></select>
+          </div>
+        </div>
+        <div id="table"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>償却仕訳の貸方（減らす科目）</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="book" value="direct" checked>
+              <span class="md-choice__text"><span class="md-choice__label">資産の科目を直接減らす（直接法）</span><span class="md-choice__desc">減価償却費 ／ 工具器具備品 のようにします</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="book" value="indirect">
+              <span class="md-choice__text"><span class="md-choice__label">減価償却累計額を使う（間接法）</span><span class="md-choice__desc">減価償却費 ／ 減価償却累計額。補助科目に資産の科目を入れます</span></span></label>
+          </div>
+        </fieldset>
+        <fieldset class="md-fieldset">
+          <legend>仕訳のまとめ方</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="group" value="account" checked>
+              <span class="md-choice__text"><span class="md-choice__label">勘定科目ごとに1行</span><span class="md-choice__desc">決算の仕訳としてふつうの形です</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="group" value="asset">
+              <span class="md-choice__text"><span class="md-choice__label">資産ごとに1行</span><span class="md-choice__desc">摘要に資産名が入ります</span></span></label>
+          </div>
+        </fieldset>
+        <details class="md-details card">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>仕訳の科目と日付<span class="md-details__hint">（会計ソフトの科目名に合わせる）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="md-grid" data-min="12">
+              <div class="md-field">
+                <label class="md-field__label form-label" for="acc-expense">借方の科目</label>
+                <input id="acc-expense" class="md-input form-control" type="text" value="減価償却費">
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="acc-accum">間接法の貸方の科目</label>
+                <input id="acc-accum" class="md-input form-control" type="text" value="減価償却累計額">
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="acc-private">家事分の借方の科目</label>
+                <p id="acc-private-help" class="md-field__help form-hint">事業専用割合が100%未満の資産で使います</p>
+                <input id="acc-private" class="md-input form-control" type="text" value="事業主貸" aria-describedby="acc-private-help">
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="j-date">仕訳の日付</label>
+                <p id="j-date-help" class="md-field__help form-hint">空なら期末日にします</p>
+                <input id="j-date" class="md-input form-control" type="text" placeholder="例: 2027/03/31" aria-describedby="j-date-help">
+              </div>
+            </div>
+          </div>
+        </details>
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-journal" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>償却仕訳.csv を保存</button>
+          <button id="save-detail" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>償却明細.csv を保存</button>
+          <button id="save-account" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>科目別合計.csv を保存</button>
+          <button id="save-schedule" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>償却予定表.csv を保存</button>
+        </div>
+        <ul class="sk-terms sk-legend">
+          <li><strong>償却仕訳.csv</strong>: 「<a href="shiwake.html">仕訳データの作成</a>」と同じ汎用の形です。会計ソフトの取り込み設定で列を合わせてください。</li>
+          <li><strong>償却明細.csv</strong>: 資産ごとの期首帳簿価額・償却費・期末帳簿価額・償却累計額です。来期は、期末帳簿価額を台帳の期首帳簿価額に写して使えます。</li>
+          <li><strong>償却予定表.csv</strong>: 資産ごとに、今期から10期分の償却費の見込みです。予算づくりに使えます。</li>
+        </ul>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で <code>samples/shokyaku/固定資産台帳.csv</code> を選び、手順3で期首を「2026年4月」にしてください。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-methods" class="md-modal" aria-labelledby="dlg-methods-title">
+    <div class="md-modal__head"><h2 id="dlg-methods-title" class="md-modal__title">計算できる償却方法</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><strong>定額法</strong>（2007年4月1日以後に取得）: 毎年 取得価額 × 償却率。最後は1円を残します。</li>
+        <li><strong>定率法</strong>（2012年4月1日以後に取得の200%定率法）: 期首の帳簿価額 × 償却率。償却保証額を下回った年から、改定取得価額 × 改定償却率 にします。率の表は内蔵しています（耐用年数2〜50年）。</li>
+        <li><strong>一括償却資産</strong>（20万円未満）: 取得価額の3分の1ずつ3年で。月割りはせず、除却しても3年間続けます。</li>
+        <li><strong>少額減価償却資産の特例</strong>（30万円未満、青色申告の中小企業者など）: 使い始めた期に全額。1年で合計300万円までです。</li>
+        <li><strong>償却しない</strong>: 土地・借地権・電話加入権など。</li>
+        <li>旧定額法・旧定率法・250%定率法（2012年3月31日以前の取得）は自動では計算せず、<span class="md-chip badge" data-tone="warning">判断が必要</span> として一覧に出します。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-calc" class="md-modal" aria-labelledby="dlg-calc-title">
+    <div class="md-modal__head"><h2 id="dlg-calc-title" class="md-modal__title">計算のしかた</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>期の途中から使い始めた資産は月割りにします（使い始めた月は1か月として数えます）。除却・売却した資産は、その月まで償却します。</li>
+        <li>1円未満の端数は切り捨てます（詳しい設定で切り上げにもできます）。</li>
+        <li>台帳に期首帳簿価額があれば、その値から今期を計算します。計算した値と違うときは知らせます。</li>
+        <li>事業専用割合（個人事業で家事と共用の資産）があると、償却費のうち割合の分を「経費になる額」にします。残りは仕訳で事業主貸にします。</li>
+      </ul>
+      <p class="sk-legend">計算は税法の決まりに沿った目安です。申告に使う前に、顧問の税理士の方に確かめてください。</p>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/shokyaku.js"></script>
+<script src="../assets/js/ui/shokyaku.js"></script>
+</body>
+</html>

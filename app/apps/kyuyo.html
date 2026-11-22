@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>給与明細の一括印刷｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+/* ---- このページだけの部品 ---- */
+.ky-date-row { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr)); }
+.ky-role-sum { display: flex; flex-wrap: wrap; gap: 8px; }
+.ky-pick-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.ky-pick-bar .md-field { flex: 1 1 16rem; min-width: 0; }
+.ky-pick-bar .md-btn { flex: none; }
+.ky-list-tools { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.ky-list-tools .md-field { flex: 1 1 16rem; min-width: 0; }
+.ky-list-tools .md-btn { flex: none; }
+.ky-list td.ky-check { width: 1%; }
+.ky-list td.ky-check .md-inline-check { min-height: 40px; }
+.ky-list tr.is-off td:not(.ky-check) { opacity: .55; }
+.ky-preview { position: relative; overflow: hidden; border-radius: var(--md-shape-m); background: var(--md-surface-container-high); padding: 16px; }
+.ky-preview__inner { transform-origin: top left; }
+.ky-preview .ky-sheet { box-shadow: var(--md-elev-2); }
+.ky-preview .ky-slot.is-current { outline: 3px solid #1a73e8; outline-offset: 2mm; }
+.ky-print-area { display: none; }
+
+/* ---- 明細（紙のイメージ。画面でも印刷でも白地に黒） ---- */
+.ky-sheet { box-sizing: border-box; width: 210mm; height: 297mm; padding: 10mm; background: #fff; color: #000; display: flex; flex-direction: column;
+  font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; letter-spacing: 0; line-height: 1.35; }
+.ky-sheet * { color: #000; box-sizing: border-box; }
+.ky-sheet p { margin: 0; }
+.ky-slot { position: relative; flex: 0 0 auto; height: calc(277mm / var(--per, 1)); }
+.ky-slot + .ky-slot { border-top: 1px dashed #000; }
+.ky-slot + .ky-slot::before { content: "切り取り線"; position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 0 3mm; font-size: 7pt; line-height: 1.2; z-index: 1; }
+.ky-slip { height: 100%; overflow: hidden; display: flex; flex-direction: column; gap: 2.2mm; padding: 0 0 4mm; }
+.ky-slot + .ky-slot .ky-slip { padding-top: 4mm; }
+.ky-sheet[data-per="1"] .ky-slip { font-size: 10.5pt; gap: 4mm; }
+.ky-sheet[data-per="2"] .ky-slip { font-size: 8.5pt; }
+.ky-sheet[data-per="3"] .ky-slip { font-size: 7.5pt; gap: 1.6mm; padding-bottom: 3mm; }
+.ky-sheet[data-per="3"] .ky-slot + .ky-slot .ky-slip { padding-top: 3mm; }
+.ky-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 6mm; border-bottom: 1.5pt solid #000; padding-bottom: 1.2mm; }
+.ky-title { font-size: 1.65em; font-weight: 700; letter-spacing: .08em; line-height: 1.25; margin: 0; }
+.ky-company { font-size: 1.1em; font-weight: 700; text-align: right; word-break: break-all; }
+.ky-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 1mm 6mm; }
+.ky-who__item { white-space: nowrap; }
+.ky-who__item span { font-size: .85em; margin-right: 1.5mm; }
+.ky-who__name { font-size: 1.35em; font-weight: 700; margin-right: auto; }
+.ky-who__name small { font-size: .7em; font-weight: 400; margin-left: 1.5mm; }
+.ky-band { display: flex; border: 1pt solid #000; }
+.ky-band__label { flex: 0 0 7mm; display: flex; align-items: center; justify-content: center; writing-mode: vertical-rl; letter-spacing: .3em; font-weight: 700;
+  background: #e6e6e6; border-right: 1pt solid #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.ky-grid { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: repeat(var(--cols, 8), minmax(0, 1fr)); }
+.ky-cell { min-width: 0; border-right: .5pt solid #000; border-bottom: .5pt solid #000; display: flex; flex-direction: column; }
+.ky-cell__k { font-size: .88em; text-align: center; padding: .4mm .6mm; background: #f2f2f2; border-bottom: .5pt solid #000; overflow-wrap: anywhere; line-height: 1.2;
+  min-height: 2.6em; display: flex; align-items: center; justify-content: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.ky-cell__v { text-align: right; padding: .6mm 1.2mm; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: clip; min-height: 1.5em; }
+.ky-band[data-kind="attend"] .ky-cell__v { text-align: center; }
+.ky-grid .ky-cell.is-lastrow { border-bottom: 0; }
+.ky-grid .ky-cell.is-lastcol { border-right: 0; }
+.ky-foot { display: flex; gap: 4mm; align-items: stretch; }
+.ky-msg { flex: 1 1 auto; min-width: 0; border: .5pt solid #000; padding: 1mm 2mm; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .92em; }
+.ky-msg h3 { font-size: .9em; font-weight: 700; margin: 0 0 .5mm; }
+.ky-totals { flex: 0 0 auto; display: grid; grid-template-columns: repeat(3, auto); border: 1pt solid #000; margin-left: auto; }
+.ky-totals .ky-cell { min-width: 25mm; }
+.ky-totals .ky-cell:last-child { border-right: 0; }
+.ky-totals .ky-cell { border-bottom: 0; }
+.ky-totals .ky-cell.is-net { border-left: 1.5pt solid #000; }
+.ky-totals .ky-cell.is-net .ky-cell__k { font-weight: 700; background: #d9d9d9; }
+.ky-totals .ky-cell.is-net .ky-cell__v { font-size: 1.45em; font-weight: 700; padding: .8mm 2mm; }
+.ky-totals .ky-cell__v { font-size: 1.1em; flex: 1 1 auto; display: flex; align-items: center; justify-content: flex-end; }
+.ky-sheet[data-per="1"] .ky-totals .ky-cell { min-width: 36mm; }
+
+@page { size: A4; margin: 10mm; }
+@media print {
+  html, body { background: #fff !important; color: #000 !important; }
+  body { display: block; min-height: 0; }
+  body > *:not(#print-area) { display: none !important; }
+  .ky-print-area { display: block !important; }
+  .ky-print-area .ky-sheet { width: auto; height: 276mm; padding: 0; box-shadow: none; break-after: page; page-break-after: always; overflow: hidden; }
+  .ky-print-area .ky-sheet:last-child { break-after: auto; page-break-after: auto; }
+  .ky-print-area .ky-slot { height: calc(276mm / var(--per, 1)); }
+}
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="badge" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">給与明細の一括印刷</h1>
+      <p class="md-lead text-secondary">給与ソフトやExcelから出した1か月分の給与データ（1行に1人）から、社員全員の給与明細書をまとめて作り、A4の紙に印刷します。合計が合っているかも確かめます。</p>
+    </div>
+  </div>
+
+  <p class="md-assurance"><span class="md-icon" data-icon="lock" aria-hidden="true"></span><span>給与のデータは外部に送信されず、このパソコンの中だけで処理されます。社員の情報はこのパソコンにも保存しません（保存するのは会社名や列の役割などの設定だけです）。</span></p>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">給与データのファイルを選ぶ</h2>
+          <p class="md-step__desc">1行に社員1人ずつのCSVです。ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">給与データ <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">1行目が見出し（社員番号・氏名・部署・基本給・健康保険…）、2行目から社員ごとの値になっているCSVです。項目の数はいくつでもかまいません。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">給与データのCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列の役割を確かめる</h2>
+          <p class="md-step__desc">ファイルの列ごとに、明細のどこに載せるかを見出しから自動で選んであります。違っているときだけ直してください。選んだ役割は、同じ形のファイルなら次回も使われます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列ごとの選択欄が出ます。</p>
+        <div id="map-wrap" class="md-hidden md-stack">
+          <ul class="md-field__help form-hint" style="margin:0;padding-left:1.25em">
+            <li><b>勤怠</b>（出勤日数・残業時間など）は、ファイルの文字のまま載せます。</li>
+            <li><b>支給</b>・<b>控除</b>は金額として読み、3桁ごとにカンマを付けて載せます。空のセルは0円として扱います。</li>
+            <li><b>振込口座の情報</b>（銀行番号・支店番号・預金種目・口座番号・口座名義カナ）を5つとも選ぶと、手順6で「全銀データ作成」に使える振込一覧を保存できます。明細には載せません。</li>
+          </ul>
+          <div id="role-sum" class="ky-role-sum" aria-live="polite"></div>
+          <div class="md-grid" data-min="14" id="map"></div>
+          <div class="md-actions">
+            <button id="reset-roles" class="md-btn btn" data-variant="text" data-size="s" type="button"><span class="md-icon" data-icon="refresh" data-size="20" aria-hidden="true"></span>見出しから選び直す</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">明細の内容を入れる</h2>
+          <p class="md-step__desc">すべての明細に共通して載せる内容です。会社名・明細の種類・メッセージは、このパソコンに保存され次回も使えます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>明細の種類</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="kind" value="kyuyo" checked>
+              <span class="md-choice__text"><span class="md-choice__label">給与明細書</span><span class="md-choice__desc">例）2026年11月分 給与明細書</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="kind" value="shoyo">
+              <span class="md-choice__text"><span class="md-choice__label">賞与明細書</span><span class="md-choice__desc">例）2026年12月 賞与明細書</span></span></label>
+          </div>
+        </fieldset>
+        <div class="ky-date-row">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="ym">対象年月 <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="ym-help" class="md-field__help form-hint">何月分の明細か。はじめは今月です。</p>
+            <input id="ym" class="md-input form-control" type="month" aria-describedby="ym-help" placeholder="2026-11">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="payday">支給日 <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <p id="payday-help" class="md-field__help form-hint">空のままなら明細に載せません。</p>
+            <input id="payday" class="md-input form-control" type="date" aria-describedby="payday-help">
+          </div>
+        </div>
+        <div class="md-field">
+          <label class="md-field__label form-label" for="company">会社名 <span class="md-badge badge" data-kind="required">必須</span></label>
+          <input id="company" class="md-input form-control" type="text" autocomplete="organization">
+        </div>
+        <div class="md-field">
+          <label class="md-field__label form-label" for="message-text">メッセージ欄 <span class="md-badge badge" data-kind="optional">任意</span></label>
+          <p id="message-text-help" class="md-field__help form-hint">すべての明細の下に載せる文です（例: 年末調整の書類は12月10日までに総務部へ提出してください）。改行もそのまま載ります。</p>
+          <textarea id="message-text" class="md-textarea form-control" rows="3" aria-describedby="message-text-help"></textarea>
+        </div>
+        <div class="md-cta">
+          <p class="md-cta__text">社員ごとの明細を作り、合計が合っているかを確かめます。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>明細を作る</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめて、印刷する人を選ぶ</h2>
+          <p class="md-step__desc">チェックを外した人は印刷しません（振込一覧にも入りません）。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-total"><span class="md-icon" data-icon="help" aria-hidden="true"></span>合計の確かめ</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div id="mismatch"></div>
+        <div class="ky-list-tools">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="search">氏名で探す <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <p id="search-help" class="md-field__help form-hint">社員番号や部署でも探せます。探しているときは「すべて選ぶ／すべて外す」が、表示中の人だけにはたらきます。</p>
+            <input id="search" class="md-input form-control" type="search" autocomplete="off" aria-describedby="search-help" placeholder="例）見本">
+          </div>
+          <button id="check-all" class="md-btn btn" data-variant="outlined" type="button"><span class="md-icon" data-icon="check" aria-hidden="true"></span>すべて選ぶ</button>
+          <button id="uncheck-all" class="md-btn btn" data-variant="outlined" type="button">すべて外す</button>
+        </div>
+        <p id="sel-status" class="md-file-status" aria-live="polite"></p>
+        <div id="list"></div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="step-print" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">見た目を確かめて印刷する</h2>
+          <p class="md-step__desc">用紙はA4・縦です。印刷の画面で送信先を「PDFに保存」にするとPDFになります。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-pdf"><span class="md-icon" data-icon="help" aria-hidden="true"></span>PDFにするには</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>1枚の紙に何人分を印刷しますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="per" value="1" checked>
+              <span class="md-choice__text"><span class="md-choice__label">1枚に1人</span><span class="md-choice__desc">文字が大きく読みやすい</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="per" value="2">
+              <span class="md-choice__text"><span class="md-choice__label">1枚に2人</span><span class="md-choice__desc">半分（A5の大きさ）に切って渡せます</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="per" value="3">
+              <span class="md-choice__text"><span class="md-choice__label">1枚に3人</span><span class="md-choice__desc">紙が少なくてすみます。項目が多いと入りきらないことがあります</span></span></label>
+          </div>
+        </fieldset>
+        <div id="fit-message" aria-live="polite"></div>
+        <div class="ky-pick-bar">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="pick">表示する人</label>
+            <select id="pick" class="md-select form-select"></select>
+          </div>
+          <button id="prev" class="md-btn btn" data-variant="outlined" type="button" aria-label="前の人"><span class="md-icon" data-icon="arrow_back" aria-hidden="true"></span>前へ</button>
+          <button id="next" class="md-btn btn" data-variant="outlined" type="button" aria-label="次の人">次へ<span class="md-icon" data-icon="arrow_forward" aria-hidden="true"></span></button>
+        </div>
+        <div id="pick-note"></div>
+        <div id="preview" class="ky-preview" role="region" aria-label="明細の見た目（表示中の人を青い枠で囲んでいます）"><div class="ky-preview__inner" id="preview-inner"></div></div>
+        <p class="md-field__help form-hint">表示中の人を青い枠で囲んでいます（青い枠は印刷されません）。</p>
+        <div class="md-actions">
+          <button id="print-all" class="md-btn btn" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>全員を印刷</button>
+          <button id="print-one" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>表示中の1人だけ印刷</button>
+        </div>
+        <p id="print-status" class="md-file-status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="step-save" class="md-step md-hidden card" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title">振込一覧を保存する</h2>
+          <p class="md-step__desc">銀行番号・支店番号・預金種目・口座番号・受取人名カナ・振込金額（差引支給額）・社員番号の一覧です。「全銀データ作成」で読み込むと、列が自動で選ばれます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <p class="md-field__help form-hint">「全銀データ作成」にそのまま読み込むときは、どちらでもかまいません。Excelで開いて上書き保存すると、銀行番号などの先頭の0が消えることがあるので、開かずにそのまま使ってください。</p>
+        <div class="md-actions">
+          <button id="save-transfer" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>振込一覧CSVを保存（全銀データ作成で使えます）</button>
+          <a class="md-btn btn" data-variant="outlined" href="zengin.html"><span class="md-icon" data-icon="bank" aria-hidden="true"></span>全銀データ作成を開く</a>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>手順1で <code>samples/kyuyo/給与データ_2026年11月.csv</code> を選んでください（架空の社員6人分です）。1人だけ、わざと差引支給額が合わないようにしてあります。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-total" class="md-modal" aria-labelledby="dlg-total-title">
+    <div class="md-modal__head"><h2 id="dlg-total-title" class="md-modal__title">合計の確かめ</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>ファイルに「総支給額」「控除合計」「差引支給額」の列があるときは、支給の項目の合計＝総支給額、控除の項目の合計＝控除合計、総支給額−控除合計＝差引支給額 になっているかを1人ずつ確かめます。合わないときも勝手には直さず、ファイルの値のまま印刷します（画面に「合計が合いません」と出ます）。これらの列がないときは、ここで計算して載せます。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-pdf" class="md-modal" aria-labelledby="dlg-pdf-title">
+    <div class="md-modal__head"><h2 id="dlg-pdf-title" class="md-modal__title">PDFにするには</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>手順5の「全員を印刷」を押すと印刷の画面が開きます。送信先（プリンター）で「PDFに保存」を選ぶと、PDFファイルになります。用紙はA4・縦です。きれいに出ないときは、印刷の画面の「詳細設定」で「ヘッダーとフッター」のチェックを外してください。</p>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<div id="print-area" class="ky-print-area"></div>
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/kyuyo.js"></script>
+<script src="../assets/js/ui/kyuyo.js"></script>
+</body>
+</html>

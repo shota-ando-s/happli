@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>アンケート集計｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* この画面だけで使う部品（色は md.css のトークンから） */
+  .eq-types { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr)); }
+  .eq-type { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: var(--md-shape-m); background: var(--md-surface-container-low); border: 1px solid var(--md-outline-variant); min-width: 0; }
+  .eq-type[data-type="skip"] { background: var(--md-surface-container-lowest); border-style: dashed; }
+  .eq-type__head { display: flex; align-items: flex-start; gap: 8px; }
+  .eq-type__name { font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; flex: 1; min-width: 0; }
+  .eq-type__col { flex: none; font-size: 13px; color: var(--md-on-surface-variant); font-family: var(--md-font-num); padding-top: 2px; }
+  .eq-type__samples { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .eq-type__auto { font-size: 13px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .eq-type__auto b { color: var(--md-on-surface); }
+  .eq-type__ctrls { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(9.5rem, 100%), 1fr)); }
+  .eq-type__ctrls label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 700; color: var(--md-on-surface-variant); min-width: 0; }
+  .eq-type__ctrls .md-select { min-height: 44px; padding: 8px 40px 8px 12px; font-size: 15px; }
+
+  .eq-filter { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr)); align-items: end; padding: 16px; border-radius: var(--md-shape-m); background: var(--md-surface-container-low); }
+  .eq-filter .md-btn { justify-self: start; }
+  .eq-filter-note { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 15px; }
+  .eq-filter-note:empty { display: none; }
+
+  .eq-qs { display: flex; flex-direction: column; gap: 16px; }
+  .eq-q { display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: var(--md-shape-m); background: var(--md-surface-container-low); min-width: 0; }
+  .eq-q__title { font-size: 18px; line-height: 1.5; font-weight: 700; display: flex; align-items: flex-start; gap: 10px; overflow-wrap: anywhere; }
+  .eq-q__num { display: inline-grid; place-items: center; flex: none; min-width: 36px; height: 28px; padding: 0 6px; border-radius: var(--md-shape-full); background: var(--md-secondary-container); color: var(--md-on-secondary-container); font-size: 14px; font-family: var(--md-font-num); margin-top: 1px; }
+  .eq-q__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .eq-q__meta .md-chip { height: 24px; font-size: 13px; padding: 0 10px; }
+  .eq-kpis { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(10rem, 100%), 1fr)); }
+  .eq-kpi { padding: 10px 14px; border-radius: var(--md-shape-s); background: var(--md-surface-container-lowest); border: 1px solid var(--md-outline-variant); min-width: 0; }
+  .eq-kpi__label { font-size: 13px; font-weight: 700; color: var(--md-on-surface-variant); }
+  .eq-kpi__value { font-family: var(--md-font-num); font-size: 22px; font-weight: 700; line-height: 1.35; font-variant-numeric: tabular-nums; }
+  .eq-kpi__value small { font-family: var(--md-font); font-size: 14px; font-weight: 500; margin-left: 2px; }
+  .eq-kpi__sub { font-size: 13px; line-height: 1.5; color: var(--md-on-surface-variant); overflow-wrap: anywhere; }
+
+  .eq-bars { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 1.5; background: var(--md-surface-container-lowest); border-radius: var(--md-shape-s); overflow: hidden; }
+  .eq-bars th, .eq-bars td { padding: 8px 12px; border-bottom: 1px solid var(--md-outline-variant); text-align: left; vertical-align: middle; }
+  .eq-bars tbody tr:last-child > * { border-bottom: 0; }
+  .eq-bars thead th { font-size: 13px; color: var(--md-on-surface-variant); background: var(--md-surface-container); font-weight: 700; }
+  .eq-bars .eq-label { width: 36%; overflow-wrap: anywhere; }
+  .eq-bars .eq-count { width: 4.5rem; text-align: right; font-family: var(--md-font-num); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .eq-bars tr.is-other .eq-label, .eq-bars tr.is-off .eq-label { color: var(--md-on-surface-variant); }
+  .eq-bars tr.is-zero td { color: var(--md-on-surface-variant); }
+  .eq-bar { display: flex; align-items: center; gap: 10px; }
+  .eq-bar__track { flex: 1; min-width: 3rem; height: 14px; border-radius: var(--md-shape-full); background: var(--md-surface-container-high); overflow: hidden; }
+  .eq-bar__fill { display: block; height: 100%; border-radius: var(--md-shape-full); background: var(--md-primary); }
+  .eq-bar__fill[data-tone="top"] { background: var(--md-success); }
+  .eq-bar__fill[data-tone="muted"] { background: var(--md-outline); }
+  .eq-bar__pct { flex: none; width: 3.8rem; text-align: right; font-family: var(--md-font-num); font-variant-numeric: tabular-nums; }
+  .eq-note { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .eq-textq { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+
+  .eq-words { display: flex; flex-wrap: wrap; gap: 8px; }
+  .eq-word { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: var(--md-shape-s); border: 1px solid var(--md-outline-variant); background: var(--md-surface-container-lowest); color: var(--md-on-surface); font: inherit; font-size: 15px; cursor: pointer; }
+  .eq-word:hover { background: var(--md-surface-container); }
+  .eq-word b { font-family: var(--md-font-num); font-size: 13px; color: var(--md-on-surface-variant); font-weight: 700; }
+  .eq-word[aria-pressed="true"] { background: var(--md-primary); color: var(--md-on-primary); border-color: var(--md-primary); }
+  .eq-word[aria-pressed="true"] b { color: var(--md-on-primary); }
+  .eq-word[data-rank="1"] { font-size: 17px; font-weight: 700; }
+  .eq-answers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .eq-answer { padding: 12px 16px; border-radius: var(--md-shape-s); background: var(--md-surface-container-low); border-left: 4px solid var(--md-outline-variant); min-width: 0; }
+  .eq-answer__meta { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: 13px; color: var(--md-on-surface-variant); }
+  .eq-answer__text { margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .eq-answer mark { background: var(--md-warning-container); color: var(--md-on-warning-container); border-radius: 2px; padding: 0 1px; }
+  .eq-pager { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .eq-pager__info { font-size: 15px; color: var(--md-on-surface-variant); }
+
+  .eq-cross th, .eq-cross td { padding: 8px 12px; }
+  .eq-cross tbody th, .eq-cross thead th:first-child, .eq-cross tfoot th { position: sticky; left: 0; z-index: 1; background: var(--md-surface-container-lowest); text-align: left; white-space: normal; min-width: 7rem; max-width: 14rem; overflow-wrap: anywhere; }
+  .eq-cross thead th:first-child { background: var(--md-surface-container); z-index: 2; }
+  .eq-cross thead th { white-space: normal; min-width: 5.5rem; vertical-align: bottom; }
+  .eq-cross tfoot td, .eq-cross tfoot th { font-weight: 700; background: var(--md-secondary-container); color: var(--md-on-secondary-container); border-top: 2px solid var(--md-outline); border-bottom: 0; }
+  .eq-cross .eq-tot { font-weight: 700; border-left: 1px solid var(--md-outline-variant); }
+  .eq-cross td.is-num { position: relative; }
+  .eq-cross td[data-heat] { background: color-mix(in srgb, var(--md-primary) calc(var(--h) * 1%), var(--md-surface-container-lowest)); }
+  .eq-modes .md-choice { padding: 10px 14px; min-height: 44px; }
+  .eq-report-opts { display: flex; flex-direction: column; gap: 4px; }
+
+  @media (max-width: 40rem) {
+    .eq-q { padding: 16px 12px; }
+    .eq-bars th, .eq-bars td { padding: 8px; }
+    .eq-bars .eq-label { width: 40%; }
+    .eq-bars .eq-count { width: 3.2rem; }
+    .eq-bar { gap: 6px; }
+    .eq-bar__track { min-width: 2rem; }
+    .eq-bar__pct { width: 3.4rem; font-size: 14px; }
+    .eq-cross th, .eq-cross td { padding: 8px; }
+  }
+
+  /* ---- 印刷用の集計レポート（白地に黒。画面には出さない） ---- */
+  .eq-print-area { display: none; }
+  .eq-report { background: #fff; color: #000; font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; font-size: 11.5pt; line-height: 1.55; letter-spacing: 0; }
+  .eq-report * { color: #000; }
+  .eq-report h1 { font-size: 18pt; line-height: 1.35; margin: 0 0 4pt; }
+  .eq-report h2 { font-size: 12.5pt; margin: 0 0 4pt; line-height: 1.4; }
+  .eq-report p { margin: 0; }
+  .eq-r-head { border-bottom: 2px solid #000; padding-bottom: 6pt; margin-bottom: 10pt; }
+  .eq-r-meta { font-size: 10pt; display: flex; flex-wrap: wrap; gap: 2pt 14pt; }
+  .eq-r-q { break-inside: avoid; page-break-inside: avoid; border: 1px solid #000; padding: 8pt 10pt; margin-bottom: 9pt; }
+  .eq-r-sub { font-size: 9.5pt; margin-bottom: 4pt; }
+  .eq-r-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  .eq-r-table th, .eq-r-table td { padding: 2.5pt 4pt; border-bottom: 0.5pt solid #999; text-align: left; vertical-align: middle; }
+  .eq-r-table thead th { border-bottom: 1px solid #000; font-weight: 700; font-size: 9pt; }
+  .eq-r-table td.n, .eq-r-table th.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .eq-r-table .lab { width: 34%; word-break: break-all; }
+  .eq-r-table .bar { width: 44%; }
+  .eq-r-bar { display: block; height: 9pt; border: 0.75pt solid #000; background: #fff; }
+  .eq-r-bar > span { display: block; height: 100%; background: #666; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .eq-r-bar[data-top] > span { background: #222; }
+  .eq-r-stats { font-size: 10pt; margin-top: 4pt; display: flex; flex-wrap: wrap; gap: 2pt 14pt; }
+  .eq-r-texts { margin: 4pt 0 0; padding-left: 1.4em; font-size: 9.5pt; }
+  .eq-r-texts li { break-inside: avoid; margin-bottom: 2pt; word-break: break-all; }
+  .eq-r-cross { break-inside: auto; }
+  .eq-r-cross table th, .eq-r-cross table td { border: 0.5pt solid #000; font-size: 9pt; }
+  .eq-r-cross table thead th { background: #eee; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  @page { size: A4 portrait; margin: 14mm 14mm 16mm; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    body { display: block; min-height: 0; }
+    body > *:not(#print-area) { display: none !important; }
+    .eq-print-area { display: block !important; }
+    .eq-r-table thead { display: table-header-group; }
+  }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="ballot" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">アンケート集計</h1>
+      <p class="md-lead text-secondary">Google フォームや Microsoft Forms、紙のアンケートを Excel に打ち込んだ回答のCSVから、質問ごとの件数と割合、満足度の平均、クロス集計、自由記述の一覧を作ります。印刷用の集計レポートも出せます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">回答のファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-file"><span class="md-icon" data-icon="help" aria-hidden="true"></span>ファイルの形</button><button type="button" class="md-help-btn" data-modal="dlg-features"><span class="md-icon" data-icon="help" aria-hidden="true"></span>できること</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">アンケートの回答 <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">1行目が質問、2行目から1人1行の回答になっているCSV。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">回答のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-types" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">質問の種類を確かめる</h2>
+          <p class="md-step__desc">回答の中身から、質問ごとの種類を自動で選んであります。違っているときだけ直してください。直した内容はこのパソコンに保存され、同じ見出しのファイルなら次回も使われます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="types-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに質問の一覧が出ます。</p>
+        <div id="types-wrap" class="md-hidden md-stack">
+          <details class="md-details card">
+            <summary><span class="md-icon" data-icon="help" aria-hidden="true"></span>種類の違い<span class="md-details__hint">（どれを選べばよいか）</span></summary>
+            <div class="md-details__body card-body">
+              <ul style="margin:0;padding-left:1.25em">
+                <li><b>単一選択</b>: 1つだけ選ぶ質問（年代・部署など）。答えごとの人数と割合を出します</li>
+                <li style="margin-top:6px"><b>複数選択</b>: いくつでも選べる質問。1つのセルに区切って入っている答えを分けて数えます。割合は「回答した人数」に対する割合なので、合計は100%を超えます</li>
+                <li style="margin-top:6px"><b>評価</b>: 満足度や1〜5点など段階のある質問。段階の順に並べ、平均点・中央値・上位2つの割合を出します</li>
+                <li style="margin-top:6px"><b>数値</b>: 年齢・回数などの数。平均・最小・最大と、区切りのよい幅の分布を出します</li>
+                <li style="margin-top:6px"><b>自由記述</b>: 文章の答え。手順4で読めます</li>
+                <li style="margin-top:6px"><b>日時・その他（除外）</b>: 回答日時・氏名・メールアドレスなど、集計しない列</li>
+              </ul>
+            </div>
+          </details>
+          <div id="types" class="eq-types"></div>
+          <div class="md-cta">
+            <p class="md-cta__text">この種類で、質問ごとに集計します。集計したあとに種類を変えても、すぐに集計し直します。</p>
+            <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>集計する</button>
+          </div>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">質問ごとの集計を見る</h2>
+          <p class="md-step__desc">割合は、その質問に答えた人数を100%としています。無回答の人は割合に入れません。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="tune" data-size="20" aria-hidden="true"></span>属性で絞り込む <span class="md-badge badge" data-kind="optional">任意</span></h3>
+          <p id="filter-help" class="md-field__help form-hint">「年代が30代の人だけ」のように絞り込むと、この手順から手順6までの集計・一覧・ファイル・レポートがすべて絞り込んだ人だけになります。</p>
+          <div class="eq-filter">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="filter-q">絞り込む質問</label>
+              <select id="filter-q" class="md-select form-select" aria-describedby="filter-help"></select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="filter-v">答え</label>
+              <select id="filter-v" class="md-select form-select" disabled></select>
+            </div>
+            <button id="filter-clear" class="md-btn btn" data-variant="outlined" type="button" disabled><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>絞り込みをやめる</button>
+          </div>
+        </div>
+        <div id="summary"></div>
+        <div id="questions" class="eq-qs"></div>
+        <p id="skipped" class="eq-note"></p>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-text" class="md-step md-hidden card" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">自由記述を読む</h2>
+          <p class="md-step__desc">文章の答えを一覧で読めます。言葉で探したり、よく出てくる言葉を押してその言葉を含む答えだけにしたりできます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="text-empty" class="md-empty md-hidden"><span class="md-icon" data-icon="info" aria-hidden="true"></span>自由記述の質問がありません。文章で答える質問があるときは、手順2で種類を「自由記述」にしてください。</p>
+        <div id="text-wrap" class="md-stack">
+          <div class="md-grid" data-min="14">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="text-q">読む質問</label>
+              <select id="text-q" class="md-select form-select"></select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="text-attr">一緒に表示する項目 <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <select id="text-attr" class="md-select form-select"></select>
+            </div>
+          </div>
+          <div id="words-wrap" class="md-stack" data-gap="8">
+            <h3 class="md-subhead">よく出てくる言葉（上位30語）</h3>
+            <p class="md-field__help form-hint">数字は、その言葉が出てくる答えの数です。押すとその言葉を含む答えだけを表示し、もう一度押すと元に戻ります。助詞（は・が・を など）や数字は数えません。言葉の区切りはブラウザの機能で自動で決めるため、ときどき不自然な区切りになります。</p>
+            <div id="words" class="eq-words"></div>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="text-search">言葉で探す</label>
+            <input id="text-search" class="md-input form-control" type="search" placeholder="例）資料" autocomplete="off">
+          </div>
+          <div id="text-status" class="eq-filter-note" aria-live="polite"></div>
+          <ol id="text-list" class="eq-answers"></ol>
+          <div id="text-pager" class="eq-pager"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-cross" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">2つの質問を掛け合わせる（クロス集計）</h2>
+          <p class="md-step__desc">「年代ごとの満足度」のように、縦と横に質問を選ぶと人数の表になります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid" data-min="14">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="cross-row">縦（行）に並べる質問</label>
+            <select id="cross-row" class="md-select form-select"></select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="cross-col">横（列）に並べる質問</label>
+            <select id="cross-col" class="md-select form-select"></select>
+          </div>
+        </div>
+        <fieldset class="md-fieldset eq-modes">
+          <legend>表に出す数</legend>
+          <div class="md-choices" data-layout="row">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="cmode" value="count" checked><span class="md-choice__text"><span class="md-choice__label">件数（人）</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="cmode" value="row"><span class="md-choice__text"><span class="md-choice__label">行%（横に見る）</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="cmode" value="col"><span class="md-choice__text"><span class="md-choice__label">列%（縦に見る）</span></span></label>
+          </div>
+        </fieldset>
+        <div id="cross-msg" aria-live="polite"></div>
+        <div id="cross-table"></div>
+        <p id="cross-note" class="eq-note"></p>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title">保存・印刷する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。絞り込み中は、絞り込んだ人だけの内容になります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="save-filter" class="eq-filter-note"></div>
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-summary" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>集計結果.csv を保存</button>
+          <button id="save-cross" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span><span id="save-cross-label">クロス集計.csv を保存</span></button>
+          <button id="save-text" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span><span id="save-text-label">自由記述.csv を保存</span></button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+        <hr class="md-divider" style="margin:4px 0">
+        <div class="md-stack">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="print" data-size="20" aria-hidden="true"></span>集計レポートを印刷する</h3>
+          <p class="md-field__help form-hint">A4縦で、1問ずつ枠に入れて印刷します（1問の途中では改ページしません）。印刷の画面でプリンターの欄を「PDFに保存」にすると、PDFファイルにできます。棒グラフが出ないときは、印刷の画面の「詳細設定」で「背景のグラフィック」にチェックを入れてください。</p>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="report-title">レポートの題名</label>
+            <input id="report-title" class="md-input form-control" type="text" autocomplete="off">
+          </div>
+          <div class="eq-report-opts">
+            <label class="md-inline-check"><input id="report-texts" class="md-checkbox form-check-input" type="checkbox" checked>自由記述の答えも載せる（手順4で探している言葉があれば、その答えだけ）</label>
+            <label class="md-inline-check"><input id="report-cross" class="md-checkbox form-check-input" type="checkbox" checked>手順5のクロス集計の表も載せる</label>
+          </div>
+          <div class="md-actions">
+            <button id="print" class="md-btn btn" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>集計レポートを印刷・PDFで保存</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で <code>samples/enquete/研修アンケート.csv</code> を選んでください（架空の社内研修のアンケート60人分です）。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-file" class="md-modal" aria-labelledby="dlg-file-title">
+    <div class="md-modal__head"><h2 id="dlg-file-title" class="md-modal__title">ファイルの形</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>1行目が質問（見出し）、2行目から1行に1人分の回答が並んだCSV</li>
+        <li>Google フォームは「回答」タブの「スプレッドシートにリンク」から、スプレッドシートの「ファイル」→「ダウンロード」→「カンマ区切り形式（.csv）」で保存します</li>
+        <li>Microsoft Forms は「応答」タブの「Excel で開く」で保存したファイルを、Excel で「CSV（コンマ区切り）」として保存し直します</li>
+        <li>いくつでも選べる質問は、1つのセルに「, 」「;」「、」や改行で区切って入っていればそのまま数えられます</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-features" class="md-modal" aria-labelledby="dlg-features-title">
+    <div class="md-modal__head"><h2 id="dlg-features-title" class="md-modal__title">できること</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li>質問ごとの件数・割合（棒グラフつき）。満足度などは平均点・中央値・上位2つの割合（「とても満足」と「やや満足」を合わせた割合など）</li>
+        <li>年代 × 満足度 のようなクロス集計（件数・行%・列%）</li>
+        <li>自由記述の一覧と検索、よく出てくる言葉の上位30語</li>
+        <li>「30代だけ」のように属性で絞り込んで、すべての集計をやり直す</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<div id="print-area" class="eq-print-area"></div>
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/enquete.js"></script>
+<script src="../assets/js/ui/enquete.js"></script>
+</body>
+</html>

@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>見積書・発注書・納品書・領収書の作成｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+/* ---- このページだけの部品: 見積書・発注書・納品書・領収書・注文請書（紙のイメージ。画面でも印刷でも白地に黒） ---- */
+.ck-preview-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.ck-preview-bar .md-field { flex: 1 1 18rem; }
+.ck-preview-bar .md-btn { flex: none; }
+.ck-preview { position: relative; overflow: hidden; border-radius: var(--md-shape-m); background: var(--md-surface-container-high); padding: 16px; }
+.ck-preview__inner { transform-origin: top left; }
+.ck-preview .ck-page { box-shadow: var(--md-elev-2); }
+.ck-print-area { display: none; }
+.ck-date-row { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr)); }
+.ck-checks { display: flex; flex-direction: column; gap: 4px; }
+
+.ck-page { width: 794px; background: #fff; color: #000; font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  font-size: 13px; line-height: 1.6; letter-spacing: 0; }
+.ck-page * { color: #000; }
+.ck-page p { margin: 0; }
+.ck-sheet { min-height: 1123px; padding: 57px; display: flex; flex-direction: column; gap: 18px; }
+.ck-title { font-size: 30px; line-height: 1.3; font-weight: 700; letter-spacing: .5em; text-indent: .5em; text-align: center; padding-bottom: 6px; border-bottom: 3px double #000; margin: 0; }
+.ck-meta { align-self: flex-end; border-collapse: collapse; font-size: 13px; }
+.ck-meta th { font-weight: 400; text-align: left; padding: 1px 16px 1px 0; }
+.ck-meta td { text-align: right; padding: 1px 0; font-variant-numeric: tabular-nums; }
+.ck-head { display: flex; gap: 32px; justify-content: space-between; align-items: flex-start; }
+.ck-to { flex: 1 1 58%; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.ck-to__addr { font-size: 12px; }
+.ck-to__name { font-size: 19px; font-weight: 700; line-height: 1.4; padding-bottom: 4px; border-bottom: 1px solid #000; word-break: break-all; }
+.ck-to__name span { font-size: 15px; font-weight: 400; margin-left: 12px; }
+.ck-to__person { font-size: 14px; }
+.ck-from { flex: 0 1 40%; min-width: 0; font-size: 12px; line-height: 1.7; word-break: break-all; display: flex; flex-direction: column; gap: 12px; }
+.ck-from__row { display: flex; gap: 10px; align-items: flex-start; }
+.ck-from__body { flex: 1 1 auto; min-width: 0; }
+.ck-from__name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.ck-from__reg { margin-top: 4px; }
+.ck-seal { flex: none; width: 64px; height: 64px; border: 1px solid #000; display: grid; place-items: center; font-size: 12px; }
+.ck-page .ck-seal span { color: #999; }
+.ck-recv { align-self: flex-end; border-collapse: collapse; text-align: center; }
+.ck-recv th { border: 1px solid #000; font-weight: 400; font-size: 12px; padding: 2px 8px; width: 90px; }
+.ck-recv td { border: 1px solid #000; height: 80px; }
+.ck-lead { margin-top: 10px; }
+.ck-amount { display: flex; align-items: baseline; gap: 18px; padding: 8px 14px; border: 2px solid #000; margin-top: 4px; }
+.ck-amount span { font-size: 14px; font-weight: 700; }
+.ck-amount strong { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; margin-left: auto; }
+.ck-info { border-collapse: collapse; font-size: 13px; width: 100%; }
+.ck-info th { font-weight: 400; text-align: left; white-space: nowrap; padding: 2px 16px 2px 0; vertical-align: top; width: 1%; }
+.ck-info td { padding: 2px 0; word-break: break-all; border-bottom: 1px dotted #000; }
+.ck-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.ck-table th, .ck-table td { border: 1px solid #000; padding: 5px 8px; vertical-align: top; }
+.ck-table thead th { background: #eee; font-weight: 700; text-align: center; white-space: nowrap; }
+.ck-table td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ck-table td.c { text-align: center; white-space: nowrap; }
+.ck-table td.item { word-break: break-all; }
+.ck-table tr { break-inside: avoid; }
+.ck-sums { display: flex; gap: 24px; justify-content: space-between; align-items: flex-start; }
+.ck-legend { font-size: 12px; flex: 1 1 auto; }
+.ck-sums__right { flex: 0 0 340px; display: flex; flex-direction: column; gap: 8px; }
+.ck-sums table th { text-align: left; font-weight: 400; white-space: nowrap; background: #fff; }
+.ck-sums table tr.total th, .ck-sums table tr.total td { font-weight: 700; font-size: 14px; background: #eee; }
+.ck-table caption { text-align: left; font-weight: 700; font-size: 12px; padding-bottom: 2px; }
+.ck-box { border: 1px solid #000; padding: 8px 12px; break-inside: avoid; }
+.ck-box h3 { font-size: 12px; font-weight: 700; margin: 0 0 2px; }
+.ck-box p { white-space: pre-wrap; word-break: break-all; }
+.ck-note { font-size: 12px; }
+.ck-from__role { font-size: 12px; font-weight: 700; border-bottom: 1px solid #000; padding-bottom: 2px; margin-bottom: 2px; }
+/* 発注書の注文請書: 受注者（発注先）が記名・押印する欄 */
+.ck-pages { display: flex; flex-direction: column; gap: 24px; width: 794px; }
+.ck-sign { display: flex; flex-direction: column; gap: 10px; border: 1px solid #000; padding: 10px 12px 12px; }
+.ck-sign .ck-from__role { border-bottom: 0; margin: 0; padding: 0; }
+.ck-sign__row { display: flex; gap: 10px; align-items: flex-end; }
+.ck-sign__lines { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.ck-sign__line { display: flex; gap: 8px; align-items: baseline; border-bottom: 1px solid #000; min-height: 26px; padding-bottom: 2px; }
+.ck-sign__label { flex: none; width: 4em; font-size: 11px; }
+.ck-sign__value { flex: 1 1 auto; min-width: 0; font-size: 13px; word-break: break-all; }
+
+/* 領収書: A4の半分（2通で1枚）か、1枚に1通 */
+.ck-page[data-kind="pair"], .ck-page[data-kind="single"] { height: 1123px; display: flex; flex-direction: column; overflow: hidden; }
+.ck-slot { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.ck-page[data-kind="single"] { height: auto; min-height: 1123px; }
+.ck-page[data-kind="single"] .ck-slot { flex: none; min-height: 561px; overflow: visible; }
+.ck-page[data-kind="pair"] .ck-slot + .ck-slot { border-top: 1px dashed #000; position: relative; }
+.ck-cut { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #fff; padding: 0 8px; font-size: 11px; line-height: 16px; }
+.ck-rc { flex: 1 1 auto; padding: 36px 48px 28px; display: flex; flex-direction: column; gap: 14px; }
+.ck-rc.is-current { outline: 3px solid var(--md-primary); outline-offset: -6px; }
+.ck-rc__top { display: flex; align-items: flex-end; gap: 16px; }
+.ck-rc__top .ck-title { flex: 1 1 auto; font-size: 26px; border-bottom: 0; padding: 0; }
+.ck-rc__top .ck-meta { flex: none; }
+.ck-rc .ck-to { flex: none; gap: 4px; }
+.ck-rc .ck-to__name { font-size: 18px; }
+.ck-rc__amount { display: flex; align-items: baseline; justify-content: center; gap: 18px; padding: 8px 14px; border-top: 2px solid #000; border-bottom: 2px solid #000; background: #f2f2f2; }
+.ck-rc__amount span { font-size: 13px; font-weight: 700; }
+.ck-rc__amount strong { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.ck-rc__but { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; }
+.ck-rc__but p:first-child { flex: 1 1 auto; border-bottom: 1px solid #000; word-break: break-all; }
+.ck-rc__but p:last-child { flex: none; }
+.ck-rc__bottom { display: flex; gap: 16px; align-items: flex-start; margin-top: 6px; }
+.ck-stamp { flex: none; width: 84px; height: 100px; border: 1.5px dashed #000; display: grid; place-items: center; text-align: center; font-size: 11px; line-height: 1.4; }
+.ck-rc__detail { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; }
+.ck-rc__detail .ck-table { font-size: 11.5px; }
+.ck-rc__detail .ck-table th, .ck-rc__detail .ck-table td { padding: 2px 6px; }
+.ck-rc__detail .ck-table thead th { background: #fff; }
+.ck-rc__detail p { word-break: break-all; }
+.ck-rc .ck-from { flex: 0 0 250px; font-size: 11.5px; gap: 0; }
+.ck-rc .ck-from__name { font-size: 14px; }
+.ck-rc .ck-seal { width: 54px; height: 54px; }
+
+@page { size: A4; margin: 12mm; }
+@media print {
+  html, body { background: #fff !important; color: #000 !important; }
+  body { display: block; min-height: 0; }
+  body > *:not(#print-area) { display: none !important; }
+  .ck-print-area { display: block !important; }
+  .ck-print-area .ck-page { width: auto; box-shadow: none; break-after: page; page-break-after: always; }
+  .ck-print-area .ck-page:last-child { break-after: auto; page-break-after: auto; }
+  .ck-print-area .ck-sheet { min-height: 0; padding: 0; }
+  .ck-print-area .ck-page[data-kind="pair"] { height: 271mm; }
+  .ck-print-area .ck-page[data-kind="single"] { min-height: 0; }
+  .ck-print-area .ck-page[data-kind="single"] .ck-slot { min-height: 135mm; }
+  .ck-print-area .ck-rc { padding: 9mm 10mm 7mm; }
+  .ck-table thead { display: table-header-group; }
+  .ck-table thead th, .ck-sums table tr.total th, .ck-sums table tr.total td, .ck-rc__amount { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="request_quote" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">見積書・発注書・納品書・領収書の作成</h1>
+      <p class="md-lead text-secondary">明細のCSVから、取引先ごとの見積書・納品書・領収書をまとめて作ります。「請求書の一括作成」と同じファイルが使えるので、1つの明細から見積書→納品書→請求書→領収書と続けて作れます。仕入先への発注書（注文請書つきも可）も同じ形の明細から作れます。印刷やPDFでの保存ができます。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-type" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">作る書類を選ぶ</h2>
+          <p class="md-step__desc">選んだ書類に合わせて、このあとの入力欄が変わります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend class="md-visually-hidden">作る書類</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="doc-type" value="estimate" checked>
+              <span class="md-choice__text"><span class="md-choice__label">見積書</span><span class="md-choice__desc">取引の前に、金額・納期・条件をお知らせする書類</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="doc-type" value="delivery">
+              <span class="md-choice__text"><span class="md-choice__label">納品書</span><span class="md-choice__desc">品物と一緒に渡す、何をいくつ届けたかの書類</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="doc-type" value="receipt">
+              <span class="md-choice__text"><span class="md-choice__label">領収書</span><span class="md-choice__desc">代金を受け取ったことを示す書類（収入印紙の目安つき）</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="doc-type" value="order">
+              <span class="md-choice__text"><span class="md-choice__label">発注書</span><span class="md-choice__desc">仕入先に品物を注文する書類（注文請書も付けられます）</span></span></label>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-file" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">明細のファイルを選ぶ</h2>
+          <p class="md-step__desc">1行に品物1つずつの明細のCSVです（請求書の一括作成と同じ形）。ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">明細 <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">宛先（請求先・取引先）・品名・単価の列が必要です。数量・単位・税率・日付・備考・宛先の住所などの列はあれば使います。値引きは単価をマイナス（例: -500）にした行で入れられます。発注書では、宛先の列を「発注先」（仕入先・発注先の列）として使います。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">明細のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-map" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順2でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-wrap" class="md-hidden md-stack">
+          <p class="md-field__help form-hint">宛先ごとに1通にまとめて、番号を自動で付けます（付け方は手順5の「詳しい設定」で変えられます）。</p>
+          <div class="md-grid" data-min="14" id="map"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-issuer" class="md-step card" data-state="waiting" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">発行元と書類の内容を入れる</h2>
+          <p class="md-step__desc">書類に載せる自社の情報と、日付などです。発行元は「請求書の一括作成」で入れたものを使います。ここで直すと、このパソコンに保存され次回も使えます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-docs"><span class="md-icon" data-icon="help" aria-hidden="true"></span>書類ごとの決まり</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="issuer-from" aria-live="polite"></div>
+        <p class="md-field__help form-hint" data-for="order">発注書では、ここに入れる自社が「発注者」になります。発注先（仕入先）の名前・住所は明細のファイルから載せます。</p>
+        <div class="md-grid" data-min="14">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="iss-name">会社名・屋号 <span class="md-badge badge" data-kind="required">必須</span></label>
+            <input id="iss-name" class="md-input form-control" type="text" autocomplete="organization">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="iss-zip">郵便番号 <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <input id="iss-zip" class="md-input md-input--short form-control" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="100-0000">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="iss-tel">電話番号 <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <input id="iss-tel" class="md-input form-control" type="tel" autocomplete="tel" placeholder="03-0000-0000">
+          </div>
+        </div>
+        <div class="md-field">
+          <label class="md-field__label form-label" for="iss-reg">登録番号 <span class="md-badge badge" data-kind="optional">任意</span></label>
+          <p id="iss-reg-help" class="md-field__help form-hint">適格請求書発行事業者の番号。「T」と数字13桁（例: T1234567890123）。領収書をインボイス（適格簡易請求書）として出すときは必ず入れてください。発注書と注文請書には載せません。</p>
+          <input id="iss-reg" class="md-input md-input--short form-control" style="max-width:20rem" type="text" inputmode="text" autocomplete="off" spellcheck="false" aria-describedby="iss-reg-help iss-reg-err" placeholder="T1234567890123">
+          <p id="iss-reg-err" class="md-field__error invalid-feedback d-block" aria-live="polite"></p>
+        </div>
+        <div class="md-field">
+          <label class="md-field__label form-label" for="iss-addr">住所 <span class="md-badge badge" data-kind="optional">任意</span></label>
+          <input id="iss-addr" class="md-input form-control" type="text" autocomplete="street-address">
+        </div>
+        <label class="md-inline-check"><input id="seal" class="md-checkbox form-check-input" type="checkbox"> 会社名の横に、はんこを押す枠（印影欄）を付ける</label>
+
+        <div class="ck-date-row">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="doc-date"><span id="doc-date-label">見積日</span> <span class="md-badge badge" data-kind="required">必須</span></label>
+            <p id="doc-date-help" class="md-field__help form-hint">はじめは今日の日付です。</p>
+            <input id="doc-date" class="md-input form-control" type="date" aria-describedby="doc-date-help">
+          </div>
+          <div class="md-field" data-for="estimate">
+            <label class="md-field__label form-label" for="valid-until">有効期限 <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <p id="valid-until-help" class="md-field__help form-hint">はじめは見積日の30日後です。</p>
+            <input id="valid-until" class="md-input form-control" type="date" aria-describedby="valid-until-help">
+          </div>
+        </div>
+
+        <div class="md-field" data-for="estimate delivery order">
+          <label class="md-field__label form-label" for="subject">件名 <span class="md-badge badge" data-kind="optional">任意</span></label>
+          <p id="subject-help" class="md-field__help form-hint">すべての書類に載せる件名です（例: 店舗備品のご注文）。保存はされません。</p>
+          <input id="subject" class="md-input form-control" type="text" aria-describedby="subject-help">
+        </div>
+        <div class="md-grid" data-min="14" data-for="estimate">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="nouki">納期 <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <p id="nouki-help" class="md-field__help form-hint">例）ご注文後2週間以内</p>
+            <input id="nouki" class="md-input form-control" type="text" aria-describedby="nouki-help">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="place">受渡場所 <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <p id="place-help" class="md-field__help form-hint">例）貴社指定場所</p>
+            <input id="place" class="md-input form-control" type="text" aria-describedby="place-help">
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="terms">取引条件 <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <p id="terms-help" class="md-field__help form-hint">例）月末締め翌月末お振込</p>
+            <input id="terms" class="md-input form-control" type="text" aria-describedby="terms-help">
+          </div>
+        </div>
+
+        <div data-for="order" class="md-stack">
+          <div class="md-grid" data-min="14">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="po-nouki">納期 <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="po-nouki-help" class="md-field__help form-hint">日付（例: 2026/12/1）か言葉（例: ご発注後2週間以内）。保存はされません。</p>
+              <input id="po-nouki" class="md-input form-control" type="text" aria-describedby="po-nouki-help">
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="po-place">納品場所 <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="po-place-help" class="md-field__help form-hint">例）弊社 本社倉庫</p>
+              <input id="po-place" class="md-input form-control" type="text" aria-describedby="po-place-help">
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="po-pay">お支払条件 <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="po-pay-help" class="md-field__help form-hint">例）月末締め翌月末払い</p>
+              <input id="po-pay" class="md-input form-control" type="text" aria-describedby="po-pay-help">
+            </div>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="po-remarks">備考 <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <p id="po-remarks-help" class="md-field__help form-hint">すべての発注書に載せる文です（例: 納品時に納品書を添付してください）。明細の備考の列があれば、その下に続けて載せます。</p>
+            <textarea id="po-remarks" class="md-textarea form-control" rows="2" aria-describedby="po-remarks-help"></textarea>
+          </div>
+          <label class="md-inline-check"><input id="po-ack" class="md-checkbox form-check-input" type="checkbox" aria-describedby="po-ack-help"> 注文請書を付ける（発注書1通ごとに1枚）</label>
+          <p id="po-ack-help" class="md-field__help form-hint">発注先に記名・押印して返してもらう控えです。宛先は自社で、受注者の欄は空けてあります。内容によっては発注先が収入印紙を貼る書類になります（この手順の見出しの右にある「書類ごとの決まり」を見てください）。</p>
+        </div>
+
+        <label class="md-inline-check" data-for="delivery"><input id="hide-prices" class="md-checkbox form-check-input" type="checkbox"> 金額を載せない（品名と数量だけの納品書にする）</label>
+
+        <div data-for="receipt" class="md-stack">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="tadashi">但し書き <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <p id="tadashi-help" class="md-field__help form-hint">「但し ○○」の部分です。はじめは「お品代として」です。</p>
+            <input id="tadashi" class="md-input form-control" type="text" aria-describedby="tadashi-help" placeholder="お品代として">
+          </div>
+          <div class="md-grid" data-min="14">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="pay-method">受け取った方法 <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="pay-method-help" class="md-field__help form-hint">選ぶと「お支払方法」の行が載ります。</p>
+              <select id="pay-method" class="md-select form-select" aria-describedby="pay-method-help">
+                <option value="" selected>載せない</option>
+                <option value="現金">現金</option>
+                <option value="お振込">振込</option>
+                <option value="other">その他</option>
+              </select>
+            </div>
+            <div class="md-field md-hidden" id="pay-other-wrap">
+              <label class="md-field__label form-label" for="pay-other">その他の方法</label>
+              <p id="pay-other-help" class="md-field__help form-hint">例）クレジットカード。空なら「その他」と載せます。</p>
+              <input id="pay-other" class="md-input form-control" type="text" aria-describedby="pay-other-help">
+            </div>
+          </div>
+          <div class="ck-checks">
+            <label class="md-inline-check"><input id="show-items" class="md-checkbox form-check-input" type="checkbox" checked> 取引の内容として品名を載せる（軽減税率の品物には※）</label>
+            <label class="md-inline-check"><input id="stamp-box" class="md-checkbox form-check-input" type="checkbox" checked> 税抜5万円以上の領収書に「収入印紙」の枠を出す</label>
+          </div>
+          <p class="md-field__help form-hint">メールなどで電子データとして渡す領収書には印紙はいりません。そのときは枠を出さない設定にしてください。</p>
+          <fieldset class="md-fieldset">
+            <legend>用紙への並べ方</legend>
+            <div class="md-choices" data-layout="grid">
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="layout" value="half" checked>
+                <span class="md-choice__text"><span class="md-choice__label">A4に2通（おすすめ）</span><span class="md-choice__desc">A4の上半分と下半分に1通ずつ。切り取り線で切って渡します</span></span></label>
+              <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="layout" value="full">
+                <span class="md-choice__text"><span class="md-choice__label">A4に1通</span><span class="md-choice__desc">1枚の上半分に1通だけ印刷します</span></span></label>
+            </div>
+          </fieldset>
+        </div>
+
+        <fieldset class="md-fieldset">
+          <legend>宛先の名前のあとに付ける言葉</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="honor" value="御中" checked>
+              <span class="md-choice__text"><span class="md-choice__label">御中（会社あて）</span><span class="md-choice__desc">例）株式会社〇〇 御中</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="honor" value="様">
+              <span class="md-choice__text"><span class="md-choice__label">様（個人あて）</span><span class="md-choice__desc">例）山田 太郎 様</span></span></label>
+          </div>
+          <p class="md-field__help form-hint" style="margin-top:8px">担当者の列に名前がある書類は、会社名のあとには付けず、担当者名のあとに「様」を付けます。</p>
+        </fieldset>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title"><span class="ck-type-name">見積書</span>を作る</h2>
+          <p class="md-step__desc">ふだんはそのままボタンを押すだけで大丈夫です。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-tax"><span class="md-icon" data-icon="help" aria-hidden="true"></span>消費税の計算</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（税抜・税込、端数、番号の付け方）</span></summary>
+          <div class="md-details__body card-body">
+            <fieldset class="md-fieldset">
+              <legend>ファイルの単価は</legend>
+              <div class="md-choices" data-layout="grid">
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="price-mode" value="excl" checked>
+                  <span class="md-choice__text"><span class="md-choice__label">税抜（消費税を含まない）</span><span class="md-choice__desc">合計に消費税を足します</span></span></label>
+                <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="price-mode" value="incl">
+                  <span class="md-choice__text"><span class="md-choice__label">税込（消費税を含む）</span><span class="md-choice__desc">合計の中に含まれる消費税を計算して載せます</span></span></label>
+              </div>
+            </fieldset>
+            <div class="md-grid" data-min="14">
+              <div class="md-field">
+                <label class="md-field__label form-label" for="rounding">消費税の1円未満の端数</label>
+                <p id="rounding-help" class="md-field__help form-hint">税率ごとの合計にかかる消費税の端数の扱いです。数量に小数がある明細の金額にも使います。</p>
+                <select id="rounding" class="md-select form-select" aria-describedby="rounding-help">
+                  <option value="floor" selected>切り捨て（おすすめ）</option>
+                  <option value="round">四捨五入</option>
+                  <option value="ceil">切り上げ</option>
+                </select>
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="default-rate">税率の列が空のときの税率</label>
+                <p id="default-rate-help" class="md-field__help form-hint">税率の列がないファイルでは、すべての明細がこの税率になります。</p>
+                <select id="default-rate" class="md-select form-select" aria-describedby="default-rate-help">
+                  <option value="10" selected>10%</option>
+                  <option value="8">8%（軽減税率）</option>
+                </select>
+              </div>
+            </div>
+            <div class="md-grid" data-min="14">
+              <div class="md-field">
+                <label class="md-field__label form-label" for="prefix"><span class="ck-no-label">見積番号</span>の頭の文字</label>
+                <p id="prefix-help" class="md-field__help form-hint">空のままなら「<span id="prefix-default">EST-</span>日付の年月-」です。書類の種類ごとに覚えます。</p>
+                <input id="prefix" class="md-input form-control" type="text" aria-describedby="prefix-help" autocomplete="off">
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="start">最初の番号</label>
+                <p id="start-help" class="md-field__help form-hint">1通目の番号です。2通目からは1ずつ増えます。</p>
+                <input id="start" class="md-input md-input--short form-control" type="number" min="0" step="1" inputmode="numeric" value="1" aria-describedby="start-help">
+              </div>
+              <div class="md-field">
+                <label class="md-field__label form-label" for="digits">番号の桁数</label>
+                <p id="digits-help" class="md-field__help form-hint">3なら 001, 002 … のように0で桁をそろえます。</p>
+                <input id="digits" class="md-input md-input--short form-control" type="number" min="0" max="10" step="1" inputmode="numeric" value="3" aria-describedby="digits-help">
+              </div>
+            </div>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">明細を宛先ごとにまとめ、税率ごとに消費税を計算します。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span><span class="ck-type-name">見積書</span>を作る</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="step-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title"><span class="ck-type-name">見積書</span>を確かめて印刷する</h2>
+          <p class="md-step__desc">できあがりの見た目を1通ずつ確かめられます。印刷の画面で「PDFに保存」を選ぶとPDFになります。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-pdf"><span class="md-icon" data-icon="help" aria-hidden="true"></span>PDFにするには</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead"><span>作った<span class="ck-type-name">見積書</span></span></h3>
+          <div id="list"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">見た目の確認</h3>
+          <div class="ck-preview-bar">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="pick">表示する書類</label>
+              <select id="pick" class="md-select form-select"></select>
+            </div>
+            <button id="prev" class="md-btn btn" data-variant="outlined" type="button" aria-label="前の書類"><span class="md-icon" data-icon="arrow_back" aria-hidden="true"></span>前へ</button>
+            <button id="next" class="md-btn btn" data-variant="outlined" type="button" aria-label="次の書類">次へ<span class="md-icon" data-icon="arrow_forward" aria-hidden="true"></span></button>
+          </div>
+          <p id="preview-note" class="md-field__help md-hidden form-hint">A4に2通のときは、表示中の領収書が入る1枚を表示します（表示中の1通を色の枠で示しています。枠は印刷されません）。</p>
+          <div id="preview" class="ck-preview" role="region" aria-label="書類の見た目"><div class="ck-preview__inner" id="preview-inner"></div></div>
+        </div>
+        <div class="md-actions">
+          <button id="print-all" class="md-btn btn" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>印刷・PDFで保存（全部）</button>
+          <button id="print-one" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>表示中の1通だけ印刷</button>
+        </div>
+        <p class="md-field__help form-hint">印刷の画面で、送信先（プリンター）を「PDFに保存」にするとPDFファイルになります。用紙サイズはA4・縦を選んでください。</p>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section id="step-save" class="md-step md-hidden card" aria-labelledby="s7">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">7</span>
+        <div class="md-step__titles">
+          <h2 id="s7" class="md-step__title card-title">一覧を保存する</h2>
+          <p id="save-desc" class="md-step__desc">作った書類の番号・取引先名・金額（税込）・日付の一覧です。控えや台帳づくりに使えます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-list" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span><span id="save-name">見積一覧.csv</span> を保存</button>
+          <a class="md-btn btn" data-variant="outlined" href="seikyusho.html"><span class="md-icon" data-icon="receipt" aria-hidden="true"></span>請求書の一括作成を開く</a>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>手順1で作る書類を選び、手順2で <code>samples/seikyusho/請求明細.csv</code> を選んでください（請求書の一括作成の見本と同じファイルです）。発注書を試すときは <code>samples/chohyo/発注明細.csv</code>（仕入先3社への発注の見本）を選んでください。手順4の発行元は、下のボタンで見本の値を入れられます（実在しない会社です。本番では自社の情報に書き換えてください）。</p>
+      <div class="md-actions">
+        <button id="fill-sample" class="md-btn btn" data-variant="tonal" data-size="s" type="button"><span class="md-icon" data-icon="edit" data-size="20" aria-hidden="true"></span>発行元に見本の値を入れる</button>
+      </div>
+      <p id="fill-sample-msg" class="md-file-status" aria-live="polite"></p>
+    </div>
+  </dialog>
+  <dialog id="dlg-docs" class="md-modal" aria-labelledby="dlg-docs-title">
+    <div class="md-modal__head"><h2 id="dlg-docs-title" class="md-modal__title">書類ごとの決まり</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <div>
+        <p class="md-subhead">領収書と収入印紙</p>
+        <p>領収書には、発行元の名前・登録番号・取引の日付・内容・税率ごとの対象額と消費税額を載せます（インボイス制度の適格簡易請求書として使える書き方です）。</p>
+        <p style="margin-top:8px">受け取った金額が5万円以上の領収書には収入印紙を貼る必要があります。消費税の金額を分けて書いてある領収書は、税抜の金額で判定します（このツールの領収書は分けて書くので、税抜5万円以上のものに「収入印紙」の枠を出します）。印紙の金額や細かな決まりは変わることがあるので、国税庁のホームページなどで最新の印紙税の決まりを確かめてください。メールなどで電子データとして渡す領収書には印紙はいりません。そのときは手順4で枠を出さない設定にしてください。</p>
+      </div>
+      <div>
+        <p class="md-subhead">発注書と注文請書</p>
+        <p>発注書は、ほかの書類と向きが逆です。手順4で入れた自社が「発注者」として載り、明細の宛先の列（仕入先・発注先）の会社あてに出します。宛先ごとに1通にまとめ、「PO-」で始まる発注番号を付けます。発注書には収入印紙はいりません。</p>
+        <p style="margin-top:8px">手順4の「注文請書を付ける」に印を付けると、発注書1通ごとに、同じ品物・金額の「注文請書」を1枚付けます。注文請書は、発注先に記名・押印して返してもらい、注文を受けたことの証拠にする控えです（宛先は自社、受注者の欄は空けてあります）。</p>
+        <p style="margin-top:8px">注文請書は、内容が工事・製作・修理・保守などの「請負」にあたるときは、印紙税がかかる書類（請負に関する契約書）になることがあります。物を買うだけの注文なら通常はかかりません。印紙を貼るのは注文請書を作って渡す側（発注先）です。このツールは印紙の要否や金額を判定しないので、国税庁のホームページや税務署で確かめてください。電子データでやり取りする注文請書には印紙はいりません。</p>
+      </div>
+    </div>
+  </dialog>
+  <dialog id="dlg-tax" class="md-modal" aria-labelledby="dlg-tax-title">
+    <div class="md-modal__head"><h2 id="dlg-tax-title" class="md-modal__title">消費税の計算</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>請求書の一括作成と同じ計算です。書類1通ごとに税率（10%・8%）ごとの合計を出してから、税率ごとに1回だけ消費税を計算して端数を処理します。軽減税率の品物には「※」を付けます。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-pdf" class="md-modal" aria-labelledby="dlg-pdf-title">
+    <div class="md-modal__head"><h2 id="dlg-pdf-title" class="md-modal__title">PDFにするには</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>手順6の「印刷・PDFで保存」を押すと印刷の画面が開きます。プリンターの欄（送信先）で「PDFに保存」を選ぶと、紙に印刷せずにPDFファイルとして保存できます。用紙はA4縦です。きれいに出ないときは、印刷の画面の「詳細設定」で「ヘッダーとフッター」のチェックを外し、余白を「デフォルト」にしてください。</p>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<div id="print-area" class="ck-print-area"></div>
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/seikyusho.js"></script>
+<script src="../assets/js/apps/chohyo.js"></script>
+<script src="../assets/js/ui/chohyo.js"></script>
+</body>
+</html>

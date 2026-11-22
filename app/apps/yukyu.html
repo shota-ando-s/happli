@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>有給休暇の管理簿｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  .yk-base { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .yk-base .md-input { width: auto; min-width: 12rem; }
+  .yk-maphead { font-size: 17px; font-weight: 700; margin: 8px 0 4px; }
+  .yk-filters { display: grid; gap: 12px 16px; grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr)); align-items: end; }
+  .yk-filterbar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+  .yk-count { font-weight: 700; }
+  .yk-table th, .yk-table td { padding: 10px 12px; }
+  .yk-table .yk-sub { display: block; font-size: 13px; color: var(--md-on-surface-variant); }
+  .yk-table .yk-strong { font-weight: 700; }
+  .yk-table td.yk-remarks { white-space: normal; min-width: 12rem; max-width: 22rem; font-size: 14px; }
+  .yk-table .md-chip { white-space: nowrap; }
+  .yk-print-opts { display: grid; gap: 12px 16px; grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr)); align-items: end; }
+
+  /* ---- 印刷用の管理簿（白地に黒。画面には出さない） ---- */
+  .yk-print-area { display: none; }
+  .yk-report { background: #fff; color: #000; font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif; font-size: 10pt; line-height: 1.45; letter-spacing: 0; }
+  .yk-report * { color: #000; }
+  .yk-r-page[data-break="page"] + .yk-r-page { break-before: page; page-break-before: always; }
+  .yk-r-page[data-break="flow"] + .yk-r-page { margin-top: 10mm; }
+  .yk-r-page[data-break="flow"] { break-inside: avoid; page-break-inside: avoid; }
+  .yk-r-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12pt; border-bottom: 2px solid #000; padding-bottom: 4pt; margin-bottom: 6pt; }
+  .yk-r-head h1 { font-size: 15pt; margin: 0; line-height: 1.3; }
+  .yk-r-meta { font-size: 9pt; margin: 0; }
+  .yk-r-who { display: flex; flex-wrap: wrap; gap: 4pt 16pt; font-size: 10pt; margin: 0 0 6pt; }
+  .yk-r-who b { font-weight: 700; }
+  .yk-r-table { width: 100%; border-collapse: collapse; font-size: 9pt; table-layout: fixed; }
+  .yk-r-table th, .yk-r-table td { border: 0.5pt solid #000; padding: 2pt 3pt; vertical-align: top; word-break: break-all; }
+  .yk-r-table thead th { background: #eee; font-weight: 700; text-align: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .yk-r-table td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .yk-r-table tr { break-inside: avoid; page-break-inside: avoid; }
+  .yk-r-note { font-size: 8.5pt; margin-top: 4pt; }
+  @page { size: A4 portrait; margin: 12mm 12mm 14mm; }
+  @media print {
+    html, body { background: #fff !important; color: #000 !important; }
+    body { display: block; min-height: 0; }
+    body > *:not(#print-area) { display: none !important; }
+    .yk-print-area { display: block !important; }
+    .yk-r-table thead { display: table-header-group; }
+  }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="beach_access" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">有給休暇の管理簿</h1>
+      <p class="md-lead text-secondary">社員名簿と有給休暇の取得記録から、社員ごとの残日数、2年で使えなくなる日数、年5日の取得義務の進み具合を確かめ、年次有給休暇管理簿を印刷します。</p>
+    </div>
+  </div>
+
+  <div class="md-banner alert" data-type="info" role="note" style="margin-bottom:16px">
+    <span class="md-icon md-banner__icon alert-icon" data-icon="lock" aria-hidden="true"></span>
+    <div class="md-banner__body">
+      <p class="md-banner__title alert-heading">社員の情報は、このパソコンのブラウザの中だけで扱います</p>
+      <p class="md-body-s" style="margin-top:4px">名簿や取得記録の中身はどこにも送信せず、このページにも残しません（ページを閉じると消えます）。次回のために覚えておくのは、列の選び方や日数などの設定だけです。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">社員名簿と取得記録を選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid" data-min="18">
+          <div class="md-field">
+            <span class="md-field__label form-label" id="pfile-label">社員名簿 <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="pfile-help" class="md-field__help form-hint">1行に1人。「氏名」と「入社日」が必要です。社員番号・部署・週の所定労働日数／時間・1日の所定労働時間・繰越日数の列はあれば使います。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">社員名簿のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="pfile" type="file" accept=".csv,.txt,.tsv" aria-labelledby="pfile-label" aria-describedby="pfile-help pfile-status">
+            </label>
+            <p id="pfile-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="rfile-label">有休の取得記録 <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="rfile-help" class="md-field__help form-hint">1行に1回の取得。「社員番号」か「氏名」と、「取得日」が必要です。日数（1・0.5・半日）や時間（時間単位）、休暇の種類の列はあれば使います。勤怠ソフトから出した休暇の一覧が使えます。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">取得記録のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="rfile" type="file" accept=".csv,.txt,.tsv" aria-labelledby="rfile-label" aria-describedby="rfile-help rfile-status">
+            </label>
+            <p id="rfile-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="pmap-wrap" class="md-hidden"><h3 class="yk-maphead">社員名簿</h3><div class="md-grid" data-min="14" id="pmap"></div></div>
+        <div id="rmap-wrap" class="md-hidden"><h3 class="yk-maphead">取得記録</h3><div class="md-grid" data-min="14" id="rmap"></div></div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">基準日と数え方を決める</h2>
+          <p class="md-step__desc">結果を出したあとに変えると、すぐに結果も変わります。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-rules"><span class="md-icon" data-icon="help" aria-hidden="true"></span>数え方の決まり</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <label class="md-field__label form-label" for="base">基準日</label>
+          <p id="base-help" class="md-field__help form-hint">この日の時点の残日数を出し、この日から先の期限を探します。この日より後の取得記録は数えません。</p>
+          <div class="yk-base">
+            <input id="base" class="md-input form-control" type="date" aria-describedby="base-help">
+            <button id="base-today" class="md-btn btn" data-variant="text" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>今日にもどす</button>
+          </div>
+        </div>
+        <fieldset class="md-fieldset">
+          <legend>取得記録はどこからありますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="mode" value="carry" checked>
+              <span class="md-choice__text"><span class="md-choice__label">名簿に繰越日数がある（おすすめ）</span><span class="md-choice__desc">名簿の「繰越日数」= 今の付与日に前年から繰り越した日数。取得記録は今の付与日から後の分を使います（前の1年分があれば年5日の判定にも使います）</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="mode" value="full">
+              <span class="md-choice__text"><span class="md-choice__label">取得記録が入社のころからそろっている</span><span class="md-choice__desc">入社からの付与をすべて数え、取得記録を古い付与から順に減らします。記録の始まりより前の分はわからないので、そう知らせます</span></span></label>
+          </div>
+        </fieldset>
+        <details class="md-details card" id="opt-details">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定 <span class="md-details__hint">（記録の始まり・1日の時間・知らせる日数）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="rstart">取得記録の始まりの日 <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="rstart-help" class="md-field__help form-hint">この日より前の取得は記録にない、として数えます。空なら、記録の中でいちばん古い取得日の月の1日にします。</p>
+              <input id="rstart" class="md-input form-control" type="date" aria-describedby="rstart-help" style="width:auto;min-width:12rem">
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="daily">1日の所定労働時間（名簿にないとき）</label>
+              <p id="daily-help" class="md-field__help form-hint">時間単位の取得を日数に直すのに使います。端数は1時間単位に切り上げます（7.5 → 8時間）。</p>
+              <div class="md-input-suffix"><input id="daily" class="md-input md-input--short form-control" type="number" min="1" max="24" step="0.25" inputmode="decimal" value="8" aria-describedby="daily-help"><span>時間</span></div>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="soon">年5日の「期限が近い」とする日数</label>
+              <p id="soon-help" class="md-field__help form-hint">期限（付与日から1年後の前日）まで、この日数以内で5日に届いていない人を「期限が近い」にします。</p>
+              <div class="md-input-suffix"><input id="soon" class="md-input md-input--short form-control" type="number" min="0" max="365" step="1" inputmode="numeric" value="90" aria-describedby="soon-help"><span>日以内</span></div>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="expmonths">時効を知らせる期間</label>
+              <p id="expmonths-help" class="md-field__help form-hint">基準日からこの月数のうちに2年の時効が来る残りを知らせます。</p>
+              <div class="md-input-suffix"><input id="expmonths" class="md-input md-input--short form-control" type="number" min="1" max="24" step="1" inputmode="numeric" value="3" aria-describedby="expmonths-help"><span>か月先まで</span></div>
+            </div>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">付与と取得を突き合わせて、残日数・時効・年5日の取得義務を確かめます。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>残日数を数える</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">年5日の取得義務は、急ぐものから順に並べています。部署や「確かめることがある人だけ」で絞り込めます。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="yk-filters" role="group" aria-label="絞り込み">
+          <div class="md-field"><label class="md-field__label form-label" for="f-dept">部署</label><select id="f-dept" class="md-select form-select" data-size="s"></select></div>
+          <div class="md-field"><label class="md-field__label form-label" for="f-only">表示する人</label>
+            <select id="f-only" class="md-select form-select" data-size="s"><option value="">全員</option><option value="attention">確かめることがある人だけ</option></select></div>
+        </div>
+        <div class="yk-filterbar">
+          <p id="filter-count" class="yk-count" aria-live="polite"></p>
+          <button id="f-clear" class="md-btn md-hidden btn" data-variant="text" data-size="s" type="button"><span class="md-icon" data-icon="refresh" aria-hidden="true"></span>絞り込みをやめる</button>
+        </div>
+        <div id="invalid"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="event" data-size="20" aria-hidden="true"></span>年5日の取得義務</h3>
+          <div id="obligations"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="group" data-size="20" aria-hidden="true"></span>社員ごとの残日数</h3>
+          <div id="balances"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">保存・印刷する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。手順4の絞り込みのとおりに保存・印刷します。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-balance" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>有休の残日数一覧.csv を保存</button>
+          <button id="save-ob" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>年5日の取得義務チェック.csv を保存</button>
+          <button id="save-kigen" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="event" aria-hidden="true"></span>期限の管理用.csv を保存</button>
+        </div>
+        <p class="md-body-s"><strong>期限の管理用.csv</strong> には、年5日がまだ足りない人の取得期限と、時効が近い残りが入ります。このツール集の「<a href="kigen.html">期限の管理</a>」でそのまま読み込め、カレンダーに取り込むファイルも作れます。</p>
+        <div id="save-message" aria-live="polite"></div>
+
+        <h3 class="md-subhead" style="margin-top:8px"><span class="md-icon" data-icon="print" data-size="20" aria-hidden="true"></span>年次有給休暇管理簿を印刷する</h3>
+        <p class="md-body-s">労働基準法施行規則24条の7の管理簿（基準日・日数・時季）です。会社は5年間（当分の間は3年間）保存する決まりです。</p>
+        <div class="yk-print-opts">
+          <div class="md-field">
+            <label class="md-field__label form-label" for="print-periods">載せる期間</label>
+            <select id="print-periods" class="md-select form-select">
+              <option value="1">今の付与の1年</option>
+              <option value="2" selected>今と前の付与の2年</option>
+              <option value="0">数えたすべての期間</option>
+            </select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="print-layout">紙の使い方</label>
+            <select id="print-layout" class="md-select form-select">
+              <option value="page">1人1枚</option>
+              <option value="flow">続けて印刷（紙を節約）</option>
+            </select>
+          </div>
+          <div class="md-field">
+            <label class="md-field__label form-label" for="print-title">会社名 <span class="md-badge badge" data-kind="optional">任意</span></label>
+            <input id="print-title" class="md-input form-control" type="text" autocomplete="organization" placeholder="例）見本株式会社">
+          </div>
+        </div>
+        <div class="md-actions">
+          <button id="print" class="md-btn btn" type="button"><span class="md-icon" data-icon="print" aria-hidden="true"></span>管理簿を印刷・PDFで保存</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で <code>samples/yukyu/社員名簿.csv</code> と <code>samples/yukyu/有休の取得記録.csv</code> を選び、手順3の基準日を 2026年11月16日 にしてください（見本の名前はすべて架空です）。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-rules" class="md-modal" aria-labelledby="dlg-rules-title">
+    <div class="md-modal__head"><h2 id="dlg-rules-title" class="md-modal__title">数え方の決まり</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><strong>付与</strong>は、入社日の6か月後に初回、そのあと1年ごとに、労働基準法39条の日数で数えます（出勤率8割以上として）。週4日以下かつ週30時間未満の人は比例付与の日数です。日数の表は「社員名簿の節目一覧」と同じものを使っています。</li>
+        <li><strong>使う順</strong>は古い付与からです（前年からの繰越 → 今年の分）。付与から<strong>2年</strong>たつと、残りは時効で使えなくなります。</li>
+        <li><strong>年5日の取得義務</strong>は、10日以上を付与した人に、付与日から1年以内に5日を取らせる決まりです。半日は0.5日として数えます。時間単位で取った分は5日に含めません。</li>
+        <li><strong>時間単位</strong>の取得は、1日の所定労働時間を1時間単位に切り上げた時間（7.5時間なら8時間）を1日として日数に直します。1年に5日分までが上限です。</li>
+        <li>会社全体で付与日をそろえている（斉一的付与）・前倒しで付与している場合には、この数え方は合いません。</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<div id="print-area" class="yk-print-area"></div>
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/kigen.js"></script>
+<script src="../assets/js/apps/meibo.js"></script>
+<script src="../assets/js/apps/yukyu.js"></script>
+<script src="../assets/js/ui/yukyu.js"></script>
+</body>
+</html>

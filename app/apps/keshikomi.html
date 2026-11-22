@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>入金消込｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="payments" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">入金消込</h1>
+      <p class="md-lead text-secondary">銀行の入金明細と請求一覧を照らし合わせて、どの請求が入金済みかを自動で仕分けます。結果はCSVで保存できます。</p>
+    </div>
+  </div>
+
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-files" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">2つのファイルを選ぶ</h2>
+          <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-grid" data-min="14">
+          <div class="md-field">
+            <span class="md-field__label form-label" id="inv-file-label">請求一覧 <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="inv-file-help" class="md-field__help form-hint">まだ入金されていない請求だけの一覧。請求番号・取引先名・請求金額の列が必要です。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">請求一覧のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="inv-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="inv-file-label" aria-describedby="inv-file-help inv-file-status">
+            </label>
+            <p id="inv-file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+          <div class="md-field">
+            <span class="md-field__label form-label" id="pay-file-label">入金明細 <span class="md-badge badge" data-kind="required">必須</span></span>
+            <p id="pay-file-help" class="md-field__help form-hint">ネットバンキングからダウンロードした入出金明細。出金の行が混ざっていてもかまいません。</p>
+            <label class="md-dropzone">
+              <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+              <span class="md-dropzone__main">入金明細のCSV</span>
+              <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+              <input id="pay-file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="pay-file-label" aria-describedby="pay-file-help pay-file-status">
+            </label>
+            <p id="pay-file-status" class="md-file-status" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="sec-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <p id="map-help" class="md-field__help md-hidden form-hint">入金明細のうち、入金額が空・0円・マイナスの行（出金など）は自動で除きます。</p>
+        <div id="map-inv-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>請求一覧</h3>
+          <div class="md-grid" data-min="14" id="map-inv"></div>
+        </div>
+        <div id="map-pay-wrap" class="md-hidden md-stack" data-gap="8">
+          <h3 class="md-subhead"><span class="md-icon" data-icon="file" data-size="20" aria-hidden="true"></span>入金明細</h3>
+          <div class="md-grid" data-min="14" id="map-pay"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">照らし合わせる</h2>
+          <p class="md-step__desc">ふだんはそのままボタンを押すだけで大丈夫です。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（手数料の許容額・名義の読み替え）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="fee">振込手数料として認める差額</label>
+              <p id="fee-help" class="md-field__help form-hint">入金が請求額よりこの金額以内で少ないときは、振込手数料が引かれたものとして「手数料差引」にします。ふつうは 880円 のままで大丈夫です。</p>
+              <div class="md-input-suffix">
+                <input id="fee" class="md-input md-input--short form-control" type="number" min="0" step="1" inputmode="numeric" aria-describedby="fee-help" value="880">
+                <span>円</span>
+              </div>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="aliases">名義の読み替え表 <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="aliases-help" class="md-field__help form-hint">振込名義が取引先名と違う場合（親会社や担当者の個人名で振り込まれる場合など）に使います。1行に「振込名義,取引先名」の形で書いてください。取引先名は請求一覧と同じ書き方にします。この内容はこのパソコンに保存され、次回も使えます。</p>
+              <textarea id="aliases" class="md-textarea form-control" rows="5" aria-describedby="aliases-help" placeholder="例）ｶ)ﾔﾏﾀﾞﾎ-ﾙﾃﾞｲﾝｸﾞｽ,株式会社山田商事"></textarea>
+            </div>
+          </div>
+        </details>
+        <div class="md-cta">
+          <p class="md-cta__text">請求一覧と入金明細を照らし合わせて、入金ごとに仕分けます。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>照らし合わせる</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="sec-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc">入金ごとの仕分けと、まだ入金されていない請求の一覧です。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">入金ごとの結果</h3>
+          <div id="results"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">まだ入金されていない請求</h3>
+          <div id="unpaid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="sec-fix" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">結びつかなかった入金の取引先を選ぶ</h2>
+          <p class="md-step__desc">取引先を選んで「この取引先で登録」を押すと、名義の読み替え表に追加して、もう一度照らし合わせます。次回からは自動で結びつきます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="fix"></div>
+      </div>
+    </section>
+
+    <!-- 6 -->
+    <section id="sec-save" class="md-step md-hidden card" aria-labelledby="s6">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">6</span>
+        <div class="md-step__titles">
+          <h2 id="s6" class="md-step__title card-title">結果を保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-result" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>消込結果.csv を保存</button>
+          <button id="save-unpaid" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>未回収一覧.csv を保存</button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で、<code>samples/keshikomi/請求一覧.csv</code> と <code>samples/keshikomi/入金明細.csv</code> を選んでください。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：仕分けの種類</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="success">一致</span> 取引先と金額がぴったり合った入金</li>
+        <li><span class="md-chip badge" data-tone="success">一括入金</span> 複数の請求をまとめて払った入金</li>
+        <li><span class="md-chip badge" data-tone="info">手数料差引</span> 振込手数料の分だけ少なく払われた入金</li>
+        <li><span class="md-chip badge" data-tone="warning">要確認</span> 金額は合うが、取引先が確かでない入金</li>
+        <li><span class="md-chip badge" data-tone="error">未消込</span> どの請求とも結びつかなかった入金</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/keshikomi.js"></script>
+<script src="../assets/js/ui/keshikomi.js"></script>
+</body>
+</html>

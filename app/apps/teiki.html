@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>定期請求の明細づくり｜Happli（はぷり）</title>
+<link rel="stylesheet" href="../assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="../assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+<style>
+  /* この画面だけで使う部品（色は md.css のトークンから） */
+  .tk-month { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .tk-month .md-select { width: auto; min-width: 7.5rem; }
+  .tk-checks { display: flex; flex-direction: column; gap: 12px; }
+  .tk-check { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); cursor: pointer; }
+  .tk-check:has(input:checked) { border-color: var(--md-primary); background: var(--md-surface-container-low); }
+  .tk-check__text { display: flex; flex-direction: column; gap: 2px; }
+  .tk-check__label { font-weight: 700; }
+  .tk-check__desc { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); }
+  .tk-sub { margin: 8px 0 0 34px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .tk-sub .md-select { width: auto; min-width: 9rem; }
+  .tk-sub[aria-disabled="true"] { opacity: .55; }
+  /* 取引先ごとの明細 */
+  .tk-custs { display: flex; flex-direction: column; gap: 8px; }
+  .tk-cust > summary { flex-wrap: wrap; row-gap: 4px; }
+  .tk-cust__name { font-weight: 700; overflow-wrap: anywhere; }
+  .tk-cust__meta { font-weight: 400; font-size: 14px; color: var(--md-on-surface-variant); }
+  .tk-cust__amt { margin-left: auto; font-family: var(--md-font-num); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tk-cust .md-details__body { padding: 12px; }
+  .tk-cust .md-details__body > * + * { margin-top: 12px; }
+  .tk-tax { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 15px; padding: 0 4px; }
+  .tk-tax b { font-family: var(--md-font-num); font-variant-numeric: tabular-nums; }
+  .tk-tax .tk-tax__total { font-weight: 700; }
+  /* 今回は請求しない契約 */
+  .tk-skips { list-style: none; margin: 0; padding: 0; border: 1px solid var(--md-outline-variant); border-radius: var(--md-shape-m); background: var(--md-surface-container-lowest); }
+  .tk-skip { display: flex; align-items: flex-start; gap: 8px 16px; padding: 12px 16px; }
+  .tk-skip + .tk-skip { border-top: 1px solid var(--md-outline-variant); }
+  .tk-skip .md-chip { flex: none; min-width: 9.5rem; justify-content: center; }
+  .tk-skip__body { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .tk-skip__title { font-weight: 700; overflow-wrap: anywhere; }
+  .tk-skip__sep { margin: 0 4px; color: var(--md-on-surface-variant); font-weight: 400; }
+  .tk-skip__detail { font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant); overflow-wrap: anywhere; }
+  /* 12か月の売上見込み */
+  .tk-fc-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .tk-fc-tools .md-select { width: auto; min-width: 11rem; }
+  .tk-fc th, .tk-fc td { padding: 8px 14px; }
+  .tk-fc tbody th, .tk-fc thead th:first-child, .tk-fc tfoot th { position: sticky; left: 0; z-index: 1; text-align: left; }
+  .tk-fc tbody th { background: var(--md-surface-container-lowest); font-weight: 500; }
+  .tk-fc thead th:first-child { background: var(--md-surface-container); z-index: 2; }
+  .tk-fc thead th { white-space: normal; min-width: 6.5rem; vertical-align: bottom; }
+  .tk-fc thead th:first-child { min-width: 0; }
+  .tk-fc tfoot th, .tk-fc tfoot td { font-weight: 700; background: var(--md-secondary-container); color: var(--md-on-secondary-container); border-top: 2px solid var(--md-outline); border-bottom: 0; }
+  .tk-fc .tk-total { font-weight: 700; border-left: 1px solid var(--md-outline-variant); }
+  .tk-fc td.tk-zero { color: var(--md-on-surface-variant); }
+  .tk-fc th.tk-barhead { width: 70%; }
+  .tk-bar { display: flex; align-items: center; gap: 12px; min-width: 12rem; }
+  .tk-bar__track { flex: 1; min-width: 4rem; height: 14px; border-radius: var(--md-shape-full); background: var(--md-surface-container-high); overflow: hidden; }
+  .tk-bar__fill { display: block; height: 100%; border-radius: var(--md-shape-full); background: var(--md-primary); }
+  .tk-bar__num { flex: none; min-width: 6.5rem; text-align: right; }
+  .tk-next { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: var(--md-shape-m); background: var(--md-surface-container-low); }
+  .tk-next p { line-height: 1.7; }
+  @media (max-width: 40rem) {
+    .tk-sub { margin-left: 0; }
+    .tk-bar { min-width: 9rem; gap: 8px; }
+    .tk-bar__num { min-width: 5.5rem; }
+    .tk-fc th, .tk-fc td { padding: 8px 10px; }
+    .tk-cust__amt { margin-left: 0; }
+    .tk-skip { flex-direction: column; }
+    .tk-skip .md-chip { min-width: 0; }
+  }
+  @media print { .tk-bar__track { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="../index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl" data-width="narrow">
+  <div class="md-page-header">
+    <div class="md-page-header__icon avatar avatar-lg"><span class="md-icon" data-icon="autorenew" data-size="32" aria-hidden="true"></span></div>
+    <div class="md-page-header__body">
+      <h1 class="md-display page-title">定期請求の明細づくり</h1>
+      <p class="md-lead text-secondary">保守料・月額利用料・年間ライセンスなどの契約一覧から、今月請求する明細を作ります。できたファイルは「請求書の一括作成」でそのまま請求書にできます。12か月先までの売上見込みもわかります。</p>
+    </div>
+  </div>
+
+  <div class="md-steps">
+    <!-- 1 -->
+    <section id="step-file" class="md-step card" aria-labelledby="s1">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">1</span>
+        <div class="md-step__titles">
+          <h2 id="s1" class="md-step__title card-title">契約一覧のファイルを選ぶ</h2>
+          <p class="md-step__desc">1行に1つの契約（品目）を書いたCSVです。ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-cols"><span class="md-icon" data-icon="help" aria-hidden="true"></span>ファイルの形</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="file-label">契約一覧 <span class="md-badge badge" data-kind="required">必須</span></span>
+          <p id="file-help" class="md-field__help form-hint">取引先・品名・単価・開始月の列が必要です。Excel の表は「CSV UTF-8」か「CSV」で保存してから選んでください。</p>
+          <label class="md-dropzone">
+            <span class="md-icon md-dropzone__icon" data-icon="upload" data-size="40" aria-hidden="true"></span>
+            <span class="md-dropzone__main">契約一覧のCSV</span>
+            <span class="md-dropzone__btn btn btn-primary"><span class="md-dropzone__btn-text">ファイルを選ぶ</span></span>
+            <input id="file" type="file" accept=".csv,.txt,.tsv" aria-labelledby="file-label" aria-describedby="file-help file-status">
+          </label>
+          <p id="file-status" class="md-file-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="step-map" class="md-step card" data-state="waiting" aria-labelledby="s2">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">2</span>
+        <div class="md-step__titles">
+          <h2 id="s2" class="md-step__title card-title">列を確かめる</h2>
+          <p class="md-step__desc">ファイルのどの列が何にあたるかを、見出しから自動で選んであります。違っているときだけ直してください。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <p id="map-empty" class="md-empty"><span class="md-icon" data-icon="info" aria-hidden="true"></span>手順1でファイルを選ぶと、ここに列の選択欄が出ます。</p>
+        <div id="map-wrap" class="md-hidden">
+          <div class="md-grid" data-min="14" id="map"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="step-run" class="md-step card" data-state="waiting" aria-labelledby="s3">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">3</span>
+        <div class="md-step__titles">
+          <h2 id="s3" class="md-step__title card-title">請求の設定をして明細を作る</h2>
+          <p class="md-step__desc">ふだんは対象月を確かめて、ボタンを押すだけで大丈夫です。設定はこのパソコンに保存され、次回も使えます。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-rules"><span class="md-icon" data-icon="help" aria-hidden="true"></span>請求する月の決まり</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div class="md-field">
+          <span class="md-field__label form-label" id="target-label">請求の対象月</span>
+          <p id="target-help" class="md-field__help form-hint">何月の請求書を作るかを選びます。はじめは来月になっています。</p>
+          <div class="tk-month" role="group" aria-labelledby="target-label" aria-describedby="target-help">
+            <select id="target-y" class="md-select form-select" aria-label="年"></select>
+            <select id="target-m" class="md-select form-select" aria-label="月"></select>
+          </div>
+        </div>
+
+        <fieldset class="md-fieldset">
+          <legend>請求のタイミング</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="timing" value="pre" checked>
+              <span class="md-choice__text"><span class="md-choice__label">前払い</span><span class="md-choice__desc">対象月の分を請求します（例: 12月の請求書に12月分）</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="timing" value="post">
+              <span class="md-choice__text"><span class="md-choice__label">後払い</span><span class="md-choice__desc">前の月に使った分を請求します（例: 12月の請求書に11月分）</span></span></label>
+          </div>
+        </fieldset>
+
+        <div class="tk-checks">
+          <label class="tk-check"><input id="suffix" class="md-checkbox form-check-input" type="checkbox" checked>
+            <span class="tk-check__text"><span class="tk-check__label">品名に何月分かを付ける</span><span class="tk-check__desc" id="suffix-desc">例:「月額保守料（2026年12月分）」。3か月ごと・毎年の契約は「（2026年12月〜2027年2月分）」のように期間を付けます。初期費用には付けません。</span></span></label>
+          <div>
+            <label class="tk-check"><input id="prorate" class="md-checkbox form-check-input" type="checkbox" aria-describedby="prorate-desc">
+              <span class="tk-check__text"><span class="tk-check__label">月の途中で始まる・終わる契約を日割りにする</span><span class="tk-check__desc" id="prorate-desc">開始月・終了月に日付まで書いてある毎月の契約だけが対象です。金額は「単価×使った日数÷その月の日数」で計算します（例: 12月10日開始なら 単価×22日÷31日）。</span></span></label>
+            <div class="tk-sub" id="prorate-sub" aria-disabled="true">
+              <label for="prorate-rounding">日割りの1円未満は</label>
+              <select id="prorate-rounding" class="md-select form-select" disabled>
+                <option value="floor">切り捨て</option>
+                <option value="round">四捨五入</option>
+                <option value="ceil">切り上げ</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <fieldset class="md-fieldset">
+          <legend>請求番号</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="numbering" value="none" checked>
+              <span class="md-choice__text"><span class="md-choice__label">付けない（おすすめ）</span><span class="md-choice__desc">「請求書の一括作成」が請求書ごとに番号を付けます</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="numbering" value="auto">
+              <span class="md-choice__text"><span class="md-choice__label">ここで付ける</span><span class="md-choice__desc" id="numbering-desc">取引先ごとに「INV-202612-001」のような番号を付けます</span></span></label>
+          </div>
+        </fieldset>
+
+        <details class="md-details card" id="settings">
+          <summary><span class="md-icon" data-icon="tune" aria-hidden="true"></span>詳しい設定<span class="md-details__hint">（消費税の端数・請求番号の頭の文字）</span></summary>
+          <div class="md-details__body card-body">
+            <div class="md-field">
+              <label class="md-field__label form-label" for="rounding">消費税の1円未満の扱い</label>
+              <p id="rounding-help" class="md-field__help form-hint">税込の見込み額の計算に使います。「請求書の一括作成」の「端数処理」と同じにしてください。ふつうは「切り捨て」です。</p>
+              <select id="rounding" class="md-select form-select" aria-describedby="rounding-help">
+                <option value="floor">切り捨て</option>
+                <option value="round">四捨五入</option>
+                <option value="ceil">切り上げ</option>
+              </select>
+            </div>
+            <div class="md-field">
+              <label class="md-field__label form-label" for="prefix">請求番号の頭の文字 <span class="md-badge badge" data-kind="optional">任意</span></label>
+              <p id="prefix-help" class="md-field__help form-hint">「ここで付ける」を選んだときに使います。空なら「INV-対象年月-」になり、そのあとに 001 から番号を付けます。</p>
+              <input id="prefix" class="md-input form-control" type="text" aria-describedby="prefix-help" placeholder="例）INV-202612-">
+            </div>
+          </div>
+        </details>
+
+        <div class="md-cta">
+          <p class="md-cta__text">契約一覧から、対象月に請求する明細と、12か月の売上見込みを作ります。</p>
+          <button id="run" class="md-btn btn" data-size="l" type="button"><span class="md-icon" data-icon="play" aria-hidden="true"></span>明細を作る</button>
+        </div>
+        <div id="message" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 4 -->
+    <section id="step-result" class="md-step md-hidden card" data-tone="result" aria-labelledby="s4">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">4</span>
+        <div class="md-step__titles">
+          <h2 id="s4" class="md-step__title card-title">結果を確かめる</h2>
+          <p class="md-step__desc" id="result-desc">取引先ごとの明細と、今回は請求しない契約の一覧です。</p>
+        </div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-legend"><span class="md-icon" data-icon="info" aria-hidden="true"></span>凡例</button></div>
+      </div>
+      <div class="md-step__body card-body">
+        <div id="summary"></div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">取引先ごとの明細</h3>
+          <p class="md-field__help form-hint">取引先の名前を押すと、明細と税率ごとの消費税が開きます。金額は「請求書の一括作成」と同じ計算です。</p>
+          <div id="preview" class="tk-custs"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead">今回は請求しない契約</h3>
+          <div id="skipped"></div>
+        </div>
+        <div class="md-stack" data-gap="8">
+          <h3 class="md-subhead" id="fc-title">12か月の売上見込み（税抜）</h3>
+          <p class="md-field__help form-hint" id="fc-help">同じ決まりで、対象月から12か月先までの請求額を計算しました。</p>
+          <div class="tk-fc-tools">
+            <label for="fc-view">表の形</label>
+            <select id="fc-view" class="md-select form-select">
+              <option value="total">月ごとの合計</option>
+              <option value="customer">取引先ごと</option>
+            </select>
+          </div>
+          <div id="forecast"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="step-save" class="md-step md-hidden card" aria-labelledby="s5">
+      <div class="md-step__head card-header">
+        <span class="md-step__num" aria-hidden="true">5</span>
+        <div class="md-step__titles">
+          <h2 id="s5" class="md-step__title card-title">ファイルを保存する</h2>
+          <p class="md-step__desc">保存したファイルは、ブラウザの「ダウンロード」フォルダに入ります。</p>
+        </div>
+      </div>
+      <div class="md-step__body card-body">
+        <fieldset class="md-fieldset">
+          <legend>ファイルをどこで開きますか？</legend>
+          <div class="md-choices" data-layout="grid">
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="SJIS" checked>
+              <span class="md-choice__text"><span class="md-choice__label">Excel で開く（おすすめ）</span><span class="md-choice__desc">文字コード Shift_JIS で保存します。「請求書の一括作成」でもそのまま読めます</span></span></label>
+            <label class="md-choice"><input class="md-radio form-check-input" type="radio" name="enc" value="UTF8">
+              <span class="md-choice__text"><span class="md-choice__label">ほかのソフトで使う</span><span class="md-choice__desc">文字コード UTF-8（BOM付き）で保存します。旧字体や記号も崩れません</span></span></label>
+          </div>
+        </fieldset>
+        <div class="md-actions">
+          <button id="save-lines" class="md-btn btn" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span><span id="save-lines-text">請求明細.csv を保存</span></button>
+          <button id="save-forecast" class="md-btn btn" data-variant="tonal" type="button"><span class="md-icon" data-icon="download" aria-hidden="true"></span>売上見込み.csv を保存</button>
+        </div>
+        <div id="save-message" aria-live="polite"></div>
+        <div class="tk-next">
+          <p class="md-subhead"><span class="md-icon" data-icon="arrow_forward" data-size="20" aria-hidden="true"></span>このあとの流れ</p>
+          <p><a href="seikyusho.html">請求書の一括作成</a> を開き、手順1で保存した「請求明細」のファイルを選んでください。列は自動で選ばれ、取引先ごとに1通の請求書になります。消費税の端数処理は、手順3の詳しい設定と同じにしてください。</p>
+        </div>
+      </div>
+    </section>
+  </div>
+  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
+    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <p>このツール集のフォルダにある見本ファイルで試せます。手順1で <code>samples/teiki/契約一覧.csv</code> を選んでください。請求の対象月を「2027年1月」にすると、値上げした単価に変わるのがわかります。</p>
+    </div>
+  </dialog>
+  <dialog id="dlg-cols" class="md-modal" aria-labelledby="dlg-cols-title">
+    <div class="md-modal__head"><h2 id="dlg-cols-title" class="md-modal__title">契約一覧に入れる列</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><b>必ず入れる列</b>: 取引先・品名・単価（税抜）・開始月</li>
+        <li><b>なくてもよい列</b>: 数量（空なら1）・単位・税率（空なら10%）・区分（月額／初期費用／年額）・周期（毎月／2か月ごと／3か月ごと／6か月ごと／毎年）・終了月（空なら続く）・請求月の基準・郵便番号・住所・担当者・備考</li>
+        <li>月は「2026/4」「2026年4月」「2026-04-01」のどれでも読めます。日付まで書くと、日割りのときに使います。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-rules" class="md-modal" aria-labelledby="dlg-rules-title">
+    <div class="md-modal__head"><h2 id="dlg-rules-title" class="md-modal__title">請求する月の決まり</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><b>周期</b>: 「請求月の基準」の月（空なら開始月）から数えて、周期ごとの月に請求します。例: 3か月ごと・開始月 2026年3月 → 3月・6月・9月・12月</li>
+        <li><b>初期費用</b>: 開始月に1回だけ請求します。<b>年額</b>は毎年同じ月に請求します。</li>
+        <li><b>値上げ・値下げ</b>: 同じ取引先・品名の行を、新しい単価と新しい開始月でもう1行足してください。対象月までに始まった行のうち、いちばん新しい行の単価を使います。周期の数え始めは最初の行の開始月のままです。</li>
+        <li><b>終了月</b>: その月の分まで請求し、次の月からは載せません。</li>
+      </ul>
+    </div>
+  </dialog>
+  <dialog id="dlg-legend" class="md-modal" aria-labelledby="dlg-legend-title">
+    <div class="md-modal__head"><h2 id="dlg-legend-title" class="md-modal__title">凡例：請求しない契約の理由</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
+    <div class="md-modal__body">
+      <ul>
+        <li><span class="md-chip badge" data-tone="info">未開始</span> 開始月がまだ来ていない</li>
+        <li><span class="md-chip badge" data-tone="neutral">終了済み</span> 終了月を過ぎた（初期費用は請求済み）</li>
+        <li><span class="md-chip badge" data-tone="neutral">周期の月ではない</span> 3か月ごと・毎年などで、今回は請求する月でない</li>
+      </ul>
+    </div>
+  </dialog>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl"><p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p></div></footer>
+</div>
+</div>
+
+<script src="../assets/vendor/tabler/tabler.min.js"></script>
+<script src="../assets/vendor/encoding.min.js"></script>
+<script src="../assets/js/core/csv.js"></script>
+<script src="../assets/js/core/kana.js"></script>
+<script src="../assets/js/core/io.js"></script>
+<script src="../assets/js/core/tb.js"></script>
+<script src="../assets/js/ui/common.js"></script>
+<script src="../assets/js/core/registry.js"></script>
+<script src="../assets/js/ui/nav.js"></script>
+<script src="../assets/js/version.js"></script>
+<script src="../assets/js/ui/update.js"></script>
+<script src="../assets/js/apps/seikyusho.js"></script>
+<script src="../assets/js/apps/teiki.js"></script>
+<script src="../assets/js/ui/teiki.js"></script>
+</body>
+</html>

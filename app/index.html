@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Happli（はぷり）</title>
+<link rel="stylesheet" href="assets/vendor/tabler/tabler.min.css">
+<link rel="stylesheet" href="assets/css/md.css">
+<script>try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-bs-theme','dark')}catch(e){}</script>
+</head>
+<body>
+<a class="md-skip" href="#main">本文へ移動</a>
+<div class="page">
+<aside class="navbar navbar-vertical navbar-expand-lg d-print-none" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="メニューを開く"><span class="navbar-toggler-icon"></span></button>
+    <div class="navbar-brand navbar-brand-autodark">
+      <a class="md-brand" href="index.html">Happli</a>
+    </div>
+    <div class="collapse navbar-collapse" id="sidebar-menu"><div id="md-nav" class="w-100"></div></div>
+  </div>
+</aside>
+<div class="page-wrapper">
+<main id="main" class="md-main page-body container-xl">
+  <!-- ホーム（すべての機能） -->
+  <section id="view-home" aria-labelledby="home-heading">
+    <div class="md-page-header"><div class="md-page-header__body md-home-head">
+      <div class="md-home-head__row">
+        <h1 id="home-heading" class="md-display page-title">どの作業をしますか？</h1>
+        <p class="md-home-note"><span class="md-icon" data-icon="lock" aria-hidden="true"></span>データは外部に送信しません</p>
+      </div>
+      <p class="md-lead text-secondary">左のメニューかカードから作業を選ぶと、その画面が開きます。よく使う機能は、メニューの ☆ を押すとお気に入りとして上に並びます。</p>
+    </div></div>
+    <div id="home-news" class="md-message"></div>
+    <div class="md-field" style="max-width:28rem;margin-bottom:24px">
+      <label class="md-field__label form-label" for="home-search">機能を探す</label>
+      <input id="home-search" class="md-input form-control" type="search" placeholder="例）請求書、CSV、在庫" autocomplete="off" aria-describedby="home-search-status">
+      <p id="home-search-status" class="md-field__help form-hint" aria-live="polite"></p>
+    </div>
+    <div id="home-list" class="md-stack" data-gap="24"></div>
+  </section>
+</main>
+
+<footer class="md-footer footer footer-transparent d-print-none"><div class="md-footer__inner container-xl">
+  <p>Happli（はぷり） — ファイルの処理はすべてお使いのブラウザ内で行われます。</p>
+</div></footer>
+</div>
+</div>
+
+<script src="assets/vendor/tabler/tabler.min.js"></script>
+<script src="assets/js/core/registry.js"></script>
+<script src="assets/js/core/tb.js"></script>
+<script src="assets/js/ui/common.js"></script>
+<script src="assets/js/ui/nav.js"></script>
+<script src="assets/js/version.js"></script>
+<script src="assets/js/ui/update.js"></script>
+<script src="assets/js/ui/home.js"></script>
+</body>
+</html>
