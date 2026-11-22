@@ -68,7 +68,7 @@
           <h2 id="s1" class="md-step__title card-title">ファイルを選ぶ</h2>
           <p class="md-step__desc">取引先マスタだけでも調べられます。ファイルをドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
         </div>
-        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-number"><span class="md-icon" data-icon="help" aria-hidden="true"></span>登録番号とは</button></div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-number"><span class="md-icon" data-icon="help" aria-hidden="true"></span>登録番号とは</button></div>
       </div>
       <div class="md-step__body card-body">
         <div class="iv-files">
@@ -301,16 +301,6 @@
       </div>
     </section>
   </div>
-  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
-    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
-    <div class="md-modal__body">
-      <ol>
-        <li>手順1で <code>samples/invoice/</code> の3つのファイル（取引先マスタ・公表データ_見本・仕入と経費の明細）を選びます。</li>
-        <li>手順4の「調べる」を押します。写し間違い・けたの多い番号・失効した番号・番号のない取引先が見つかります。</li>
-        <li>「公表データ_見本」は架空のデータです。実際に使うときは、国税庁の公表サイトの「公表情報ダウンロード」から取ったCSVを選んでください。</li>
-      </ol>
-    </div>
-  </dialog>
   <dialog id="dlg-number" class="md-modal" aria-labelledby="dlg-number-title">
     <div class="md-modal__head"><h2 id="dlg-number-title" class="md-modal__title">登録番号とは</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
     <div class="md-modal__body">

@@ -23,10 +23,6 @@
   ];
   const GUESS_ORDER = ['id', 'zip', 'address', 'person', 'date', 'unit', 'qty', 'rate', 'price', 'item', 'note', 'customer'];
   const ISSUER = [['name', 'iss-name'], ['regNo', 'iss-reg'], ['zip', 'iss-zip'], ['tel', 'iss-tel'], ['address', 'iss-addr'], ['bank', 'iss-bank']];
-  const SAMPLE = {
-    name: '見本株式会社（サンプル）', regNo: 'T0000000000000', zip: '000-0000', tel: '00-0000-0000',
-    address: '東京都見本区見本町1-1-1 見本ビル3階', bank: '見本銀行 本店営業部 普通 0000000\n口座名義 ミホン（カ',
-  };
 
   const saved = M.io.loadSetting(SETTING_KEY, {}) || {};
   const state = { data: null, result: null, opts: null, current: 0 };
@@ -79,13 +75,6 @@
     return c;
   }
   $('iss-reg').addEventListener('blur', function () { const c = checkReg(); if (c.ok && c.value) $('iss-reg').value = c.value; });
-
-  $('fill-sample').addEventListener('click', function () {
-    ISSUER.forEach(([k, id]) => { $(id).value = SAMPLE[k]; $(id).removeAttribute('aria-invalid'); });
-    $('iss-reg-err').textContent = '';
-    persist(); hideResult(); updateSteps();
-    $('fill-sample-msg').textContent = '手順3に見本の発行元を入れました。本番で使う前に、自社の情報に書き換えてください。';
-  });
 
   function updateSteps() {
     const has = !!state.data;

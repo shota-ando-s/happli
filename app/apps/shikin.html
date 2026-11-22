@@ -135,7 +135,7 @@
           <h2 id="s1" class="md-step__title card-title">入金・支払の予定のファイルを選ぶ</h2>
           <p class="md-step__desc">いくつでも選べます。ファイルごとに「入金予定」か「支払予定」かを選んでください。ファイルがなく、手順2の定例だけで作ることもできます。</p>
         </div>
-        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-files"><span class="md-icon" data-icon="help" aria-hidden="true"></span>使えるファイル</button></div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-files"><span class="md-icon" data-icon="help" aria-hidden="true"></span>使えるファイル</button></div>
       </div>
       <div class="md-step__body card-body">
         <label id="zone" class="md-dropzone" data-ready="1">
@@ -320,16 +320,6 @@
       </div>
     </section>
   </div>
-  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
-    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
-    <div class="md-modal__body">
-      <ol>
-        <li>手順1で、<code>samples/shikin/入金予定.csv</code> と <code>samples/shikin/支払予定.csv</code> をまとめて選びます。</li>
-        <li>手順2で「見本の行を入れる」を押すと、家賃などの定例が入ります（なくてもかまいません）。</li>
-        <li>手順3で、開始日を <strong>2026/11/17</strong>、期間を <strong>3か月</strong>、開始時点の残高を <strong>3,000,000</strong>、注意する残高を <strong>1,000,000</strong> にして「資金繰り表を作る」を押します。12月10日の賞与で残高が一度だけ注意する残高を下回ります。</li>
-      </ol>
-    </div>
-  </dialog>
   <dialog id="dlg-files" class="md-modal" aria-labelledby="dlg-files-title">
     <div class="md-modal__head"><h2 id="dlg-files-title" class="md-modal__title">使えるファイル</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
     <div class="md-modal__body">

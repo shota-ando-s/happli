@@ -9,7 +9,6 @@
   const setRadio = (name, v) => { const r = document.querySelector('input[name="' + name + '"][value="' + v + '"]'); if (r) r.checked = true; };
 
   const ISSUER = [['name', 'iss-name'], ['regNo', 'iss-reg'], ['zip', 'iss-zip'], ['tel', 'iss-tel'], ['address', 'iss-addr']];
-  const SAMPLE = { name: '見本株式会社（サンプル）', regNo: 'T0000000000000', zip: '000-0000', tel: '00-0000-0000', address: '東京都見本区見本町1-1-1 見本ビル3階' };
   const DEFAULT_TADASHI = 'お品代として';
 
   const saved = M.io.loadSetting(SETTING_KEY, {}) || {};
@@ -126,12 +125,6 @@
   }
   $('iss-reg').addEventListener('blur', function () { const c = checkReg(); if (c.ok && c.value) $('iss-reg').value = c.value; });
 
-  $('fill-sample').addEventListener('click', function () {
-    fillIssuer(SAMPLE);
-    issuerOwn = true;
-    persist(); hideResult(); issuerNote(); updateSteps();
-    $('fill-sample-msg').textContent = '手順4に見本の発行元を入れました。本番で使う前に、自社の情報に書き換えてください。';
-  });
   issuerNote();
 
   function updateSteps() {

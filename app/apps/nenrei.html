@@ -92,7 +92,7 @@
           <h2 id="s1" class="md-step__title card-title">ファイルを選ぶ</h2>
           <p class="md-step__desc">ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
         </div>
-        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button><button type="button" class="md-help-btn" data-modal="dlg-link"><span class="md-icon" data-icon="help" aria-hidden="true"></span>ほかのツールとのつなぎ方</button></div>
+        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-link"><span class="md-icon" data-icon="help" aria-hidden="true"></span>ほかのツールとのつなぎ方</button></div>
       </div>
       <div class="md-step__body card-body">
         <div class="md-grid" data-min="14">
@@ -282,19 +282,13 @@
       </div>
     </section>
   </div>
-  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
-    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
-    <div class="md-modal__body">
-      <p>このツール集のフォルダにある見本ファイル（架空の8社・2026年6〜10月の請求40件）で試せます。手順1で <code>samples/nenrei/請求一覧_2026年.csv</code> と <code>samples/nenrei/未回収一覧.csv</code> を選び、手順3の基準日を 2026年11月16日 にしてください。</p>
-    </div>
-  </dialog>
   <dialog id="dlg-link" class="md-modal" aria-labelledby="dlg-link-title">
     <div class="md-modal__head"><h2 id="dlg-link-title" class="md-modal__title">ほかのツールとのつなぎ方</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
     <div class="md-modal__body">
       <ul>
         <li><b>請求書の一括作成</b>で保存した「請求一覧.csv」は、そのまま手順1の請求一覧に使えます（列は自動で選ばれます）。</li>
         <li><b>入金消込</b>で保存した「消込結果.csv」か「未回収一覧.csv」を手順1で一緒に選ぶと、入金済みの請求を除いて集計します。</li>
-        <li>入金の分かる列（入金額）が請求一覧にあれば、それでもかまいません。一部だけ入金された請求は、残りの金額で数えます（見本: <code>請求一覧_入金額つき_2026年.csv</code>）。</li>
+        <li>入金の分かる列（入金額）が請求一覧にあれば、それでもかまいません。一部だけ入金された請求は、残りの金額で数えます。</li>
         <li>結果から「督促の差し込み用CSV」を保存して<b>差し込み文書</b>で読み込むと、「お支払いのお願い」の文書を取引先ごとにまとめて作れます。</li>
       </ul>
     </div>

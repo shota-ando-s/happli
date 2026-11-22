@@ -5,7 +5,7 @@
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else { root.MacroApps = root.MacroApps || {}; root.MacroApps.version = api; }
 })(typeof self !== 'undefined' ? self : this, function () {
-  const VERSION = '2026.11.22.2';
+  const VERSION = '2026.11.22.3';
   /* 公開用リポジトリ（shota-ando-s/happli）の GitHub Pages。中身は version.json とダウンロードの案内だけ */
   const SITE = 'https://shota-ando-s.github.io/happli/';
   const MANIFEST_URL = SITE + 'version.json';

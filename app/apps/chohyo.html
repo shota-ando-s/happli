@@ -186,7 +186,6 @@
           <h2 id="s2" class="md-step__title card-title">明細のファイルを選ぶ</h2>
           <p class="md-step__desc">1行に品物1つずつの明細のCSVです（請求書の一括作成と同じ形）。ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
         </div>
-        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
       </div>
       <div class="md-step__body card-body">
         <div class="md-field">
@@ -510,16 +509,6 @@
       </div>
     </section>
   </div>
-  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
-    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
-    <div class="md-modal__body">
-      <p>手順1で作る書類を選び、手順2で <code>samples/seikyusho/請求明細.csv</code> を選んでください（請求書の一括作成の見本と同じファイルです）。発注書を試すときは <code>samples/chohyo/発注明細.csv</code>（仕入先3社への発注の見本）を選んでください。手順4の発行元は、下のボタンで見本の値を入れられます（実在しない会社です。本番では自社の情報に書き換えてください）。</p>
-      <div class="md-actions">
-        <button id="fill-sample" class="md-btn btn" data-variant="tonal" data-size="s" type="button"><span class="md-icon" data-icon="edit" data-size="20" aria-hidden="true"></span>発行元に見本の値を入れる</button>
-      </div>
-      <p id="fill-sample-msg" class="md-file-status" aria-live="polite"></p>
-    </div>
-  </dialog>
   <dialog id="dlg-docs" class="md-modal" aria-labelledby="dlg-docs-title">
     <div class="md-modal__head"><h2 id="dlg-docs-title" class="md-modal__title">書類ごとの決まり</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
     <div class="md-modal__body">

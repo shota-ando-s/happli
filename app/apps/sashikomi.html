@@ -139,7 +139,6 @@
           <h2 id="s1" class="md-step__title card-title">送付先の一覧を選ぶ</h2>
           <p class="md-step__desc">1行に1通分の宛先や金額・日付が並んだCSVです。ファイルをここにドラッグするか、枠を押して選んでください。文字コードは自動で判別します。</p>
         </div>
-        <div class="md-step__aside"><button type="button" class="md-help-btn" data-modal="dlg-sample"><span class="md-icon" data-icon="play" aria-hidden="true"></span>見本で試す</button></div>
       </div>
       <div class="md-step__body card-body">
         <div class="md-field">
@@ -293,9 +292,6 @@
                 <div class="md-field"><label class="md-field__label form-label" for="from-person">担当</label><input id="from-person" class="md-input form-control" type="text" placeholder="経理部 鈴木"></div>
               </div>
               <div class="md-field" style="margin-top:16px"><label class="md-field__label form-label" for="from-address">住所</label><input id="from-address" class="md-input form-control" type="text" autocomplete="street-address"></div>
-              <div class="md-actions" style="margin-top:12px">
-                <button id="fill-sample" class="md-btn btn" data-variant="text" data-size="s" type="button"><span class="md-icon" data-icon="edit" data-size="20" aria-hidden="true"></span>見本の差出人を入れる</button>
-              </div>
             </fieldset>
 
             <div class="md-field">
@@ -404,12 +400,6 @@
       </div>
     </section>
   </div>
-  <dialog id="dlg-sample" class="md-modal" aria-labelledby="dlg-sample-title">
-    <div class="md-modal__head"><h2 id="dlg-sample-title" class="md-modal__title">見本で試す</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
-    <div class="md-modal__body">
-      <p>手順1で <code>samples/sashikomi/送付先リスト.csv</code> を選び、手順3で「お支払いのお願い」を選んでください。見本の会社・住所はすべて架空のものです。</p>
-    </div>
-  </dialog>
   <dialog id="dlg-field" class="md-modal" aria-labelledby="dlg-field-title">
     <div class="md-modal__head"><h2 id="dlg-field-title" class="md-modal__title">差し込み欄の書き方</h2><button type="button" class="md-modal__close" data-close aria-label="閉じる"><span class="md-icon" data-icon="close" aria-hidden="true"></span></button></div>
     <div class="md-modal__body">

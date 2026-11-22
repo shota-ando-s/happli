@@ -3,7 +3,6 @@
   const M = window.MacroApps, el = M.ui.el, S = M.sashikomi;
   const KEY_CURRENT = 'sashikomi.current', KEY_SAVED = 'sashikomi.templates';
   const $ = (id) => document.getElementById(id);
-  const SAMPLE_FROM = { company: '見本株式会社（サンプル）', zip: '000-0000', address: '東京都見本区見本町1-1-1 見本ビル3階', tel: '00-0000-0000', person: '経理部 見本' };
 
   const state = { data: null, selected: new Set(), visible: [], tpl: null, current: 0, built: false, lastField: null, mapSig: '' };
 
@@ -476,12 +475,6 @@
     const filename = '差し込み文書_' + name + '.json';
     M.io.download(filename, S.exportJson(t), { encoding: 'UTF8' });
     M.ui.banner($('save-msg'), 'success', filename + ' を書き出しました。ダウンロードフォルダを確かめてください。', ['受け取った人は、手順3の「ファイルから読み込む」で使えます。差出人の欄も入っているので、必要なら書き換えてもらってください。']);
-  });
-
-  $('fill-sample').addEventListener('click', function () {
-    $('from-company').value = SAMPLE_FROM.company; $('from-zip').value = SAMPLE_FROM.zip; $('from-address').value = SAMPLE_FROM.address;
-    $('from-tel').value = SAMPLE_FROM.tel; $('from-person').value = SAMPLE_FROM.person;
-    changed(true);
   });
 
   /* 入力欄の変化 */
